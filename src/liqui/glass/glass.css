@@ -1,0 +1,75 @@
+/* ---- liqui glass tokens ---------------------------------------------- */
+
+:root {
+  --lq-text: rgba(28, 28, 40, 0.95);
+  --lq-text-dim: rgba(28, 28, 40, 0.55);
+  --lq-tint: rgba(255, 255, 255, 0.26);
+  --lq-tint-deep: rgba(255, 255, 255, 0.08);
+  --lq-rim-hi: rgba(255, 255, 255, 0.85);
+  --lq-rim-lo: rgba(255, 255, 255, 0.28);
+  --lq-shadow: 0 24px 60px rgba(10, 15, 40, 0.35), 0 4px 14px rgba(10, 15, 40, 0.18);
+  --lq-highlight: rgba(255, 255, 255, 0.5);
+  --lq-accent: #2f6bff;
+}
+
+[data-theme='dark'] {
+  --lq-text: rgba(245, 246, 255, 0.96);
+  --lq-text-dim: rgba(245, 246, 255, 0.55);
+  --lq-tint: rgba(30, 32, 46, 0.42);
+  --lq-tint-deep: rgba(18, 20, 32, 0.3);
+  --lq-rim-hi: rgba(255, 255, 255, 0.5);
+  --lq-rim-lo: rgba(255, 255, 255, 0.12);
+  --lq-shadow: 0 24px 60px rgba(0, 0, 5, 0.55), 0 4px 14px rgba(0, 0, 5, 0.35);
+  --lq-highlight: rgba(255, 255, 255, 0.18);
+  --lq-accent: #6f9dff;
+}
+
+/* ---- surface anatomy -------------------------------------------------- */
+
+.liqui-glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--lq-radius, 16px);
+  color: var(--lq-text);
+}
+
+.liqui-glass--elevated {
+  box-shadow: var(--lq-shadow);
+}
+
+.liqui-glass__defs {
+  position: absolute;
+  pointer-events: none;
+}
+
+.liqui-glass__backdrop,
+.liqui-glass__tint,
+.liqui-glass__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liqui-glass__backdrop {
+  z-index: 0;
+}
+
+.liqui-glass__tint {
+  z-index: 1;
+  background: linear-gradient(135deg, var(--lq-tint), var(--lq-tint-deep));
+}
+
+/* Specular rim: bright top-left catch-light, faint bottom rim. */
+.liqui-glass__shine {
+  z-index: 2;
+  box-shadow:
+    inset 0 1px 1px var(--lq-rim-hi),
+    inset 1px 0 1px 0.5px color-mix(in srgb, var(--lq-rim-hi) 60%, transparent),
+    inset -1px -1px 1px var(--lq-rim-lo);
+}
+
+.liqui-glass__content {
+  position: relative;
+  z-index: 3;
+}

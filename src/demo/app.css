@@ -1,0 +1,247 @@
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family:
+    'SF Pro Text',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Inter,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ---- desktop / wallpaper ---------------------------------------------- */
+
+.desktop {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #cfe3ff 0%, #e8d9ff 40%, #ffd9e8 75%, #ffe9cf 100%);
+  transition: background 0.5s ease;
+}
+
+[data-theme='dark'] .desktop {
+  background: linear-gradient(160deg, #0b1026 0%, #251a3f 45%, #3d1a35 80%, #1a0f2e 100%);
+}
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wallpaper__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.85;
+}
+
+.wallpaper__blob--1 {
+  width: 44vmin;
+  height: 44vmin;
+  left: 8%;
+  top: 12%;
+  background: radial-gradient(circle at 35% 30%, #7cc0ff, #2f6bff 70%);
+  animation: drift 16s ease-in-out infinite alternate;
+}
+
+.wallpaper__blob--2 {
+  width: 36vmin;
+  height: 36vmin;
+  right: 10%;
+  top: 20%;
+  background: radial-gradient(circle at 40% 35%, #ffb6f9, #b53fff 75%);
+  animation: drift 20s ease-in-out infinite alternate-reverse;
+}
+
+.wallpaper__blob--3 {
+  width: 40vmin;
+  height: 40vmin;
+  left: 30%;
+  bottom: -8%;
+  background: radial-gradient(circle at 40% 35%, #ffe08a, #ff7847 75%);
+  animation: drift 24s ease-in-out infinite alternate;
+}
+
+[data-theme='dark'] .wallpaper__blob {
+  opacity: 0.55;
+}
+
+@keyframes drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(6vmin, -4vmin) scale(1.12);
+  }
+}
+
+/* Fine grid — makes the edge refraction of the glass clearly visible. */
+.wallpaper__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+}
+
+[data-theme='dark'] .wallpaper__grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+}
+
+/* ---- hero -------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  text-align: center;
+  color: rgba(20, 24, 46, 0.9);
+  z-index: 1;
+}
+
+[data-theme='dark'] .hero {
+  color: rgba(240, 242, 255, 0.92);
+}
+
+.hero__brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.hero__title {
+  margin-top: 10px;
+  font-size: clamp(34px, 5.5vw, 62px);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.hero__hint {
+  margin-top: 14px;
+  font-size: 15px;
+  opacity: 0.65;
+}
+
+.hero__action {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f6bff;
+}
+
+[data-theme='dark'] .hero__action {
+  color: #8fb2ff;
+}
+
+/* ---- emoji tiles -------------------------------------------------------- */
+
+.tiles {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-content: space-between;
+  padding: 6vh 5vw 14vh;
+  pointer-events: none;
+}
+
+.tile {
+  font-size: 34px;
+  opacity: 0.9;
+  justify-self: center;
+  animation: bob 6s ease-in-out infinite;
+}
+
+.tiles--list .tile {
+  justify-self: start;
+}
+
+.tiles--gallery .tile {
+  font-size: 48px;
+}
+
+.tiles--columns {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ---- dock --------------------------------------------------------------- */
+
+.dock-wrap {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.dock .liqui-glass__content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+}
+
+.dock__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lq-text);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 10px;
+}
+
+.dock__button:hover {
+  background: var(--lq-highlight);
+}
+
+.dock__divider {
+  width: 1px;
+  height: 18px;
+  background: color-mix(in srgb, var(--lq-text) 18%, transparent);
+}
+
+.dock__note {
+  font-size: 12.5px;
+  color: var(--lq-text);
+}
+
+.dock__note-dim {
+  color: var(--lq-text-dim);
+}
