@@ -61,6 +61,19 @@ The perf/quality trade-off is exposed to consumers via props:
   (physical), `'rim'` (stylized quadratic falloff).
 - `refraction` (px), `bezel` (px), `blur` (px), `saturation`.
 - `specular` — opacity of the rim-light layer (0 disables).
+- `frost` — material density dial (0–1) mirroring Apple's Liquid Glass
+  variants: 0 ≈ "clear" (transparent; Apple reserves it for media-rich
+  backdrops with a dimming layer), 1 ≈ "regular" (adaptive frosted tint that
+  carries legibility — Apple's default for menus and controls). Interpolates
+  tint opacity and adds up to 14px blur. Default 0.35.
+
+### Latency
+
+Displacement/specular maps are cached module-wide by size+params (reopening a
+popup is a lookup, not a render), generated at half resolution above ~180×180
+(smooth fields — stretching is invisible), and the surface is measured
+synchronously before first paint. While the map PNG decodes, the backdrop
+runs the same blur so refraction fades in without a frost jump.
 - `dispersion` — chromatic aberration; `0` disables (single displacement
   pass). Values > 0 split R/G/B into three displacement passes (~3× filter
   cost), so keep it `0` where performance matters.

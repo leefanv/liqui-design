@@ -13,6 +13,7 @@ interface GlassSettings {
   refraction: number;
   dispersion: number;
   specular: number;
+  frost: number;
   blur: number;
 }
 
@@ -25,11 +26,10 @@ function initialSettings(): GlassSettings {
     refraction: Number(q.get('refraction') ?? 150),
     dispersion: Number(q.get('dispersion') ?? 0),
     specular: Number(q.get('specular') ?? 0.7),
+    frost: Number(q.get('frost') ?? 0.35),
     blur: Number(q.get('blur') ?? 1),
   };
 }
-
-const wallpaperTiles = ['🍇', '🌊', '🫧', '🍋', '🌸', '🪼', '🍑', '🌿', '🫐', '🍒', '🌀', '🦋'];
 
 export default function App() {
   const [theme, setTheme] = React.useState<'light' | 'dark'>(() =>
@@ -81,11 +81,41 @@ export default function App() {
   return (
     <Menu.Root>
       <Menu.Trigger className="desktop" data-theme-root>
-        <div className="wallpaper" aria-hidden>
-          <div className="wallpaper__blob wallpaper__blob--1" />
-          <div className="wallpaper__blob wallpaper__blob--2" />
-          <div className="wallpaper__blob wallpaper__blob--3" />
-          <div className="wallpaper__grid" />
+        <div className="os" aria-hidden>
+          <img
+            className="os__wallpaper"
+            src="/os/wallpaper-light.jpg"
+            alt=""
+            draggable={false}
+          />
+          <img
+            className="os__wallpaper os__wallpaper--dark"
+            src="/os/wallpaper-dark.jpg"
+            alt=""
+            draggable={false}
+          />
+          <div className="os__menubar">
+            <img src="/os/menu-bar-left.png" width={395} height={24} alt="" draggable={false} />
+            <img src="/os/menu-bar-right.png" width={235} height={24} alt="" draggable={false} />
+          </div>
+          <div className="os__dock">
+            <img
+              className="os__dock-img"
+              src="/os/dock-light.png"
+              width={1153}
+              height={56}
+              alt=""
+              draggable={false}
+            />
+            <img
+              className="os__dock-img os__dock-img--dark"
+              src="/os/dock-dark.png"
+              width={1153}
+              height={56}
+              alt=""
+              draggable={false}
+            />
+          </div>
         </div>
 
         <header className="hero">
@@ -96,14 +126,6 @@ export default function App() {
           </p>
           {lastAction && <p className="hero__action">→ {lastAction}</p>}
         </header>
-
-        <div className={`tiles tiles--${view}`} aria-hidden>
-          {wallpaperTiles.map((emoji, i) => (
-            <div className="tile" key={i} style={{ animationDelay: `${i * 0.35}s` }}>
-              {emoji}
-            </div>
-          ))}
-        </div>
 
         <aside
           className="panel-wrap"
@@ -177,6 +199,20 @@ export default function App() {
                 step={0.05}
                 value={glass.specular}
                 onChange={(e) => set('specular', Number(e.target.value))}
+              />
+            </label>
+
+            <label className="panel__row">
+              <span>
+                Frost <em>{glass.frost.toFixed(2)}</em>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={glass.frost}
+                onChange={(e) => set('frost', Number(e.target.value))}
               />
             </label>
 

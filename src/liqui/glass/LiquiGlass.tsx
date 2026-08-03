@@ -104,13 +104,32 @@ const THETA_COUNTER = Math.atan2(0.9, 0.5);
  * features like mix-blend-mode disabled, which silently corrupts
  * gradient-composited maps.)
  */
+/**
+ * Maps are cached module-wide: popups remount at identical sizes on every
+ * open, so a reopen costs a Map lookup instead of a canvas render. Large
+ * surfaces render at half resolution — displacement vectors and the specular
+ * glow are smooth fields, so feImage/background stretching is invisible, and
+ * generation + PNG decode get ~4× cheaper (less pop-in latency).
+ */
+const imageCache = new Map<string, { map: string; specular: string }>();
+
 function glassImages(
-  w: number,
-  h: number,
-  radius: number,
-  bezel: number,
+  fullW: number,
+  fullH: number,
+  fullRadius: number,
+  fullBezel: number,
   profile: GlassProfile,
 ) {
+  const key = `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}`;
+  const cached = imageCache.get(key);
+  if (cached) return cached;
+
+  const scale = fullW * fullH > 32000 ? 0.5 : 1;
+  const w = Math.ceil(fullW * scale);
+  const h = Math.ceil(fullH * scale);
+  const radius = fullRadius * scale;
+  const bezel = fullBezel * scale;
+
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -186,7 +205,9 @@ function glassImages(
 
   ctx.putImageData(image, 0, 0);
   specCtx.putImageData(specImage, 0, 0);
-  return { map: canvas.toDataURL(), specular: specCanvas.toDataURL() };
+  const result = { map: canvas.toDataURL(), specular: specCanvas.toDataURL() };
+  imageCache.set(key, result);
+  return result;
 }
 
 const ISOLATE_R = '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0';
@@ -223,6 +244,13 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
    * the refraction tier; frost/clear keep the cheap inset-shadow shine.
    */
   specular?: number;
+  /**
+   * Material density, 0–1, mirroring Apple's Liquid Glass variants:
+   * 0 ≈ "clear" (transparent, for media-rich backdrops with their own
+   * dimming), 1 ≈ "regular" (adaptive frosted tint that carries legibility).
+   * Interpolates tint opacity and adds up to 14px of blur on top of `blur`.
+   */
+  frost?: number;
   /** Extra saturation pushed through the glass. */
   saturation?: number;
   /** Depth level: raises tint opacity + shadow. */
@@ -244,6 +272,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       bezel = 26,
       dispersion = 0,
       specular = 0.7,
+      frost = 0.35,
       saturation = 1.7,
       elevated = false,
       className,
@@ -269,18 +298,23 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
 
     React.useLayoutEffect(() => {
       if (tier !== 'refract' || !localRef.current) return;
-      const observer = new ResizeObserver((entries) => {
-        // contentRect, not getBoundingClientRect: the latter includes CSS
-        // transforms, so measuring during an open animation (scale 0.85)
-        // would bake a permanently undersized map.
-        const rect = entries[0].contentRect;
-        const w = Math.round(rect.width);
-        const h = Math.round(rect.height);
+      const el = localRef.current;
+      const apply = (w: number, h: number) => {
         if (w > 0 && h > 0) {
           setSize((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }));
         }
+      };
+      // Measure synchronously before first paint so the filter is present on
+      // the very first frame instead of popping in a few frames later.
+      // offsetWidth/contentRect are layout sizes, unaffected by CSS
+      // transforms — measuring the bounding rect during the scale(0.85) open
+      // animation would bake a permanently undersized map.
+      apply(el.offsetWidth, el.offsetHeight);
+      const observer = new ResizeObserver((entries) => {
+        const rect = entries[0].contentRect;
+        apply(Math.round(rect.width), Math.round(rect.height));
       });
-      observer.observe(localRef.current);
+      observer.observe(el);
       return () => observer.disconnect();
     }, [tier]);
 
@@ -291,12 +325,19 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       [refractionReady, size, radius, bezel, profile],
     );
 
+    // frost interpolates toward Apple's "regular" variant: more blur + tint.
+    const effectiveBlur = blur + frost * 14;
     const backdropFilter =
       tier === 'clear'
         ? undefined
-        : refractionReady
-          ? `url(#${filterId}) blur(${blur}px) saturate(${saturation})`
-          : `blur(${blur * 4}px) saturate(${saturation})`;
+        : tier === 'frost'
+          ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})`
+          : refractionReady
+            ? `url(#${filterId}) blur(${effectiveBlur}px) saturate(${saturation})`
+            : // Same blur while the map decodes: refraction fades in without a
+              // visible jump in frostiness.
+              `blur(${effectiveBlur}px) saturate(${saturation})`;
+    const tintOpacity = tier === 'clear' ? 1 : 0.25 + 0.75 * frost;
 
     return (
       <div
@@ -381,7 +422,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
             style={{ backdropFilter, WebkitBackdropFilter: backdropFilter }}
           />
         )}
-        <span className="liqui-glass__tint" />
+        <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
         {refractionReady && specular > 0 && (
           <span
             className="liqui-glass__specular"

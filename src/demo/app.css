@@ -31,82 +31,77 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, #cfe3ff 0%, #e8d9ff 40%, #ffd9e8 75%, #ffe9cf 100%);
-  transition: background 0.5s ease;
+  background: #b9b4ad;
 }
 
 [data-theme='dark'] .desktop {
-  background: linear-gradient(160deg, #0b1026 0%, #251a3f 45%, #3d1a35 80%, #1a0f2e 100%);
+  background: #191a2b;
 }
 
-.wallpaper {
+/* macOS desktop chrome — wallpaper, menu bar, dock. Assets are @2x,
+   rendered at @1x sizes. */
+.os {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.wallpaper__blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(2px);
-  opacity: 0.85;
-}
-
-.wallpaper__blob--1 {
-  width: 44vmin;
-  height: 44vmin;
-  left: 8%;
-  top: 12%;
-  background: radial-gradient(circle at 35% 30%, #7cc0ff, #2f6bff 70%);
-  animation: drift 16s ease-in-out infinite alternate;
-}
-
-.wallpaper__blob--2 {
-  width: 36vmin;
-  height: 36vmin;
-  right: 10%;
-  top: 20%;
-  background: radial-gradient(circle at 40% 35%, #ffb6f9, #b53fff 75%);
-  animation: drift 20s ease-in-out infinite alternate-reverse;
-}
-
-.wallpaper__blob--3 {
-  width: 40vmin;
-  height: 40vmin;
-  left: 30%;
-  bottom: -8%;
-  background: radial-gradient(circle at 40% 35%, #ffe08a, #ff7847 75%);
-  animation: drift 24s ease-in-out infinite alternate;
-}
-
-[data-theme='dark'] .wallpaper__blob {
-  opacity: 0.55;
-}
-
-@keyframes drift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(6vmin, -4vmin) scale(1.12);
-  }
-}
-
-/* Fine grid — makes the edge refraction of the glass clearly visible. */
-.wallpaper__grid {
+.os__wallpaper {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.5s ease;
 }
 
-[data-theme='dark'] .wallpaper__grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+.os__wallpaper--dark {
+  opacity: 0;
+}
+
+[data-theme='dark'] .os__wallpaper--dark {
+  opacity: 1;
+}
+
+.os__menubar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 20px 5px 10px;
+  z-index: 1;
+}
+
+.os__menubar img {
+  display: block;
+}
+
+.os__dock {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1153px, 92vw);
+}
+
+.os__dock-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: opacity 0.5s ease;
+}
+
+.os__dock-img--dark {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+[data-theme='dark'] .os__dock-img--dark {
+  opacity: 1;
 }
 
 /* ---- hero -------------------------------------------------------------- */
@@ -152,47 +147,6 @@ body {
 
 [data-theme='dark'] .hero__action {
   color: #8fb2ff;
-}
-
-/* ---- emoji tiles -------------------------------------------------------- */
-
-.tiles {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  align-content: space-between;
-  padding: 6vh 5vw 14vh;
-  pointer-events: none;
-}
-
-.tile {
-  font-size: 34px;
-  opacity: 0.9;
-  justify-self: center;
-  animation: bob 6s ease-in-out infinite;
-}
-
-.tiles--list .tile {
-  justify-self: start;
-}
-
-.tiles--gallery .tile {
-  font-size: 48px;
-}
-
-.tiles--columns {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
 /* ---- settings panel ----------------------------------------------------- */
@@ -265,9 +219,8 @@ body {
 
 .dock-wrap {
   position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 44px;
+  left: 24px;
   z-index: 2;
 }
 
