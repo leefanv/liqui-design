@@ -56,6 +56,23 @@
   z-index: 0;
 }
 
+/* Displacement-only layer above the blur layer; fades in once its feImage
+   map has decoded so refraction materializes without a frost jump. */
+.liqui-glass__refract {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  animation: lq-fade-in 0.18s ease-out;
+}
+
+@keyframes lq-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .liqui-glass__tint {
   z-index: 1;
   background: linear-gradient(135deg, var(--lq-tint), var(--lq-tint-deep));
@@ -82,6 +99,7 @@
   pointer-events: none;
   z-index: 2;
   background-size: 100% 100%;
+  animation: lq-fade-in 0.18s ease-out;
 }
 
 /* Cheap fallback shine: bright top-left catch-light, faint bottom rim. */

@@ -327,16 +327,21 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
 
     // frost interpolates toward Apple's "regular" variant: more blur + tint.
     const effectiveBlur = blur + frost * 14;
+    // Blur and refraction live on SEPARATE backdrop layers. While feImage
+    // decodes its data URL, Chromium treats the whole
+    // `url(#f) blur() saturate()` chain as inert — putting them on one layer
+    // makes even the base blur pop in late. Layer A (blur+saturate) never
+    // changes after first paint; layer B (displacement only) stacks above it,
+    // sampling A's output. The map's neutral center makes B a no-op wherever
+    // there's no displacement, so B arriving late just fades refraction in
+    // over an already-frosted surface.
     const backdropFilter =
       tier === 'clear'
         ? undefined
         : tier === 'frost'
           ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})`
-          : refractionReady
-            ? `url(#${filterId}) blur(${effectiveBlur}px) saturate(${saturation})`
-            : // Same blur while the map decodes: refraction fades in without a
-              // visible jump in frostiness.
-              `blur(${effectiveBlur}px) saturate(${saturation})`;
+          : `blur(${effectiveBlur}px) saturate(${saturation})`;
+    const refractFilter = refractionReady ? `url(#${filterId})` : undefined;
     const tintOpacity = tier === 'clear' ? 1 : 0.25 + 0.75 * frost;
 
     return (
@@ -420,6 +425,12 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           <span
             className="liqui-glass__backdrop"
             style={{ backdropFilter, WebkitBackdropFilter: backdropFilter }}
+          />
+        )}
+        {refractFilter && (
+          <span
+            className="liqui-glass__refract"
+            style={{ backdropFilter: refractFilter, WebkitBackdropFilter: refractFilter }}
           />
         )}
         <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
