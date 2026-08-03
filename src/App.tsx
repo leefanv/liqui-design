@@ -12,6 +12,7 @@ interface GlassSettings {
   profile: GlassProfile;
   refraction: number;
   dispersion: number;
+  specular: number;
   blur: number;
 }
 
@@ -21,9 +22,10 @@ function initialSettings(): GlassSettings {
   return {
     material: (q.get('material') as GlassMaterial) || 'auto',
     profile: (q.get('profile') as GlassProfile) || 'squircle',
-    refraction: Number(q.get('refraction') ?? 100),
+    refraction: Number(q.get('refraction') ?? 150),
     dispersion: Number(q.get('dispersion') ?? 0),
-    blur: Number(q.get('blur') ?? 3),
+    specular: Number(q.get('specular') ?? 0.7),
+    blur: Number(q.get('blur') ?? 1),
   };
 }
 
@@ -166,6 +168,20 @@ export default function App() {
 
             <label className="panel__row">
               <span>
+                Specular <em>{glass.specular.toFixed(2)}</em>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={glass.specular}
+                onChange={(e) => set('specular', Number(e.target.value))}
+              />
+            </label>
+
+            <label className="panel__row">
+              <span>
                 Blur <em>{glass.blur}px</em>
               </span>
               <input
@@ -180,7 +196,7 @@ export default function App() {
         </aside>
 
         <div className="dock-wrap">
-          <LiquiGlass material={glass.material} radius={26} blur={2.5} refraction={48} bezel={10} className="dock">
+          <LiquiGlass material={glass.material} radius={26} blur={1} refraction={90} bezel={16} className="dock">
             <button
               type="button"
               className="dock__button"

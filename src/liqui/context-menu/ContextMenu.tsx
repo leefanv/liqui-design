@@ -16,9 +16,9 @@ export const Group = BaseContextMenu.Group;
 const POPUP_GLASS: LiquiGlassProps = {
   elevated: true,
   radius: 18,
-  blur: 3,
-  refraction: 100,
-  bezel: 18,
+  blur: 1,
+  refraction: 150,
+  bezel: 28,
 };
 
 export function Content({
@@ -161,7 +161,7 @@ export function SubmenuContent({
         <BaseContextMenu.Popup
           className="lq-menu-popup"
           render={
-            <LiquiGlass {...POPUP_GLASS} refraction={64} bezel={13} {...glass} />
+            <LiquiGlass {...POPUP_GLASS} refraction={110} bezel={20} {...glass} />
           }
         >
           <div className="lq-menu-list">{children}</div>

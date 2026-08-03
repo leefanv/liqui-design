@@ -29,13 +29,26 @@ For automated screenshots, `?autopen` opens the menu on load.
    glass) while the `bezel`-wide rim samples toward the center, magnifying the
    backdrop like a convex lens edge.
 2. **Tint** — a translucent gradient wash (theme-aware; strengthened
-   automatically in the `clear` tier, which has no backdrop-filter).
-3. **Specular rim** — inset shadows forming the top-left catch-light and the
-   bottom rim.
+   automatically in the `clear` tier, which has no backdrop-filter). Kept
+   near-transparent by default — the liquid look comes from refraction and
+   light, not from frost.
+3. **Specular rim light** — a canvas-rendered layer: a Gaussian band across
+   the bezel × cosine-power falloff around two light positions (key light
+   top-left, dim counter-light bottom-right), giving the arcs of light that
+   make the rim read as polished glass. Positional azimuth, not surface-normal
+   lighting: normals are constant along straight edges, which would light
+   whole edges uniformly (bevel-button look). Controlled by the `specular`
+   prop (0 disables; frost/clear tiers use cheap inset shadows instead).
 
-The map is canvas-generated rather than an SVG data-URI because Chromium's
-`feImage` rasterizes SVG images with CSS features (e.g. `mix-blend-mode`)
-disabled, which silently corrupts gradient-composited maps.
+Implementation gotchas learned the hard way:
+
+- The maps are canvas-generated rather than SVG data-URIs because Chromium's
+  `feImage` rasterizes SVG images with CSS features (e.g. `mix-blend-mode`)
+  disabled, which silently corrupts gradient-composited maps.
+- Surfaces are measured with ResizeObserver's `contentRect`, never
+  `getBoundingClientRect()` — the popup opens under a `scale(0.85)` transition,
+  and a transformed rect measured mid-animation would bake a permanently
+  undersized (and never re-observed) map.
 
 ### Configuration
 
@@ -47,6 +60,7 @@ The perf/quality trade-off is exposed to consumers via props:
 - `profile` — rim lens shape: `'squircle'` (physical, default), `'convex'`
   (physical), `'rim'` (stylized quadratic falloff).
 - `refraction` (px), `bezel` (px), `blur` (px), `saturation`.
+- `specular` — opacity of the rim-light layer (0 disables).
 - `dispersion` — chromatic aberration; `0` disables (single displacement
   pass). Values > 0 split R/G/B into three displacement passes (~3× filter
   cost), so keep it `0` where performance matters.

@@ -38,42 +38,59 @@ export type GlassProfile = 'squircle' | 'convex' | 'rim';
  * falloff kept for comparison.
  */
 const LUT_SIZE = 128;
-const lutCache = new Map<GlassProfile, Float32Array>();
+interface SurfaceLUTs {
+  /** Refraction displacement magnitude, normalized to [0, 1]. */
+  mag: Float32Array;
+  /** Surface slope dh/dd × thickness — drives the 3D normal for lighting. */
+  slope: Float32Array;
+}
+const lutCache = new Map<GlassProfile, SurfaceLUTs>();
 
-function refractionLUT(profile: GlassProfile): Float32Array {
+function surfaceLUTs(profile: GlassProfile): SurfaceLUTs {
   const cached = lutCache.get(profile);
   if (cached) return cached;
 
-  const lut = new Float32Array(LUT_SIZE);
-  if (profile === 'rim') {
-    for (let i = 0; i < LUT_SIZE; i++) {
-      const d = i / (LUT_SIZE - 1);
-      lut[i] = (1 - d) * (1 - d);
-    }
-  } else {
-    const n = 1.5; // refractive index of glass
-    const T = 0.6; // slab thickness relative to bezel width
-    const h =
-      profile === 'squircle'
-        ? (t: number) => Math.pow(1 - Math.pow(1 - t, 4), 0.25)
-        : (t: number) => Math.sqrt(1 - (1 - t) * (1 - t));
-    const eps = 1 / 1024;
-    let max = 0;
-    for (let i = 0; i < LUT_SIZE; i++) {
-      const t = Math.max(i / (LUT_SIZE - 1), eps);
-      const hi = Math.min(t + eps, 1);
-      const lo = Math.max(t - eps, 0);
-      const slope = ((h(hi) - h(lo)) / (hi - lo)) * T;
-      const thetaI = Math.atan(Math.abs(slope));
+  const mag = new Float32Array(LUT_SIZE);
+  const slope = new Float32Array(LUT_SIZE);
+  const n = 1.5; // refractive index of glass
+  const T = 0.6; // slab thickness relative to bezel width
+  const h =
+    profile === 'squircle'
+      ? (t: number) => Math.pow(1 - Math.pow(1 - t, 4), 0.25)
+      : profile === 'convex'
+        ? (t: number) => Math.sqrt(1 - (1 - t) * (1 - t))
+        : (t: number) => 1 - (1 - t) * (1 - t); // 'rim' pseudo-height
+  const eps = 1 / 1024;
+  let max = 0;
+  for (let i = 0; i < LUT_SIZE; i++) {
+    const t = Math.max(i / (LUT_SIZE - 1), eps);
+    const hi = Math.min(t + eps, 1);
+    const lo = Math.max(t - eps, 0);
+    slope[i] = ((h(hi) - h(lo)) / (hi - lo)) * T;
+    if (profile === 'rim') {
+      mag[i] = (1 - t) * (1 - t);
+    } else {
+      const thetaI = Math.atan(Math.abs(slope[i]));
       const delta = thetaI - Math.asin(Math.sin(thetaI) / n);
-      lut[i] = h(t) * T * Math.tan(delta);
-      max = Math.max(max, lut[i]);
+      mag[i] = h(t) * T * Math.tan(delta);
+      max = Math.max(max, mag[i]);
     }
-    if (max > 0) for (let i = 0; i < LUT_SIZE; i++) lut[i] /= max;
   }
-  lutCache.set(profile, lut);
-  return lut;
+  if (max > 0) for (let i = 0; i < LUT_SIZE; i++) mag[i] /= max;
+  const luts = { mag, slope };
+  lutCache.set(profile, luts);
+  return luts;
 }
+
+/**
+ * Rim-light angles: key light toward the top-left corner, dim counter-light
+ * toward the bottom-right. Specular intensity falls off with the *positional*
+ * azimuth around the shape center (a normal-based falloff would light whole
+ * straight edges uniformly — bevel-button, not glass), shaped by a Gaussian
+ * band across the bezel. Tuned for the bold arcs of the reference look.
+ */
+const THETA_KEY = Math.atan2(-0.9, -0.45);
+const THETA_COUNTER = Math.atan2(0.9, 0.5);
 
 /**
  * Displacement map for the lens effect, generated per-pixel on a canvas.
@@ -87,7 +104,7 @@ function refractionLUT(profile: GlassProfile): Float32Array {
  * features like mix-blend-mode disabled, which silently corrupts
  * gradient-composited maps.)
  */
-function displacementMap(
+function glassImages(
   w: number,
   h: number,
   radius: number,
@@ -100,7 +117,15 @@ function displacementMap(
   const ctx = canvas.getContext('2d')!;
   const image = ctx.createImageData(w, h);
   const data = image.data;
-  const lut = refractionLUT(profile);
+
+  const specCanvas = document.createElement('canvas');
+  specCanvas.width = w;
+  specCanvas.height = h;
+  const specCtx = specCanvas.getContext('2d')!;
+  const specImage = specCtx.createImageData(w, h);
+  const spec = specImage.data;
+
+  const { mag: lut } = surfaceLUTs(profile);
 
   const r = Math.min(radius, w / 2, h / 2);
   const bx = w / 2 - r;
@@ -133,21 +158,35 @@ function displacementMap(
       }
 
       const d = depth / bezel;
-      const mag =
-        d >= 1 || d < 0
-          ? 0
-          : lut[Math.min(Math.round(d * (LUT_SIZE - 1)), LUT_SIZE - 1)];
+      const inRim = d < 1 && d >= 0;
+      const idx = inRim ? Math.min(Math.round(d * (LUT_SIZE - 1)), LUT_SIZE - 1) : 0;
+      const mag = inRim ? lut[idx] : 0;
 
       const i = (y * w + x) * 4;
       data[i] = Math.round(128 - nx * mag * 127); // R → x displacement
       data[i + 1] = 128;
       data[i + 2] = Math.round(128 - ny * mag * 127); // B → y displacement
       data[i + 3] = 255;
+
+      // Specular rim light: Gaussian band across the bezel × cosine-power
+      // falloff around each light's corner.
+      if (inRim) {
+        const theta = Math.atan2(py, px);
+        const band = Math.exp(-(((d - 0.2) / 0.4) ** 2));
+        const c1 = Math.max(Math.cos(theta - THETA_KEY), 0);
+        const c2 = Math.max(Math.cos(theta - THETA_COUNTER), 0);
+        const intensity = Math.min(band * (1.15 * c1 ** 3 + 0.75 * c2 ** 3.5), 1);
+        spec[i] = 255;
+        spec[i + 1] = 255;
+        spec[i + 2] = 255;
+        spec[i + 3] = Math.round(intensity * 255);
+      }
     }
   }
 
   ctx.putImageData(image, 0, 0);
-  return canvas.toDataURL();
+  specCtx.putImageData(specImage, 0, 0);
+  return { map: canvas.toDataURL(), specular: specCanvas.toDataURL() };
 }
 
 const ISOLATE_R = '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0';
@@ -179,6 +218,11 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
    * Costs roughly 3× filter work — keep 0 where perf matters.
    */
   dispersion?: number;
+  /**
+   * Opacity of the normal-lit specular layer (0 disables). Only rendered in
+   * the refraction tier; frost/clear keep the cheap inset-shadow shine.
+   */
+  specular?: number;
   /** Extra saturation pushed through the glass. */
   saturation?: number;
   /** Depth level: raises tint opacity + shadow. */
@@ -195,11 +239,12 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       material = 'auto',
       profile = 'squircle',
       radius = 16,
-      blur = 3,
-      refraction = 100,
-      bezel = 18,
+      blur = 1,
+      refraction = 140,
+      bezel = 26,
       dispersion = 0,
-      saturation = 1.6,
+      specular = 0.7,
+      saturation = 1.7,
       elevated = false,
       className,
       style,
@@ -225,7 +270,10 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     React.useLayoutEffect(() => {
       if (tier !== 'refract' || !localRef.current) return;
       const observer = new ResizeObserver((entries) => {
-        const rect = entries[0].target.getBoundingClientRect();
+        // contentRect, not getBoundingClientRect: the latter includes CSS
+        // transforms, so measuring during an open animation (scale 0.85)
+        // would bake a permanently undersized map.
+        const rect = entries[0].contentRect;
         const w = Math.round(rect.width);
         const h = Math.round(rect.height);
         if (w > 0 && h > 0) {
@@ -237,11 +285,9 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     }, [tier]);
 
     const refractionReady = tier === 'refract' && size !== null;
-    const mapHref = React.useMemo(
+    const images = React.useMemo(
       () =>
-        refractionReady
-          ? displacementMap(size!.w, size!.h, radius, bezel, profile)
-          : null,
+        refractionReady ? glassImages(size!.w, size!.h, radius, bezel, profile) : null,
       [refractionReady, size, radius, bezel, profile],
     );
 
@@ -278,7 +324,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
               colorInterpolationFilters="sRGB"
             >
               <feImage
-                href={mapHref!}
+                href={images!.map}
                 x="0"
                 y="0"
                 width={size.w}
@@ -336,6 +382,15 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           />
         )}
         <span className="liqui-glass__tint" />
+        {refractionReady && specular > 0 && (
+          <span
+            className="liqui-glass__specular"
+            style={{
+              backgroundImage: `url(${images!.specular})`,
+              opacity: specular,
+            }}
+          />
+        )}
         <span className="liqui-glass__shine" />
         <div className="liqui-glass__content">{children}</div>
       </div>
