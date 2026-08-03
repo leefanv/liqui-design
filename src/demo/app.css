@@ -195,6 +195,72 @@ body {
   }
 }
 
+/* ---- settings panel ----------------------------------------------------- */
+
+.panel-wrap {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+}
+
+.panel .liqui-glass__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  width: 240px;
+}
+
+.panel__title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lq-text-dim);
+}
+
+.panel__row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--lq-text);
+}
+
+.panel__row > span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.panel__row em {
+  font-style: normal;
+  color: var(--lq-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel__row select {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--lq-text);
+  background: color-mix(in srgb, var(--lq-highlight) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lq-text) 15%, transparent);
+  border-radius: 8px;
+  padding: 5px 8px;
+  outline: none;
+}
+
+[data-theme='dark'] .panel__row select option {
+  color: #eee;
+  background: #222;
+}
+
+.panel__row input[type='range'] {
+  accent-color: var(--lq-accent);
+  margin: 0;
+}
+
 /* ---- dock --------------------------------------------------------------- */
 
 .dock-wrap {

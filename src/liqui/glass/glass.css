@@ -60,6 +60,18 @@
   background: linear-gradient(135deg, var(--lq-tint), var(--lq-tint-deep));
 }
 
+/* Clear tier has no backdrop-filter to quiet the background, so the tint
+   carries the legibility burden instead. */
+.liqui-glass--clear {
+  --lq-tint: rgba(255, 255, 255, 0.72);
+  --lq-tint-deep: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='dark'] .liqui-glass--clear {
+  --lq-tint: rgba(34, 36, 52, 0.82);
+  --lq-tint-deep: rgba(22, 24, 38, 0.68);
+}
+
 /* Specular rim: bright top-left catch-light, faint bottom rim. */
 .liqui-glass__shine {
   z-index: 2;

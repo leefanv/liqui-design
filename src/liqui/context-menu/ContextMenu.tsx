@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ContextMenu as BaseContextMenu } from '@base-ui/react/context-menu';
-import { LiquiGlass } from '../glass/LiquiGlass';
+import { LiquiGlass, type LiquiGlassProps } from '../glass/LiquiGlass';
 import './context-menu.css';
 
 /**
@@ -13,12 +13,19 @@ export const Root = BaseContextMenu.Root;
 export const Trigger = BaseContextMenu.Trigger;
 export const Group = BaseContextMenu.Group;
 
-const POPUP_RADIUS = 18;
+const POPUP_GLASS: LiquiGlassProps = {
+  elevated: true,
+  radius: 18,
+  blur: 3,
+  refraction: 100,
+  bezel: 18,
+};
 
 export function Content({
   children,
+  glass,
   ...positionerProps
-}: BaseContextMenu.Positioner.Props) {
+}: BaseContextMenu.Positioner.Props & { glass?: Partial<LiquiGlassProps> }) {
   return (
     <BaseContextMenu.Portal>
       <BaseContextMenu.Positioner
@@ -29,15 +36,7 @@ export function Content({
       >
         <BaseContextMenu.Popup
           className="lq-menu-popup"
-          render={
-            <LiquiGlass
-              elevated
-              radius={POPUP_RADIUS}
-              blur={3}
-              refraction={100}
-              bezel={18}
-            />
-          }
+          render={<LiquiGlass {...POPUP_GLASS} {...glass} />}
         >
           <div className="lq-menu-list">{children}</div>
         </BaseContextMenu.Popup>
@@ -147,8 +146,9 @@ export function SubmenuTrigger({
 
 export function SubmenuContent({
   children,
+  glass,
   ...positionerProps
-}: BaseContextMenu.Positioner.Props) {
+}: BaseContextMenu.Positioner.Props & { glass?: Partial<LiquiGlassProps> }) {
   return (
     <BaseContextMenu.Portal>
       <BaseContextMenu.Positioner
@@ -161,13 +161,7 @@ export function SubmenuContent({
         <BaseContextMenu.Popup
           className="lq-menu-popup"
           render={
-            <LiquiGlass
-              elevated
-              radius={POPUP_RADIUS}
-              blur={3}
-              refraction={56}
-              bezel={11}
-            />
+            <LiquiGlass {...POPUP_GLASS} refraction={64} bezel={13} {...glass} />
           }
         >
           <div className="lq-menu-list">{children}</div>
