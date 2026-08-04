@@ -59,6 +59,12 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
+}
+
+/* Applied only while the filter is cold (feImage decoding); removed after it
+   plays so display:none → shown toggles don't restart it. */
+.liqui-glass__refract--fade,
+.liqui-glass__specular--fade {
   animation: lq-fade-in 0.18s ease-out;
 }
 
@@ -94,7 +100,6 @@
   pointer-events: none;
   z-index: 2;
   background-size: 100% 100%;
-  animation: lq-fade-in 0.18s ease-out;
 }
 
 /* Cheap fallback shine: bright top-left catch-light, faint bottom rim. */

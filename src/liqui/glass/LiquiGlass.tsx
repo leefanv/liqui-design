@@ -342,15 +342,27 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       if (!refractionReady) return null;
       const images = glassImages(size!.w, size!.h, radius, bezel, profile);
       prewarmImage(images.specular);
-      const filterId = ensureFilter({
+      const { id: filterId, cold } = ensureFilter({
         w: size!.w,
         h: size!.h,
         mapHref: images.map,
         refraction,
         dispersion,
       });
-      return { images, filterId };
+      return { images, filterId, cold };
     }, [refractionReady, size, radius, bezel, profile, refraction, dispersion]);
+
+    // The masking fade-in is only for a cold filter (feImage still decoding).
+    // It must also be REMOVED after it plays: under keepMounted a closed
+    // popup is display:none, and re-display restarts any CSS animation still
+    // on the element — which would re-fade refraction on every open.
+    const [fadeDone, setFadeDone] = React.useState(false);
+    const needsFade = (glassRefs?.cold ?? false) && !fadeDone;
+    React.useEffect(() => {
+      if (!glassRefs?.cold || fadeDone) return;
+      const timer = setTimeout(() => setFadeDone(true), 250);
+      return () => clearTimeout(timer);
+    }, [glassRefs?.cold, fadeDone]);
 
     // frost interpolates toward Apple's "regular" variant: more blur + tint.
     const effectiveBlur = blur + frost * 14;
@@ -393,14 +405,22 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         )}
         {refractFilter && (
           <span
-            className="liqui-glass__refract"
+            className={
+              needsFade
+                ? 'liqui-glass__refract liqui-glass__refract--fade'
+                : 'liqui-glass__refract'
+            }
             style={{ backdropFilter: refractFilter, WebkitBackdropFilter: refractFilter }}
           />
         )}
         <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
         {glassRefs && specular > 0 && (
           <span
-            className="liqui-glass__specular"
+            className={
+              needsFade
+                ? 'liqui-glass__specular liqui-glass__specular--fade'
+                : 'liqui-glass__specular'
+            }
             style={{
               backgroundImage: `url(${glassRefs.images.specular})`,
               opacity: specular,

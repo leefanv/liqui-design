@@ -75,16 +75,17 @@ function displacement(scale: number, result?: string): SVGElement {
 
 /**
  * Returns the id of a filter implementing the given optics, creating it in
- * the persistent host on first request. Filters are never removed — they are
- * tiny, and keeping them is exactly what makes remounts free.
+ * the persistent host on first request. `cold` is true only when the filter
+ * was just created (its feImage still has to decode) — callers use it to
+ * decide whether a masking fade-in is needed at all.
  */
-export function ensureFilter(params: FilterParams): string {
+export function ensureFilter(params: FilterParams): { id: string; cold: boolean } {
   const { w, h, mapHref, refraction, dispersion } = params;
   // The map href fully encodes size/radius/bezel/profile (it's cached by
   // those in glassImages), so id dedup can key on it plus the optics.
   const key = `${w}x${h}|r${refraction}|d${dispersion}|${mapHref.length}:${mapHref.slice(-24)}`;
   const existing = filterIds.get(key);
-  if (existing) return existing;
+  if (existing) return { id: existing, cold: false };
 
   const id = `lq-refract-${nextId++}`;
   const filter = el('filter', {
@@ -125,11 +126,22 @@ export function ensureFilter(params: FilterParams): string {
     filterIds.delete(oldestKey);
     host?.querySelector(`#${oldestId}`)?.remove();
   }
-  return id;
+  return { id, cold: true };
 }
 
-/** Warm the browser image cache for a data URL (e.g. the specular PNG). */
+/**
+ * Warm the browser image cache for a data URL (e.g. the specular PNG) and
+ * pin the Image object so its decoded data isn't dropped while the surface
+ * sits in a display:none keepMounted subtree.
+ */
+const pinnedImages = new Map<string, HTMLImageElement>();
+
 export function prewarmImage(href: string) {
+  if (pinnedImages.has(href)) return;
   const img = new Image();
   img.src = href;
+  pinnedImages.set(href, img);
+  if (pinnedImages.size > FILTER_CACHE_MAX) {
+    pinnedImages.delete(pinnedImages.keys().next().value!);
+  }
 }
