@@ -27,7 +27,7 @@ export function Content({
   ...positionerProps
 }: BaseContextMenu.Positioner.Props & { glass?: Partial<LiquiGlassProps> }) {
   return (
-    <BaseContextMenu.Portal>
+    <BaseContextMenu.Portal keepMounted>
       <BaseContextMenu.Positioner
         sideOffset={6}
         collisionPadding={12}
@@ -150,7 +150,7 @@ export function SubmenuContent({
   ...positionerProps
 }: BaseContextMenu.Positioner.Props & { glass?: Partial<LiquiGlassProps> }) {
   return (
-    <BaseContextMenu.Portal>
+    <BaseContextMenu.Portal keepMounted>
       <BaseContextMenu.Positioner
         sideOffset={2}
         alignOffset={-6}
