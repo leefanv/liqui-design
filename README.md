@@ -74,6 +74,14 @@ popup is a lookup, not a render), generated at half resolution above ~180×180
 (smooth fields — stretching is invisible), and the surface is measured
 synchronously before first paint. While the map PNG decodes, the backdrop
 runs the same blur so refraction fades in without a frost jump.
+
+Filters themselves live in a global, never-unmounted `<svg>` registry
+(`filterRegistry.ts`) rather than inside each surface: `url(#id)` resolves
+document-wide, so a remounted popup references an already-decoded filter and
+refracts on its first frame. Only the first surface ever rendered at a given
+(size, shape, optics) pays the one-off feImage decode — the same
+pay-once-at-load economics as a permanently mounted element, without keeping
+surfaces mounted.
 - `dispersion` — chromatic aberration; `0` disables (single displacement
   pass). Values > 0 split R/G/B into three displacement passes (~3× filter
   cost), so keep it `0` where performance matters.

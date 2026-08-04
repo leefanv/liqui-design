@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ensureFilter, prewarmImage } from './filterRegistry';
 import './glass.css';
 
 /**
@@ -110,8 +111,29 @@ const THETA_COUNTER = Math.atan2(0.9, 0.5);
  * surfaces render at half resolution — displacement vectors and the specular
  * glow are smooth fields, so feImage/background stretching is invisible, and
  * generation + PNG decode get ~4× cheaper (less pop-in latency).
+ *
+ * Bounded LRU: a surface that animates its box (an accordion panel expanding)
+ * walks through a distinct size every frame, so an unbounded cache would grow
+ * a PNG pair per intermediate height and never release them.
  */
+const IMAGE_CACHE_MAX = 48;
 const imageCache = new Map<string, { map: string; specular: string }>();
+
+function cacheGet(key: string) {
+  const hit = imageCache.get(key);
+  if (!hit) return undefined;
+  // Re-insert to mark most-recently-used (Map preserves insertion order).
+  imageCache.delete(key);
+  imageCache.set(key, hit);
+  return hit;
+}
+
+function cacheSet(key: string, value: { map: string; specular: string }) {
+  imageCache.set(key, value);
+  if (imageCache.size > IMAGE_CACHE_MAX) {
+    imageCache.delete(imageCache.keys().next().value!);
+  }
+}
 
 function glassImages(
   fullW: number,
@@ -121,7 +143,7 @@ function glassImages(
   profile: GlassProfile,
 ) {
   const key = `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}`;
-  const cached = imageCache.get(key);
+  const cached = cacheGet(key);
   if (cached) return cached;
 
   const scale = fullW * fullH > 32000 ? 0.5 : 1;
@@ -206,13 +228,9 @@ function glassImages(
   ctx.putImageData(image, 0, 0);
   specCtx.putImageData(specImage, 0, 0);
   const result = { map: canvas.toDataURL(), specular: specCanvas.toDataURL() };
-  imageCache.set(key, result);
+  cacheSet(key, result);
   return result;
 }
-
-const ISOLATE_R = '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0';
-const ISOLATE_G = '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0';
-const ISOLATE_B = '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0';
 
 export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -290,7 +308,6 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
             ? 'refract'
             : 'frost';
 
-    const filterId = React.useId().replace(/[^a-zA-Z0-9_-]/g, '');
     const localRef = React.useRef<HTMLDivElement | null>(null);
     const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
 
@@ -319,11 +336,21 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     }, [tier]);
 
     const refractionReady = tier === 'refract' && size !== null;
-    const images = React.useMemo(
-      () =>
-        refractionReady ? glassImages(size!.w, size!.h, radius, bezel, profile) : null,
-      [refractionReady, size, radius, bezel, profile],
-    );
+    // Filters live in a global, never-unmounted registry so a remounted
+    // popup references an already-decoded filter (see filterRegistry.ts).
+    const glassRefs = React.useMemo(() => {
+      if (!refractionReady) return null;
+      const images = glassImages(size!.w, size!.h, radius, bezel, profile);
+      prewarmImage(images.specular);
+      const filterId = ensureFilter({
+        w: size!.w,
+        h: size!.h,
+        mapHref: images.map,
+        refraction,
+        dispersion,
+      });
+      return { images, filterId };
+    }, [refractionReady, size, radius, bezel, profile, refraction, dispersion]);
 
     // frost interpolates toward Apple's "regular" variant: more blur + tint.
     const effectiveBlur = blur + frost * 14;
@@ -341,7 +368,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         : tier === 'frost'
           ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})`
           : `blur(${effectiveBlur}px) saturate(${saturation})`;
-    const refractFilter = refractionReady ? `url(#${filterId})` : undefined;
+    const refractFilter = glassRefs ? `url(#${glassRefs.filterId})` : undefined;
     const tintOpacity = tier === 'clear' ? 1 : 0.25 + 0.75 * frost;
 
     return (
@@ -358,69 +385,6 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           .trim()}
         style={{ ...style, ['--lq-radius' as string]: `${radius}px` }}
       >
-        {refractionReady && (
-          <svg className="liqui-glass__defs" aria-hidden width="0" height="0">
-            <filter
-              id={filterId}
-              x="0"
-              y="0"
-              width={size.w}
-              height={size.h}
-              filterUnits="userSpaceOnUse"
-              colorInterpolationFilters="sRGB"
-            >
-              <feImage
-                href={images!.map}
-                x="0"
-                y="0"
-                width={size.w}
-                height={size.h}
-                result="map"
-              />
-              {dispersion > 0 ? (
-                <>
-                  <feDisplacementMap
-                    in="SourceGraphic"
-                    in2="map"
-                    scale={refraction * (1 - dispersion)}
-                    xChannelSelector="R"
-                    yChannelSelector="B"
-                    result="dispR"
-                  />
-                  <feColorMatrix in="dispR" values={ISOLATE_R} result="chR" />
-                  <feDisplacementMap
-                    in="SourceGraphic"
-                    in2="map"
-                    scale={refraction}
-                    xChannelSelector="R"
-                    yChannelSelector="B"
-                    result="dispG"
-                  />
-                  <feColorMatrix in="dispG" values={ISOLATE_G} result="chG" />
-                  <feDisplacementMap
-                    in="SourceGraphic"
-                    in2="map"
-                    scale={refraction * (1 + dispersion)}
-                    xChannelSelector="R"
-                    yChannelSelector="B"
-                    result="dispB"
-                  />
-                  <feColorMatrix in="dispB" values={ISOLATE_B} result="chB" />
-                  <feComposite in="chR" in2="chG" operator="arithmetic" k2="1" k3="1" result="chRG" />
-                  <feComposite in="chRG" in2="chB" operator="arithmetic" k2="1" k3="1" />
-                </>
-              ) : (
-                <feDisplacementMap
-                  in="SourceGraphic"
-                  in2="map"
-                  scale={refraction}
-                  xChannelSelector="R"
-                  yChannelSelector="B"
-                />
-              )}
-            </filter>
-          </svg>
-        )}
         {backdropFilter && (
           <span
             className="liqui-glass__backdrop"
@@ -434,11 +398,11 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           />
         )}
         <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
-        {refractionReady && specular > 0 && (
+        {glassRefs && specular > 0 && (
           <span
             className="liqui-glass__specular"
             style={{
-              backgroundImage: `url(${images!.specular})`,
+              backgroundImage: `url(${glassRefs.images.specular})`,
               opacity: specular,
             }}
           />

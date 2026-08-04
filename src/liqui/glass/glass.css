@@ -38,11 +38,6 @@
   box-shadow: var(--lq-shadow);
 }
 
-.liqui-glass__defs {
-  position: absolute;
-  pointer-events: none;
-}
-
 .liqui-glass__backdrop,
 .liqui-glass__tint,
 .liqui-glass__shine {
