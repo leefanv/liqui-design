@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "The refraction kernel behind liqui — SVG displacement filter registry, canvas displacement maps, and the glass surface primitive.",
   "license": "MIT",
+  "author": "leefanv",
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -19,6 +20,9 @@
     "type": "git",
     "url": "git+https://github.com/leefanv/liqui-design.git",
     "directory": "packages/glass"
+  },
+  "bugs": {
+    "url": "https://github.com/leefanv/liqui-design/issues"
   },
   "exports": {
     ".": {
