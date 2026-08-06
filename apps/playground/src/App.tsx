@@ -1,10 +1,15 @@
 import * as React from 'react';
+import * as Accordion from './liqui/accordion/Accordion';
+import * as AlertDialog from './liqui/alert-dialog/AlertDialog';
+import * as Checkbox from './liqui/checkbox/Checkbox';
 import * as Menu from './liqui/context-menu/ContextMenu';
+import * as Field from './liqui/field/Field';
+import { Button } from './liqui/button/Button';
 import {
   LiquiGlass,
   type GlassMaterial,
   type GlassProfile,
-} from './liqui/glass/LiquiGlass';
+} from '@liqui-design/glass';
 import './demo/app.css';
 
 interface GlassSettings {
@@ -118,14 +123,191 @@ export default function App() {
           </div>
         </div>
 
-        <header className="hero">
-          <p className="hero__brand">liqui</p>
-          <h1 className="hero__title">Liquid Glass Context Menu</h1>
-          <p className="hero__hint">
-            Right-click (or long-press) anywhere on this desktop
-          </p>
-          {lastAction && <p className="hero__action">→ {lastAction}</p>}
-        </header>
+        <main className="stage">
+          <section className="stage__col">
+            <h2 className="stage__label">Accordion</h2>
+            <Accordion.Root defaultValue={['lens']} className="stage__accordion">
+              <Accordion.Item value="lens" glass={glass}>
+                <Accordion.Trigger>How the lens is built</Accordion.Trigger>
+                <Accordion.Panel>
+                  <p>
+                    A rounded-rect signed distance field gives depth and an outward
+                    normal per pixel. A per-profile lookup table turns that depth
+                    into a displacement magnitude, which is painted into a canvas
+                    as an R/B vector map.
+                  </p>
+                  <p>
+                    The map feeds <code>feDisplacementMap</code> through a
+                    backdrop-filter, so the surface bends whatever sits behind it.
+                  </p>
+                </Accordion.Panel>
+              </Accordion.Item>
+
+              <Accordion.Item value="resize" glass={glass}>
+                <Accordion.Trigger>Resizing surfaces</Accordion.Trigger>
+                <Accordion.Panel>
+                  <p>
+                    Expanding a panel changes the glass box, so the displacement
+                    map is regenerated at the new size — the bezel keeps hugging
+                    the edge instead of stretching. Watch the rim while this item
+                    opens and closes.
+                  </p>
+                </Accordion.Panel>
+              </Accordion.Item>
+
+              <Accordion.Item value="tiers" glass={glass}>
+                <Accordion.Trigger>Material tiers</Accordion.Trigger>
+                <Accordion.Panel>
+                  <p>
+                    <strong>Auto</strong> refracts where the browser supports SVG
+                    backdrop filters and falls back to frost elsewhere.{' '}
+                    <strong>Frost</strong> is blur + saturate only.{' '}
+                    <strong>Clear</strong> drops the backdrop filter entirely and
+                    leans on the tint.
+                  </p>
+                </Accordion.Panel>
+              </Accordion.Item>
+            </Accordion.Root>
+          </section>
+
+          <section
+            className="stage__col"
+            onContextMenu={(e) => e.stopPropagation()}
+          >
+            <h2 className="stage__label">Field</h2>
+            <form className="stage__form" onSubmit={(e) => e.preventDefault()}>
+              {/* validationMode defaults to onSubmit; onBlur makes the invalid
+                  ring reachable without a submit button. */}
+              <Field.Root name="name" validationMode="onBlur">
+                <Field.Label>Name</Field.Label>
+                <Field.Control glass={glass} required placeholder="Ada Lovelace" />
+                <Field.Error match="valueMissing">A name is required</Field.Error>
+              </Field.Root>
+
+              <Field.Root name="email" validationMode="onBlur">
+                <Field.Label>Email</Field.Label>
+                <Field.Control
+                  glass={glass}
+                  type="email"
+                  required
+                  placeholder="ada@liqui.design"
+                />
+                <Field.Description>
+                  Tab out of the field to validate.
+                </Field.Description>
+                <Field.Error match="typeMismatch">
+                  That doesn’t look like an email address
+                </Field.Error>
+                <Field.Error match="valueMissing">An email is required</Field.Error>
+              </Field.Root>
+
+              <Field.Root
+                name="passphrase"
+                validationMode="onBlur"
+                validate={(value) =>
+                  String(value).length > 0 && String(value).length < 8
+                    ? 'Use at least 8 characters'
+                    : null
+                }
+              >
+                <Field.Label>Passphrase</Field.Label>
+                <Field.Control glass={glass} type="password" placeholder="••••••••" />
+                <Field.Error />
+              </Field.Root>
+
+              <Field.Root name="disabled" disabled>
+                <Field.Label>Disabled</Field.Label>
+                <Field.Control glass={glass} placeholder="Not editable" />
+              </Field.Root>
+            </form>
+          </section>
+
+          <section className="stage__col">
+            <h2 className="stage__label">Button</h2>
+            <div className="stage__buttons">
+              <Button glass={glass} onClick={() => setLastAction('Glass button')}>
+                Glass
+              </Button>
+              <Button
+                variant="accent"
+                glass={glass}
+                onClick={() => setLastAction('Accent button')}
+              >
+                Accent
+              </Button>
+              <Button
+                variant="danger"
+                glass={glass}
+                onClick={() => setLastAction('Danger button')}
+              >
+                Danger
+              </Button>
+              <Button glass={glass} disabled>
+                Disabled
+              </Button>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Checkbox</h2>
+            <div className="stage__checks">
+              <Checkbox.Label>
+                <Checkbox.Root
+                  glass={glass}
+                  checked={snapToGrid}
+                  onCheckedChange={setSnapToGrid}
+                />
+                Snap to grid
+              </Checkbox.Label>
+              <Checkbox.Label>
+                <Checkbox.Root
+                  glass={glass}
+                  checked={showHidden}
+                  onCheckedChange={setShowHidden}
+                />
+                Show hidden files
+              </Checkbox.Label>
+              <Checkbox.Label>
+                <Checkbox.Root glass={glass} indeterminate />
+                Indeterminate
+              </Checkbox.Label>
+              <Checkbox.Label>
+                <Checkbox.Root glass={glass} defaultChecked disabled />
+                Disabled
+              </Checkbox.Label>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Alert dialog</h2>
+            <AlertDialog.Root>
+              {/* inline-flex buttons stretch as direct children of the column,
+                  so the trigger sits in the same wrapper the button row uses. */}
+              <div className="stage__buttons">
+                <AlertDialog.Trigger
+                  render={<Button variant="danger" glass={glass} />}
+                >
+                  Move to Trash…
+                </AlertDialog.Trigger>
+              </div>
+              <AlertDialog.Content glass={glass}>
+                <AlertDialog.Title>Move 3 items to Trash?</AlertDialog.Title>
+                <AlertDialog.Description>
+                  The dialog refracts the dimmed backdrop rather than the
+                  wallpaper, so the same frost value reads darker here than on the
+                  controls behind it.
+                </AlertDialog.Description>
+                <AlertDialog.Actions>
+                  <AlertDialog.Close render={<Button glass={glass} />}>
+                    Cancel
+                  </AlertDialog.Close>
+                  <AlertDialog.Close
+                    render={<Button variant="danger" glass={glass} />}
+                    onClick={() => setLastAction('Moved 3 items to Trash')}
+                  >
+                    Move to Trash
+                  </AlertDialog.Close>
+                </AlertDialog.Actions>
+              </AlertDialog.Content>
+            </AlertDialog.Root>
+          </section>
+        </main>
 
         <aside
           className="panel-wrap"
@@ -245,10 +427,16 @@ export default function App() {
               <span>{theme === 'light' ? 'Dark' : 'Light'}</span>
             </button>
             <span className="dock__divider" />
-            <span className="dock__note">
-              Base UI · SVG refraction{' '}
-              <span className="dock__note-dim">(frosted fallback on Safari/Firefox)</span>
-            </span>
+            {lastAction ? (
+              <span className="dock__note dock__note--action">→ {lastAction}</span>
+            ) : (
+              <span className="dock__note">
+                Right-click the desktop ·{' '}
+                <span className="dock__note-dim">
+                  SVG refraction, frosted fallback on Safari/Firefox
+                </span>
+              </span>
+            )}
           </LiquiGlass>
         </div>
       </Menu.Trigger>

@@ -104,49 +104,97 @@ body {
   opacity: 1;
 }
 
-/* ---- hero -------------------------------------------------------------- */
+/* ---- component stage ---------------------------------------------------- */
 
-.hero {
+/* Components sit straight on the wallpaper (not on a host card) so each one
+   refracts the background directly — glass stacked on glass muddies the rim
+   and hides exactly what these dials are for. */
+.stage {
   position: relative;
-  text-align: center;
-  color: rgba(20, 24, 46, 0.9);
   z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  /* The settings panel is fixed to the right edge, so the stage centers in
+     what's left of the desktop rather than in the viewport. */
+  width: min(1000px, calc(100vw - 380px));
+  margin-right: 280px;
+  max-height: calc(100vh - 180px);
+  overflow: auto;
+  padding: 4px;
 }
 
-[data-theme='dark'] .hero {
-  color: rgba(240, 242, 255, 0.92);
+.stage__col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.hero__brand {
-  font-size: 15px;
+/* Labels have no glass under them, so they carry their own contrast. */
+.stage__label {
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.6;
+  color: rgba(20, 24, 46, 0.72);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.45);
 }
 
-.hero__title {
-  margin-top: 10px;
-  font-size: clamp(34px, 5.5vw, 62px);
-  font-weight: 750;
-  letter-spacing: -0.02em;
+[data-theme='dark'] .stage__label {
+  color: rgba(240, 242, 255, 0.75);
+  text-shadow: 0 1px 3px rgba(0, 0, 10, 0.5);
 }
 
-.hero__hint {
+.stage__label--spaced {
   margin-top: 14px;
-  font-size: 15px;
-  opacity: 0.65;
 }
 
-.hero__action {
-  margin-top: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #2f6bff;
+.stage__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-[data-theme='dark'] .hero__action {
-  color: #8fb2ff;
+.stage__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stage__checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Checkbox labels sit on bare wallpaper like the field labels do. */
+.stage__checks .lq-checkbox-row {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='dark'] .stage__checks .lq-checkbox-row {
+  text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
+}
+
+/* Field labels/descriptions also sit on bare wallpaper here. */
+.stage__form .lq-field-label,
+.stage__form .lq-field-description {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='dark'] .stage__form .lq-field-label,
+[data-theme='dark'] .stage__form .lq-field-description {
+  text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
+}
+
+.stage code {
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 0.92em;
+  padding: 1px 4px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--lq-text) 10%, transparent);
 }
 
 /* ---- settings panel ----------------------------------------------------- */
@@ -263,4 +311,9 @@ body {
 
 .dock__note-dim {
   color: var(--lq-text-dim);
+}
+
+.dock__note--action {
+  font-weight: 600;
+  color: var(--lq-accent);
 }

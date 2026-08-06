@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ContextMenu as BaseContextMenu } from '@base-ui/react/context-menu';
-import { LiquiGlass, type LiquiGlassProps } from '../glass/LiquiGlass';
+import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 import './context-menu.css';
 
 /**

@@ -1,0 +1,69 @@
+.lq-checkbox {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  cursor: default;
+  outline: none;
+  transition: transform 0.12s ease;
+}
+
+.lq-checkbox > .liqui-glass__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+}
+
+.lq-checkbox:active {
+  transform: scale(0.92);
+}
+
+.lq-checkbox:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lq-accent) 40%, transparent);
+}
+
+/* Checked fills the glass with accent rather than swapping in a flat box, so
+   the bezel and specular arc survive the state change. */
+.lq-checkbox[data-checked] .liqui-glass__tint,
+.lq-checkbox[data-indeterminate] .liqui-glass__tint {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--lq-accent) 88%, transparent),
+    color-mix(in srgb, var(--lq-accent) 66%, transparent)
+  );
+}
+
+.lq-checkbox[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lq-checkbox-indicator {
+  display: inline-flex;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.lq-checkbox-indicator[data-starting-style],
+.lq-checkbox-indicator[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.lq-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--lq-text);
+  cursor: default;
+  user-select: none;
+}
+
+.lq-checkbox-row:has(.lq-checkbox[data-disabled]) {
+  color: var(--lq-text-dim);
+}
