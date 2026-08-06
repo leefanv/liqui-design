@@ -8,10 +8,14 @@
     },
     "registry:build": {
       "dependsOn": ["^build"],
-      "outputs": ["public/r/**", "registry/__index__.tsx"]
+      "outputs": ["public/r/**", "registry/__index__.tsx", "registry/__sources__.ts"]
     },
     "typecheck": {
-      "dependsOn": ["^build"]
+      // The registry index and sources are generated and gitignored, so on a
+      // fresh checkout they do not exist yet and the docs site fails to compile.
+      // Declaring the dependency here rather than adding a step to the workflow
+      // keeps every entry point correct — CI, a local run, any task order.
+      "dependsOn": ["^build", "registry:build"]
     },
     "dev": {
       "cache": false,
