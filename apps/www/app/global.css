@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* The glass design tokens. Registry users receive the same values through each
+   item's `cssVars`; the docs site imports the stylesheet directly because it
+   consumes @liqui-design/glass as a workspace package, not through the CLI. */
+@import '@liqui-design/glass/tokens.css';
+
+/* Tailwind v4 discovers sources from the project root but stops at
+   node_modules, and @liqui-design/glass is symlinked in there. */
+@source '../../../packages/glass/src';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

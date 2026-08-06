@@ -1,0 +1,40 @@
+{
+  "name": "www",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm registry:build && next dev --turbopack --port 4000",
+    "build": "pnpm registry:build && next build",
+    "start": "next start --port 4000",
+    "typecheck": "next typegen && tsc --noEmit",
+    "registry:build": "tsx ./scripts/build-registry.mts",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@liqui-design/glass": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fumadocs-core": "^16.14.0",
+    "fumadocs-mdx": "^15.2.2",
+    "fumadocs-ui": "^16.14.0",
+    "lucide-react": "^1.27.0",
+    "next": "16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.24",
+    "shadcn": "^4.16.1",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.6",
+    "typescript": "~5.8.3"
+  }
+}
