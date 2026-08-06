@@ -1,23 +1,25 @@
 {
-  "name": "liqui",
+  "name": "liqui-design",
   "private": true,
-  "version": "0.0.1",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+  "packageManager": "pnpm@11.5.1",
+  "engines": {
+    "node": ">=20"
   },
-  "dependencies": {
-    "@base-ui/react": "^1.6.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:www": "turbo run dev --filter=www",
+    "dev:playground": "turbo run dev --filter=playground",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "registry:build": "turbo run registry:build --filter=www",
+    "changeset": "changeset",
+    "release": "turbo run build --filter=@liqui-design/glass && changeset publish"
   },
   "devDependencies": {
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.0"
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.29.7",
+    "turbo": "^2.6.2",
+    "typescript": "~5.8.3"
   }
 }
