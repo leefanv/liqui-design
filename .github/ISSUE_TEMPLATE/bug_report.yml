@@ -1,0 +1,67 @@
+name: Bug report
+description: Something renders or behaves incorrectly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: refraction renders in Chromium only. Safari and Firefox fall back
+        to frosted blur by design — that is not a bug. See the
+        [glass handbook](https://liqui.design/docs/handbook/glass#degradation).
+
+        A surface on a flat background also looks flat on purpose; a lens over a solid
+        colour shows you the solid colour.
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      placeholder: button, context-menu, @liqui-design/glass, …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: If it only happens in one, say which. Glass behaves differently per engine.
+      multiple: true
+      options:
+        - Chrome / Edge / other Chromium
+        - Safari
+        - Firefox
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: '`@liqui-design/glass` version, plus React and Tailwind if relevant.'
+      placeholder: 'glass 0.2.0, React 19.2, Tailwind 4.3'
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: And what you expected instead. A screenshot or short screen recording helps a lot for anything visual.
+    validations:
+      required: true
+
+  - type: input
+    id: repro
+    attributes:
+      label: Reproduction
+      description: A StackBlitz, CodeSandbox or repo. Issues without one may be closed if they can't be reproduced.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: What the surface sits on, whether it is inside a portal or a transformed ancestor, whether it animates. These matter more than usual here.
+    validations:
+      required: false

@@ -1,107 +1,106 @@
+<div align="center">
+
 # liqui
 
-Liquid-glass web UI components, built on [Base UI](https://base-ui.com/) headless primitives.
-A project by [liquidglassdesign.com](https://liquidglassdesign.com/).
+**Liquid glass components for React, built on [Base UI](https://base-ui.com).**
 
-## Demo: Context Menu
+Surfaces that actually refract what is behind them — a canvas-generated displacement
+map driving an SVG filter, not a blur with a white overlay.
+
+[Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button)
+
+[![npm](https://img.shields.io/npm/v/@liqui-design/glass?color=%232f6bff&label=%40liqui-design%2Fglass)](https://www.npmjs.com/package/@liqui-design/glass)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+
+<img src="./.github/assets/hero.jpg" alt="liqui components over a desktop wallpaper: an accordion, a form, buttons, checkboxes and a context menu, each bending the background through its rim" width="100%">
+
+<sub>Every surface above is refracting the wallpaper behind it — look at where the curves cross an edge. Run it yourself with <code>pnpm dev:playground</code>.</sub>
+
+</div>
+
+---
+
+## How it ships
+
+Components are **source code in your project**, installed with the shadcn CLI. You own
+the file, you edit the file. Only the refraction kernel — the displacement-map maths,
+the document-wide SVG filter registry, and the browser fallbacks — stays a dependency,
+because those are the parts you cannot reasonably maintain by hand.
 
 ```bash
-npm install
-npm run dev
+npx shadcn@latest add @liqui/button
 ```
 
-Right-click anywhere on the desktop. Includes submenus, radio groups, checkbox
-items, group labels, shortcuts, disabled and destructive items, and a
-light/dark toggle in the dock.
+Register the namespace once in your `components.json`:
 
-For automated screenshots, `?autopen` opens the menu on load.
+```json
+{
+  "registries": {
+    "@liqui": "https://liqui.design/r/{name}.json"
+  }
+}
+```
 
-## How the glass works
+liqui is built on the same Base UI base as shadcn/ui (`shadcn init -b base`), so an
+existing `components.json`, `cn()` and Tailwind token setup carries over unchanged.
 
-`src/liqui/glass/LiquiGlass.tsx` is the base surface primitive. It layers:
+## Use it
 
-1. **Refracting backdrop** — `backdrop-filter: url(#filter) blur() saturate()`
-   where the SVG filter is an `feImage` displacement map fed into
-   `feDisplacementMap`. The map is generated per-pixel on a canvas from a
-   rounded-rect signed distance field; the refraction magnitude along the rim
-   comes from a physically derived profile (surface height function + Snell's
-   law, n = 1.5), precomputed into a small LUT. The center stays neutral (flat
-   glass) while the `bezel`-wide rim samples toward the center, magnifying the
-   backdrop like a convex lens edge.
-2. **Tint** — a translucent gradient wash (theme-aware; strengthened
-   automatically in the `clear` tier, which has no backdrop-filter). Kept
-   near-transparent by default — the liquid look comes from refraction and
-   light, not from frost.
-3. **Specular rim light** — a canvas-rendered layer: a Gaussian band across
-   the bezel × cosine-power falloff around two light positions (key light
-   top-left, dim counter-light bottom-right), giving the arcs of light that
-   make the rim read as polished glass. Positional azimuth, not surface-normal
-   lighting: normals are constant along straight edges, which would light
-   whole edges uniformly (bevel-button look). Controlled by the `specular`
-   prop (0 disables; frost/clear tiers use cheap inset shadows instead).
+```tsx
+import { Button } from '@/components/ui/button';
 
-Implementation gotchas learned the hard way:
+export default function Page() {
+  return (
+    <main className="min-h-dvh bg-[url(/wallpaper.jpg)] bg-cover p-10">
+      <Button variant="accent">Continue</Button>
+    </main>
+  );
+}
+```
 
-- The maps are canvas-generated rather than SVG data-URIs because Chromium's
-  `feImage` rasterizes SVG images with CSS features (e.g. `mix-blend-mode`)
-  disabled, which silently corrupts gradient-composited maps.
-- Surfaces are measured with ResizeObserver's `contentRect`, never
-  `getBoundingClientRect()` — the popup opens under a `scale(0.85)` transition,
-  and a transformed rect measured mid-animation would bake a permanently
-  undersized (and never re-observed) map.
-
-### Configuration
-
-The perf/quality trade-off is exposed to consumers via props:
-
-- `material` — `'auto'` (refract where supported, frost elsewhere), `'frost'`
-  (always blur-only, no SVG filter or canvas work), `'clear'` (tint + rim only,
-  no backdrop-filter at all — cheapest).
-- `profile` — rim lens shape: `'squircle'` (physical, default), `'convex'`
-  (physical), `'rim'` (stylized quadratic falloff).
-- `refraction` (px), `bezel` (px), `blur` (px), `saturation`.
-- `specular` — opacity of the rim-light layer (0 disables).
-- `frost` — material density dial (0–1) mirroring Apple's Liquid Glass
-  variants: 0 ≈ "clear" (transparent; Apple reserves it for media-rich
-  backdrops with a dimming layer), 1 ≈ "regular" (adaptive frosted tint that
-  carries legibility — Apple's default for menus and controls). Interpolates
-  tint opacity and adds up to 14px blur. Default 0.35.
-
-### Latency
-
-Displacement/specular maps are cached module-wide by size+params (reopening a
-popup is a lookup, not a render), generated at half resolution above ~180×180
-(smooth fields — stretching is invisible), and the surface is measured
-synchronously before first paint. While the map PNG decodes, the backdrop
-runs the same blur so refraction fades in without a frost jump.
-
-Filters themselves live in a global, never-unmounted `<svg>` registry
-(`filterRegistry.ts`) rather than inside each surface: `url(#id)` resolves
-document-wide, so a remounted popup references an already-decoded filter and
-refracts on its first frame. Only the first surface ever rendered at a given
-(size, shape, optics) pays the one-off feImage decode — the same
-pay-once-at-load economics as a permanently mounted element, without keeping
-surfaces mounted.
-- `dispersion` — chromatic aberration; `0` disables (single displacement
-  pass). Values > 0 split R/G/B into three displacement passes (~3× filter
-  cost), so keep it `0` where performance matters.
-
-The demo's "Glass settings" panel drives all of these live; URL params
-(`?material=frost&profile=rim&refraction=140&dispersion=0.2`) preset them.
-
-### Browser support
-
-True refraction requires `backdrop-filter` with SVG filter references —
-Chromium today. Safari and Firefox automatically fall back to frosted glass.
-WebKit has an implementation in review (bug 245510; PRs landed for review in
-July 2026) — when Safari ships it, raise `SAFARI_REFRACTION_MIN` in
-`LiquiGlass.tsx`. A standardization request for backdrop
-displacement/refraction is open at w3c/svgwg#1142.
+Note the background. **Glass refracts what is behind it**, so a surface on a flat fill
+has nothing to show and will look like a slightly grey box. Put it over imagery, video,
+a gradient with real edges, or content that scrolls underneath.
 
 ## Components
 
-- `src/liqui/glass/` — `LiquiGlass` surface primitive + design tokens.
-- `src/liqui/context-menu/` — styled Base UI ContextMenu: `Root`, `Trigger`,
-  `Content`, `Item`, `CheckboxItem`, `RadioGroup`/`RadioItem`,
-  `SubmenuRoot`/`SubmenuTrigger`/`SubmenuContent`, `Group`/`GroupLabel`,
-  `Separator`, `Shortcut`.
+| | |
+| --- | --- |
+| [Accordion](https://liqui.design/docs/components/accordion) | Each item is its own surface, resizing with its panel |
+| [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | The only surface that refracts a dimmed scrim |
+| [Button](https://liqui.design/docs/components/button) | Glass, accent and danger tints |
+| [Checkbox](https://liqui.design/docs/components/checkbox) | Fills with accent while keeping the bezel and rim light |
+| [Context Menu](https://liqui.design/docs/components/context-menu) | Submenus, checkbox and radio items, keep-mounted popup |
+| [Field](https://liqui.design/docs/components/field) | Focus and invalid rings on the surface, not the input |
+
+## Browser support
+
+| | Refraction | Notes |
+| --- | :---: | --- |
+| Chromium | ✅ | Full displacement refraction |
+| Safari | — | Drops `backdrop-filter` entirely when it references an SVG filter. WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) has an implementation in review |
+| Firefox | — | Same |
+
+The fallback to frosted blur is automatic and needs no configuration, but it is worth
+looking at: a design tuned to `frost: 0` can be unreadable once the lens is gone,
+because in the refraction tier the lens was doing work the tint would otherwise have to
+do. See the [glass handbook](https://liqui.design/docs/handbook/glass#degradation).
+
+## Requirements
+
+- React 18 or 19
+- Tailwind CSS v4
+
+## Repository
+
+```
+packages/glass    @liqui-design/glass — the refraction kernel
+apps/www          documentation site, and the registry the CLI installs from
+apps/playground   Vite app for tuning the optics against a real backdrop
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) to run it locally or add a component.
+
+## License
+
+[MIT](./LICENSE)

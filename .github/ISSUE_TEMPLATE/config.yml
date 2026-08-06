@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://liqui.design
+    about: Component pages, and the handbook covering the material itself.
+  - name: Glass handbook
+    url: https://liqui.design/docs/handbook/glass
+    about: Why a surface looks flat, what the dials do, the performance budget, and where it degrades. Read this before filing a rendering bug.
+  - name: Questions and ideas
+    url: https://github.com/leefanv/liqui-design/discussions
+    about: For anything that isn't a defect or a specific component request.

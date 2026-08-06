@@ -1,0 +1,38 @@
+name: Component request
+description: Ask for a component that doesn't exist yet
+labels: [component]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        liqui builds on [Base UI](https://base-ui.com) primitives, so a component is
+        realistic if Base UI has one to build on. Check its
+        [component list](https://base-ui.com/react/overview/quick-start) first — if it
+        isn't there, the work is much larger than styling.
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      placeholder: Select, Tooltip, Slider, …
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What are you building with it
+      description: Concrete beats general. It shapes what the default optics should be.
+    validations:
+      required: true
+
+  - type: textarea
+    id: glass
+    attributes:
+      label: How should it use glass
+      description: |
+        Optional, but useful. Is the whole surface glass, or only part of it? Does it
+        sit over a scrim, over page content, or over media? Roughly how large is the box?
+        Bezel is a fraction of the box, so size drives the dials.
+    validations:
+      required: false
