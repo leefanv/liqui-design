@@ -8,7 +8,22 @@ description: A labelled form field whose control sits on its own glass surface.
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/field
+npx shadcn@latest add https://liqui.design/r/field.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/field
 ```
 
 ## Usage

@@ -8,7 +8,7 @@ description: A button rendered as a refracting glass surface, with accent and da
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/button
+npx shadcn@latest add https://liqui.design/r/button.json
 ```
 
 This writes `components/ui/button.tsx` into your project and installs
@@ -16,14 +16,19 @@ This writes `components/ui/button.tsx` into your project and installs
 not something you should be editing. Everything you *would* want to edit is in
 the file you just received.
 
-If you haven't registered the namespace yet, add it to `components.json`:
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
 
 ```json title="components.json"
 {
   "registries": {
-    "@liqui": "https://liqui.design/r/{name}.json"
+    "@liqui-design": "https://liqui.design/r/{name}.json"
   }
 }
+```
+
+```bash
+npx shadcn@latest add @liqui-design/button
 ```
 
 ## Usage

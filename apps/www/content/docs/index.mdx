@@ -14,7 +14,7 @@ Register the namespace once:
 ```json title="components.json"
 {
   "registries": {
-    "@liqui": "https://liqui.design/r/{name}.json"
+    "@liqui-design": "https://liqui.design/r/{name}.json"
   }
 }
 ```
@@ -22,15 +22,30 @@ Register the namespace once:
 Then set up the theme and add whatever you need:
 
 ```bash
-npx shadcn@latest add @liqui/liqui
-npx shadcn@latest add @liqui/button
+npx shadcn@latest add @liqui-design/liqui
+npx shadcn@latest add @liqui-design/button
 ```
 
-`@liqui/liqui` writes the glass design tokens into your `globals.css` and pulls
+`@liqui-design/liqui` writes the glass design tokens into your `globals.css` and pulls
 in [`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass) — the SVG filter
 registry, displacement-map generator and browser fallbacks. That package is the
 one part of liqui you are not meant to edit; everything else lands in your repo
 as plain TSX.
+
+<Callout type="warn">
+  `@liqui-design/button` is a **registry** item, not an npm package —
+  `@liqui-design` here is a key you just defined in your own
+  `components.json`, and it resolves through the shadcn CLI. `npm i
+  @liqui-design/button` will not work. The only thing that comes from npm is
+  `@liqui-design/glass`, and the CLI installs it for you.
+</Callout>
+
+Prefer not to configure anything? Every component page also gives a direct URL
+that needs no namespace:
+
+```bash
+npx shadcn@latest add https://liqui.design/r/button.json
+```
 
 <Callout type="info">
   Already using shadcn/ui? liqui is built on the same Base UI base

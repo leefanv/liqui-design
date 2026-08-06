@@ -8,7 +8,22 @@ description: A modal confirmation dialog on the library's largest glass surface.
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/alert-dialog
+npx shadcn@latest add https://liqui.design/r/alert-dialog.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/alert-dialog
 ```
 
 ## Usage

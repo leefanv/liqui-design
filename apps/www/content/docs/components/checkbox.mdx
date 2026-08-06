@@ -8,7 +8,22 @@ description: A checkbox whose glass fills with accent when checked, keeping the 
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/checkbox
+npx shadcn@latest add https://liqui.design/r/checkbox.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/checkbox
 ```
 
 ## Usage

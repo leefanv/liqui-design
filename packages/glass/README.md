@@ -4,9 +4,10 @@ The refraction kernel behind [liqui](https://liqui.design) — the part of the
 liquid-glass material that is algorithm and browser-compatibility work rather
 than styling.
 
-You usually don't install this directly. `npx shadcn@latest add @liqui/button`
-pulls it in as a dependency and writes the component source into your project,
-which is the part you're meant to edit. This package is the part you aren't.
+You usually don't install this directly.
+`npx shadcn@latest add https://liqui.design/r/button.json` pulls it in as a
+dependency and writes the component source into your project, which is the part
+you're meant to edit. This package is the part you aren't.
 
 ```bash
 npm i @liqui-design/glass

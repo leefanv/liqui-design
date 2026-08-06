@@ -8,7 +8,22 @@ description: A right-click menu with submenus, checkbox and radio items, on a ke
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/context-menu
+npx shadcn@latest add https://liqui.design/r/context-menu.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/context-menu
 ```
 
 ## Usage

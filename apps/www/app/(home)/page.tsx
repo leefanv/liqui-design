@@ -41,7 +41,7 @@ export default function HomePage() {
         </div>
 
         <code className="mt-6 inline-block rounded-lg bg-fd-muted px-3 py-1.5 text-sm">
-          npx shadcn@latest add @liqui/button
+          npx shadcn@latest add https://liqui.design/r/button.json
         </code>
       </section>
 

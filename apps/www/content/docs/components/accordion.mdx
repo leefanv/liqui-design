@@ -8,7 +8,22 @@ description: Collapsible panels where each item is its own resizing glass surfac
 ## Installation
 
 ```bash
-npx shadcn@latest add @liqui/accordion
+npx shadcn@latest add https://liqui.design/r/accordion.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/accordion
 ```
 
 ## Usage

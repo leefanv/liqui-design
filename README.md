@@ -28,18 +28,29 @@ the document-wide SVG filter registry, and the browser fallbacks — stays a dep
 because those are the parts you cannot reasonably maintain by hand.
 
 ```bash
-npx shadcn@latest add @liqui/button
+npx shadcn@latest add https://liqui.design/r/button.json
 ```
 
-Register the namespace once in your `components.json`:
+Installing more than one? Register the namespace once in your `components.json`
+and drop the URLs:
 
 ```json
 {
   "registries": {
-    "@liqui": "https://liqui.design/r/{name}.json"
+    "@liqui-design": "https://liqui.design/r/{name}.json"
   }
 }
 ```
+
+```bash
+npx shadcn@latest add @liqui-design/button
+```
+
+> `@liqui-design/button` is a registry item, not an npm package — the namespace
+> is a key in your own `components.json` and resolves through the shadcn CLI.
+> The only thing that comes from npm is
+> [`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass),
+> which the CLI installs for you.
 
 liqui is built on the same Base UI base as shadcn/ui (`shadcn init -b base`), so an
 existing `components.json`, `cn()` and Tailwind token setup carries over unchanged.
