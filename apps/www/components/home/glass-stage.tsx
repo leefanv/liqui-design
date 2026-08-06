@@ -66,6 +66,7 @@ export function GlassStage() {
   return (
     <div
       ref={stageRef}
+      data-glass-stage={backdrop}
       className="relative isolate flex min-h-[34rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-fd-border sm:min-h-[38rem]"
       data-theme="dark"
     >

@@ -16,3 +16,8 @@ apps/www/registry/__sources__.ts
 # local agent/editor tooling
 .claude/
 .cursor/
+
+# Playwright
+apps/www/test-results
+apps/www/playwright-report
+apps/www/blob-report

@@ -22,6 +22,10 @@ export function PreviewBackdrop({
 }) {
   return (
     <div
+      // Stable hook for the visual regression suite. Selecting these by class
+      // would break on any restyle, which is exactly when the screenshots need
+      // to still be pointing at the right element.
+      data-preview={variant}
       // The gradient and photo backdrops are dark regardless of the page theme,
       // so the glass tokens inside them have to be the dark set — otherwise a
       // reader on the light docs theme gets near-black body text sitting on a

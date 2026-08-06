@@ -1,0 +1,79 @@
+import { expect, test } from '@playwright/test';
+
+import { preview, stage, waitForGlass } from './glass';
+
+const COMPONENTS = ['accordion', 'alert-dialog', 'button', 'checkbox', 'context-menu', 'field'];
+
+test.describe('component previews', () => {
+  for (const name of COMPONENTS) {
+    test(name, async ({ page }) => {
+      await page.goto(`/docs/components/${name}`);
+      await waitForGlass(page);
+      await expect(preview(page)).toHaveScreenshot(`${name}.png`);
+    });
+  }
+});
+
+test.describe('home stage', () => {
+  test('default optics', async ({ page }) => {
+    await page.goto('/');
+    await waitForGlass(page);
+    await expect(stage(page)).toHaveScreenshot('home-aurora.png');
+  });
+
+  test('grid backdrop shows the displacement clearly', async ({ page }) => {
+    await page.goto('/');
+    await waitForGlass(page);
+    await page.getByRole('button', { name: 'Grid' }).click();
+    await waitForGlass(page);
+    await expect(stage(page)).toHaveScreenshot('home-grid.png');
+  });
+
+  test('dragging moves the surface without disturbing the optics', async ({ page }) => {
+    await page.goto('/');
+    await waitForGlass(page);
+
+    const handle = page.getByText('drag me over an edge');
+    const box = await handle.boundingBox();
+    if (!box) throw new Error('drag handle not found');
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 160, box.y + box.height / 2 - 100, { steps: 12 });
+    await page.mouse.up();
+
+    // Moving the surface must not regenerate anything: the map is keyed on size
+    // and optics, neither of which changed. A fade class reappearing here would
+    // mean a filter was recreated on a plain translate.
+    await expect(page.locator('.liqui-glass__refract--fade')).toHaveCount(0);
+    await expect(stage(page)).toHaveScreenshot('home-dragged.png');
+  });
+});
+
+test.describe('the material', () => {
+  test('a flat backdrop leaves nothing to refract', async ({ page }) => {
+    await page.goto('/docs/handbook/glass');
+    await waitForGlass(page);
+    // The handbook makes its point by showing the same component on a flat
+    // fill. If this ever stops looking flat, the page's argument is broken.
+    await expect(page.locator('[data-preview="flat"]')).toHaveScreenshot('handbook-flat.png');
+  });
+});
+
+test.describe('no console errors', () => {
+  for (const path of ['/', '/docs', '/docs/components/alert-dialog', '/docs/handbook/glass']) {
+    test(path, async ({ page }) => {
+      const errors: string[] = [];
+      page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+      page.on('pageerror', (e) => errors.push(String(e)));
+
+      await page.goto(path);
+      await waitForGlass(page);
+
+      // Favicon 404s are noise; anything else is a defect. The Base UI
+      // nativeButton warning reached production once through a documented
+      // snippet, which is why this check exists at all.
+      expect(errors.filter((e) => !/favicon|404/i.test(e))).toEqual([]);
+    });
+  }
+});

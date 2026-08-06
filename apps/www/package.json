@@ -9,7 +9,9 @@
     "start": "next start --port 4000",
     "typecheck": "next typegen && tsc --noEmit",
     "registry:build": "tsx ./scripts/build-registry.mts",
-    "postinstall": "fumadocs-mdx"
+    "postinstall": "fumadocs-mdx",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -26,6 +28,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/mdx": "^2.0.14",
     "@types/node": "^26.1.2",
