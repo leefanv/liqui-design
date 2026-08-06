@@ -1,0 +1,59 @@
+{
+  "name": "@liqui-design/glass",
+  "version": "0.1.0",
+  "description": "The refraction kernel behind liqui — SVG displacement filter registry, canvas displacement maps, and the glass surface primitive.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "keywords": [
+    "liquid-glass",
+    "backdrop-filter",
+    "svg-filter",
+    "react",
+    "base-ui"
+  ],
+  "homepage": "https://liqui.design",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leefanv/liqui-design.git",
+    "directory": "packages/glass"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/glass.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test:package": "publint --pack pnpm && attw --pack . --profile esm-only --exclude-entrypoints styles.css tokens.css package.json"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "publint": "^0.3.15",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tsdown": "^0.15.6",
+    "typescript": "~5.8.3"
+  }
+}

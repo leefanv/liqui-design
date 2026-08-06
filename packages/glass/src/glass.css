@@ -1,41 +1,29 @@
-/* ---- liqui glass tokens ---------------------------------------------- */
-
-:root {
-  --lq-text: rgba(28, 28, 40, 0.95);
-  --lq-text-dim: rgba(28, 28, 40, 0.55);
-  /* Full-strength ("regular") tint; the frost prop scales layer opacity. */
-  --lq-tint: rgba(255, 255, 255, 0.48);
-  --lq-tint-deep: rgba(255, 255, 255, 0.14);
-  --lq-rim-hi: rgba(255, 255, 255, 0.85);
-  --lq-rim-lo: rgba(255, 255, 255, 0.28);
-  --lq-shadow: 0 24px 60px rgba(10, 15, 40, 0.35), 0 4px 14px rgba(10, 15, 40, 0.18);
-  --lq-highlight: rgba(255, 255, 255, 0.5);
-  --lq-accent: #2f6bff;
-}
-
-[data-theme='dark'] {
-  --lq-text: rgba(245, 246, 255, 0.96);
-  --lq-text-dim: rgba(245, 246, 255, 0.55);
-  --lq-tint: rgba(30, 32, 46, 0.62);
-  --lq-tint-deep: rgba(18, 20, 32, 0.4);
-  --lq-rim-hi: rgba(255, 255, 255, 0.5);
-  --lq-rim-lo: rgba(255, 255, 255, 0.12);
-  --lq-shadow: 0 24px 60px rgba(0, 0, 5, 0.55), 0 4px 14px rgba(0, 0, 5, 0.35);
-  --lq-highlight: rgba(255, 255, 255, 0.18);
-  --lq-accent: #6f9dff;
-}
-
-/* ---- surface anatomy -------------------------------------------------- */
+/* liqui glass — surface anatomy.
+ *
+ * This is the part of the glass that utilities cannot express and users must
+ * not edit: the two stacked backdrop layers (A = blur/saturate, B =
+ * displacement-only), the specular image plane, and the stacking order that
+ * keeps content above all of it. It is imported by LiquiGlass.tsx so consumers
+ * cannot forget it.
+ *
+ * Design tokens live in tokens.css (or, for registry users, in their own
+ * globals.css via each item's `cssVars`). Every var() below carries a fallback
+ * so a surface still renders if no token layer is present at all.
+ */
 
 .liqui-glass {
   position: relative;
   isolation: isolate;
   border-radius: var(--lq-radius, 16px);
-  color: var(--lq-text);
+  color: var(--lq-text, inherit);
 }
 
 .liqui-glass--elevated {
-  box-shadow: var(--lq-shadow);
+  box-shadow: var(
+    --lq-shadow,
+    0 24px 60px rgba(10, 15, 40, 0.35),
+    0 4px 14px rgba(10, 15, 40, 0.18)
+  );
 }
 
 .liqui-glass__backdrop,
@@ -76,7 +64,11 @@
 
 .liqui-glass__tint {
   z-index: 1;
-  background: linear-gradient(135deg, var(--lq-tint), var(--lq-tint-deep));
+  background: linear-gradient(
+    135deg,
+    var(--lq-tint, rgba(255, 255, 255, 0.48)),
+    var(--lq-tint-deep, rgba(255, 255, 255, 0.14))
+  );
 }
 
 /* Clear tier has no backdrop-filter to quiet the background, so the tint
@@ -86,7 +78,8 @@
   --lq-tint-deep: rgba(255, 255, 255, 0.5);
 }
 
-[data-theme='dark'] .liqui-glass--clear {
+[data-theme='dark'] .liqui-glass--clear,
+.dark .liqui-glass--clear {
   --lq-tint: rgba(34, 36, 52, 0.82);
   --lq-tint-deep: rgba(22, 24, 38, 0.68);
 }
@@ -106,9 +99,10 @@
 .liqui-glass__shine {
   z-index: 2;
   box-shadow:
-    inset 0 1px 1px var(--lq-rim-hi),
-    inset 1px 0 1px 0.5px color-mix(in srgb, var(--lq-rim-hi) 60%, transparent),
-    inset -1px -1px 1px var(--lq-rim-lo);
+    inset 0 1px 1px var(--lq-rim-hi, rgba(255, 255, 255, 0.85)),
+    inset 1px 0 1px 0.5px
+      color-mix(in srgb, var(--lq-rim-hi, rgba(255, 255, 255, 0.85)) 60%, transparent),
+    inset -1px -1px 1px var(--lq-rim-lo, rgba(255, 255, 255, 0.28));
 }
 
 .liqui-glass__content {

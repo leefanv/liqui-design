@@ -273,6 +273,17 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
   saturation?: number;
   /** Depth level: raises tint opacity + shadow. */
   elevated?: boolean;
+  /**
+   * Classes for the content wrapper that sits above every glass layer.
+   *
+   * Padding, flex layout and typography belong to the *component* built on the
+   * glass, not to the glass — but that wrapper is rendered here, so a consumer
+   * styling it from outside would need a descendant selector
+   * (`[&>.liqui-glass__content]:…`), which utility classes express badly. This
+   * prop hands the wrapper over directly so a registry component can stay pure
+   * Tailwind.
+   */
+  contentClassName?: string;
 }
 
 /**
@@ -294,17 +305,30 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       saturation = 1.7,
       elevated = false,
       className,
+      contentClassName,
       style,
       children,
       ...rest
     } = props;
+
+    // `supportsRefraction` sniffs the UA, so it is false during SSR and true in
+    // Chromium — reading it directly at render time would make the server emit
+    // the frost tier and the client's first render emit the refract tier, which
+    // is a hydration mismatch React explicitly won't patch up. Start every
+    // render pass in the tier the server can also produce, then upgrade in a
+    // layout effect: that runs after hydration commits but before paint, so
+    // there is no visible frost flash.
+    const [refractionAllowed, setRefractionAllowed] = React.useState(false);
+    React.useLayoutEffect(() => {
+      if (supportsRefraction) setRefractionAllowed(true);
+    }, []);
 
     const tier: 'refract' | 'frost' | 'clear' =
       material === 'clear'
         ? 'clear'
         : material === 'frost'
           ? 'frost'
-          : supportsRefraction
+          : refractionAllowed
             ? 'refract'
             : 'frost';
 
@@ -428,7 +452,9 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           />
         )}
         <span className="liqui-glass__shine" />
-        <div className="liqui-glass__content">{children}</div>
+        <div className={['liqui-glass__content', contentClassName ?? ''].join(' ').trim()}>
+          {children}
+        </div>
       </div>
     );
   },
