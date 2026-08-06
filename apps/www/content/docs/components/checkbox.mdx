@@ -1,0 +1,59 @@
+---
+title: Checkbox
+description: A checkbox whose glass fills with accent when checked, keeping the bezel and rim light.
+---
+
+<ComponentPreview name="checkbox-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/checkbox
+```
+
+## Usage
+
+```tsx
+import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
+```
+
+```tsx
+<CheckboxLabel>
+  <Checkbox checked={checked} onCheckedChange={setChecked} />
+  Show hidden files
+</CheckboxLabel>
+```
+
+`CheckboxLabel` is a plain `<label>` row. It exists so the whole line is the hit
+area and so the text dims when the box inside is disabled — that last part is a
+`has-[[data-disabled]]` rule, not something the checkbox reaches out to do.
+
+## Notes
+
+### The smallest surface in the library
+
+At 20px the box is barely wider than its own bezel, so this is where the lens is
+under the most pressure. The optics are scaled down hard from the popup
+defaults:
+
+| | Checkbox | Context menu popup |
+| --- | --- | --- |
+| `radius` | 7 | 18 |
+| `bezel` | 6 | 28 |
+| `refraction` | 20 | 150 |
+
+If you raise `refraction` globally, this component smears first. It is a useful
+canary — tune here, then check the big surfaces.
+
+### Checked state
+
+Checking doesn't swap in a flat filled box. It overrides `--lq-tint` on the
+root, so the accent arrives *as glass* and the bezel and specular arc survive
+the transition:
+
+```tsx
+data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]
+```
+
+Retint through the token if you want a different checked colour, rather than
+adding a background — a background would paint over the refraction.

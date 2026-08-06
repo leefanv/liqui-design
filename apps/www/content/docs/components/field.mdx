@@ -1,0 +1,65 @@
+---
+title: Field
+description: A labelled form field whose control sits on its own glass surface.
+---
+
+<ComponentPreview name="field-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/field
+```
+
+## Usage
+
+```tsx
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field';
+```
+
+```tsx
+<Field>
+  <FieldLabel>Workspace name</FieldLabel>
+  <FieldControl placeholder="acme-design" />
+  <FieldDescription>Lowercase letters, numbers and dashes.</FieldDescription>
+</Field>
+```
+
+## Examples
+
+### Validation
+
+<ComponentPreview name="field-validation" />
+
+Base UI drives validity from the native constraint API, so `match` takes
+`ValidityState` keys — `valueMissing`, `typeMismatch`, `patternMismatch` and the
+rest.
+
+## Notes
+
+### The input is not the surface
+
+The `<input>` stays a plain transparent element *inside* the glass content
+layer. Making the input itself the glass root would put the backdrop and tint
+layers inside a replaced element, where browsers won't render them — you'd get
+an input with no glass and no error explaining why.
+
+### Rings live on the surface
+
+Focus and invalid rings belong to the glass, not the input, so they wrap the
+whole bezel instead of appearing inside it. The surface reacts to its child's
+state through `has-*`:
+
+```tsx
+has-[input:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]
+has-[input[data-invalid][data-touched]]:shadow-[0_0_0_2px_color-mix(in_srgb,var(--lq-danger)_55%,transparent)]
+```
+
+Note `data-touched` — the invalid ring only appears once the user has actually
+interacted, so a form doesn't open covered in red.

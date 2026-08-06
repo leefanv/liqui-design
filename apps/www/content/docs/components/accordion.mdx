@@ -1,0 +1,73 @@
+---
+title: Accordion
+description: Collapsible panels where each item is its own resizing glass surface.
+---
+
+<ComponentPreview name="accordion-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/accordion
+```
+
+## Usage
+
+```tsx
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+```
+
+```tsx
+<Accordion defaultValue={['one']}>
+  <AccordionItem value="one">
+    <AccordionTrigger>First</AccordionTrigger>
+    <AccordionPanel>Panel content.</AccordionPanel>
+  </AccordionItem>
+</Accordion>
+```
+
+Pass `openMultiple={false}` to `Accordion` for the one-open-at-a-time behaviour.
+
+## Notes
+
+### Glass on an animating box
+
+This is the library's stress test. The surface grows and shrinks with the panel,
+and a new size means a new displacement map — the bezel has to follow the new
+box or the refraction detaches from the edge mid-animation.
+
+That works because maps are cached module-wide by size and optics. An accordion
+that has been opened once reopens without regenerating anything; only the first
+open at each height pays. Height itself comes from Base UI's own panel
+measurement:
+
+```tsx
+h-[var(--accordion-panel-height)]
+data-[starting-style]:h-0
+data-[ending-style]:h-0
+```
+
+### Why the content wrapper is clipped
+
+The panel animates by clipping, so the glass content wrapper carries
+`overflow-hidden rounded-[inherit]`:
+
+```tsx
+<LiquiGlass contentClassName="overflow-hidden rounded-[inherit]" />
+```
+
+Without it the panel's square corners punch through the surface's rounded ones
+while the height is animating. This is exactly the kind of thing
+`contentClassName` exists for — it is glass-internal geometry that the component
+on top has to control.
+
+### Stacking cost
+
+Each item is a separate `backdrop-filter` surface, and that is the cost that
+actually shows up in frame times. A long list of glass rows is the one layout
+worth profiling — see [Glass](/docs/handbook/glass#performance-budget).

@@ -1,0 +1,4 @@
+{
+  "title": "Components",
+  "pages": ["accordion", "alert-dialog", "button", "checkbox", "context-menu", "field"]
+}

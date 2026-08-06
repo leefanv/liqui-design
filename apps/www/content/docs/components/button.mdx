@@ -1,0 +1,89 @@
+---
+title: Button
+description: A button rendered as a refracting glass surface, with accent and danger tints.
+---
+
+<ComponentPreview name="button-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/button
+```
+
+This writes `components/ui/button.tsx` into your project and installs
+`@liqui-design/glass` — the refraction kernel, which stays a dependency because it is
+not something you should be editing. Everything you *would* want to edit is in
+the file you just received.
+
+If you haven't registered the namespace yet, add it to `components.json`:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+## Usage
+
+```tsx
+import { Button } from '@/components/ui/button';
+```
+
+```tsx
+<Button variant="accent">Save</Button>
+```
+
+## Examples
+
+### Variants
+
+Variants don't paint over the glass — they override `--lq-tint`, so the lens
+keeps refracting the background *through* the accent color instead of hiding it.
+
+<ComponentPreview name="button-variants" />
+
+### Tuning the glass
+
+The `glass` prop reaches the surface underneath. `frost` is the material
+density dial: `0` is Apple's "clear" tier, `1` is "regular". Refraction and
+bezel control how wide and how strong the lens at the rim is.
+
+<ComponentPreview name="button-glass-dial" />
+
+### Disabled
+
+<ComponentPreview name="button-disabled" />
+
+## Notes
+
+### Why it isn't a native `<button>`
+
+The glass anatomy is four stacked layers plus a content wrapper. A native
+`<button>` only accepts phrasing content, so those wrapper `<div>`s would be
+invalid HTML inside one. liqui passes `nativeButton={false}`, which is Base UI's
+supported escape — `useButton` then supplies `role="button"`, `tabIndex` and the
+Enter/Space handlers itself.
+
+The one thing it cannot give back is **implicit form submission**. For a real
+submit button, pass `nativeButton` explicitly and accept a plain surface:
+
+```tsx
+<Button nativeButton type="submit" glass={{ material: 'clear' }}>
+  Submit
+</Button>
+```
+
+### Backdrop
+
+A glass button on a flat fill is just a grey box. Put it over imagery, a
+gradient, or anything with edges for the bezel to bend. See
+[Glass](/docs/handbook/glass) for the full material guide.
+
+### Browser support
+
+Refraction renders in Chromium only. Safari and Firefox drop `backdrop-filter`
+entirely when it references an SVG filter, so liqui detects this and falls back
+to frosted blur — no configuration needed, but do check both.

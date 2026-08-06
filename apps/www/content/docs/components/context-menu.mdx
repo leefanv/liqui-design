@@ -1,0 +1,78 @@
+---
+title: Context Menu
+description: A right-click menu with submenus, checkbox and radio items, on a keep-mounted glass popup.
+---
+
+<ComponentPreview name="context-menu-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/context-menu
+```
+
+## Usage
+
+```tsx
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+```
+
+```tsx
+<ContextMenu>
+  <ContextMenuTrigger render={<div>Right-click me</div>} />
+  <ContextMenuContent>
+    <ContextMenuItem>
+      New Folder
+      <ContextMenuShortcut>⇧⌘N</ContextMenuShortcut>
+    </ContextMenuItem>
+    <ContextMenuSeparator />
+    <ContextMenuItem variant="danger">Move to Trash</ContextMenuItem>
+  </ContextMenuContent>
+</ContextMenu>
+```
+
+The full anatomy also ships `ContextMenuGroup`, `ContextMenuGroupLabel`,
+`ContextMenuCheckboxItem`, `ContextMenuRadioGroup`, `ContextMenuRadioItem`,
+`ContextMenuSub`, `ContextMenuSubTrigger` and `ContextMenuSubContent`.
+
+## Notes
+
+### The portal stays mounted
+
+`ContextMenuContent` renders through `<Portal keepMounted>`. A closed menu stays
+in the DOM, so its filter and already-decoded displacement map survive close and
+the next open is instant.
+
+Without it, every open pays the `feImage` decode window again, and the menu
+appears as flat frosted blur for ~150ms before refraction arrives. That reads as
+lag even though nothing is slow.
+
+<Callout type="warn">
+  `display: none` → shown **restarts** any CSS animation still attached to an
+  element. The refraction fade-in is therefore cold-gated inside `@liqui-design/glass`
+  and removed once it has played — otherwise a keep-mounted popup would re-fade
+  on every single open, which looks worse than the problem it solves.
+</Callout>
+
+### Submenus get softer optics
+
+A submenu is a narrower box, so the popup defaults would over-bend it:
+
+```tsx
+<LiquiGlass {...POPUP_GLASS} refraction={110} bezel={20} />
+```
+
+Same principle as the checkbox — bezel is a fraction of the box, so smaller
+boxes need smaller numbers.
+
+### Trigger area
+
+`ContextMenuTrigger` takes `render` and becomes your element. Give it a real
+box with dimensions; a zero-height trigger has nothing to right-click.

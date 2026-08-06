@@ -1,0 +1,61 @@
+---
+title: Alert Dialog
+description: A modal confirmation dialog on the library's largest glass surface.
+---
+
+<ComponentPreview name="alert-dialog-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add @liqui/alert-dialog
+```
+
+## Usage
+
+```tsx
+import {
+  AlertDialog,
+  AlertDialogActions,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+```
+
+```tsx
+<AlertDialog>
+  <AlertDialogTrigger render={<Button variant="danger">Delete</Button>} />
+  <AlertDialogContent>
+    <AlertDialogTitle>Delete this workspace?</AlertDialogTitle>
+    <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+    <AlertDialogActions>
+      <AlertDialogClose render={<Button>Cancel</Button>} />
+      <AlertDialogClose render={<Button variant="danger">Delete</Button>} />
+    </AlertDialogActions>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+`render` is Base UI's composition prop: the trigger and close *become* the
+button rather than wrapping it, so you don't end up with a button inside a
+button.
+
+## Notes
+
+### It refracts a dimmed backdrop
+
+This is the only surface in the library sitting on a scrim. That changes how the
+dials read: the page behind is already darkened and blurred by
+`--lq-scrim` + `backdrop-blur-[2px]`, so a `frost` value tuned against bare
+wallpaper will look far too heavy here.
+
+Tune dialog optics against the scrim, not against the other components.
+
+### Alert vs. dialog
+
+`AlertDialog` is deliberately modal and un-dismissible by click-outside or
+`Escape` — Base UI enforces that. It is for decisions the user must answer, not
+for a panel they might wander away from. Reach for a plain dialog otherwise.

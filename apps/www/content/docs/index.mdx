@@ -1,0 +1,69 @@
+---
+title: Quick start
+description: Install liqui and put a glass surface on screen.
+---
+
+liqui is a set of liquid-glass components built on [Base UI](https://base-ui.com)
+primitives. Components arrive as **source code in your project** through the
+shadcn CLI; only the refraction kernel stays a dependency.
+
+## Install
+
+Register the namespace once:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+Then set up the theme and add whatever you need:
+
+```bash
+npx shadcn@latest add @liqui/liqui
+npx shadcn@latest add @liqui/button
+```
+
+`@liqui/liqui` writes the glass design tokens into your `globals.css` and pulls
+in [`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass) — the SVG filter
+registry, displacement-map generator and browser fallbacks. That package is the
+one part of liqui you are not meant to edit; everything else lands in your repo
+as plain TSX.
+
+<Callout type="info">
+  Already using shadcn/ui? liqui is built on the same Base UI base
+  (`shadcn init -b base`), so your existing `components.json`, `cn()` and
+  Tailwind token setup carry over unchanged.
+</Callout>
+
+## Use it
+
+```tsx
+import { Button } from '@/components/ui/button';
+
+export default function Page() {
+  return (
+    <main className="min-h-dvh bg-[url(/wallpaper.jpg)] bg-cover p-10">
+      <Button variant="accent">Continue</Button>
+    </main>
+  );
+}
+```
+
+Note the background. Glass refracts what is behind it, so a surface on a flat
+fill has nothing to show — see [Glass](/docs/handbook/glass) before you judge
+how it looks.
+
+## Requirements
+
+- React 18 or 19
+- Tailwind CSS v4
+- Refraction renders in Chromium; Safari and Firefox fall back to frosted blur
+  automatically
+
+<Cards>
+  <Card title="Glass" href="/docs/handbook/glass" description="The material, its dials, and where it degrades." />
+  <Card title="Button" href="/docs/components/button" description="The first component." />
+</Cards>

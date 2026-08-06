@@ -1,0 +1,105 @@
+---
+title: Glass
+description: What the material is, what it needs from your layout, and where it degrades.
+---
+
+Every liqui component is a `LiquiGlass` surface with a component-shaped content
+layer on top. Understanding the material is most of understanding the library.
+
+## The anatomy
+
+A surface is four stacked layers plus your content:
+
+| Layer | What it does |
+| --- | --- |
+| **Backdrop A** | `blur()` + `saturate()`. Never changes after first paint. |
+| **Backdrop B** | Displacement only — `backdrop-filter: url(#…)`, sampling A's output. |
+| **Tint** | A gradient carrying legibility, scaled by `frost`. |
+| **Specular** | A canvas-rendered rim light that makes the edge read as polished. |
+| **Content** | Your children, above all of it. |
+
+Blur and displacement are on **separate layers** deliberately. While the filter's
+`feImage` decodes its map, Chromium treats an entire
+`url(#f) blur() saturate()` chain as inert — combined on one layer, even the
+base blur would pop in late. Split, the surface is frosted from the first frame
+and refraction fades in over it.
+
+## It needs something to refract
+
+<ComponentPreview name="button-variants" backdrop="flat" hideCode />
+
+That is the same component as at the top of the Button page, on a flat fill.
+It is not broken — there is simply nothing behind it to bend. Glass is a lens;
+a lens over a solid colour shows you the solid colour.
+
+Put surfaces over photography, video, a gradient with real edges, or content
+that scrolls underneath. If your design calls for glass on a flat background,
+you want `material="clear"` and a tint, not refraction.
+
+## The dials
+
+| Prop | Range | What it controls |
+| --- | --- | --- |
+| `frost` | 0–1 | Material density. `0` ≈ Apple's *clear* (needs a busy backdrop and its own dimming), `1` ≈ *regular* (adaptive frosted, safe anywhere). Default `0.35`. |
+| `refraction` | px | `feDisplacementMap` scale — how hard the rim bends. |
+| `bezel` | px | How wide the refracting rim is. Menus want ~28, buttons ~11. |
+| `blur` | px | Base blur. `frost` adds up to 14px on top. |
+| `dispersion` | 0+ | Chromatic aberration. Costs ~3× filter work — leave at `0` unless it's a hero surface. |
+| `specular` | 0–1 | Rim light opacity. |
+| `radius` | px | Corner radius. Also drives the displacement map's shape. |
+| `material` | `auto` \| `frost` \| `clear` | Rendering tier. `auto` refracts where supported and frosts elsewhere. |
+
+## Performance budget
+
+The expensive parts are the canvas-generated displacement map and the
+`backdrop-filter` chain, in that order.
+
+- **Maps are cached** module-wide, keyed by size + optics. Ten buttons of the
+  same size cost one map.
+- **Filters are hoisted** into a single persistent hidden `<svg>` registry, so a
+  remounted surface references an already-decoded filter and refracts on the
+  first frame. This is why reopening a menu has no warm-up.
+- **Generation is half-resolution** above roughly 180×180.
+- `dispersion > 0` triples the filter work. Reserve it.
+- Stacking many large `backdrop-filter` surfaces is the one thing that will
+  actually cost you frames. Prefer one large surface over a dozen small ones.
+
+## Degradation
+
+| Browser | Behaviour |
+| --- | --- |
+| **Chromium** | Full refraction. |
+| **Safari** | Drops `backdrop-filter` entirely when it references an SVG filter. Falls back to frosted blur automatically. WebKit bug 245510 has an implementation in review. |
+| **Firefox** | Same fallback. |
+
+The fallback is automatic — `material="auto"` detects support at module load.
+There is nothing to configure, but there *is* something to check: **look at your
+UI in Safari.** A design tuned to `frost: 0` can be unreadable once refraction
+is gone, because in the refraction tier the lens was doing the work the tint
+would otherwise have to do.
+
+Also honour user preference — a surface that ignores
+`prefers-reduced-transparency` is an accessibility bug, not a style choice:
+
+```css
+@media (prefers-reduced-transparency: reduce) {
+  .liqui-glass {
+    --lq-tint: var(--fd-background);
+    --lq-tint-deep: var(--fd-background);
+  }
+}
+```
+
+## Two things that will bite you
+
+**Never measure a surface with `getBoundingClientRect`.** Popups open under a
+`scale()` transition, and a rect measured mid-animation bakes a permanently
+undersized displacement map that nothing re-fires to correct. The result looks
+like weak frosted blur and is very hard to trace back. liqui uses
+`ResizeObserver` `contentRect` and `offsetWidth`, both of which are layout
+sizes and immune to transforms.
+
+**Never build the displacement map as an SVG data URI.** Chromium rasterizes
+`feImage` SVG sources with CSS features disabled — `mix-blend-mode` and modern
+`hsl()` silently do nothing, corrupting the map into a full-surface smear.
+Generate it on a canvas.
