@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the "Version Packages" branch and create tags
+      pull-requests: write # open/update the release PR
+      id-token: write # mint the OIDC token npm exchanges for publish rights
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # changesets needs history to diff against the base branch
+
+      # Must be a recent action-setup: older pinned versions broke OIDC publishing
+      # with a 404 (pnpm/pnpm#11513). Bumping the action was the actual fix.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm CLI >= 11.5.1. pnpm shells out to it, and the
+      # npm bundled with Node 22 is older than that.
+      - run: npm install -g npm@latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+      # With a changeset present, this opens a "Version Packages" PR. Merging that
+      # PR runs the workflow again with no changesets left, and this step publishes
+      # instead. No NPM_TOKEN anywhere — auth comes from the OIDC token above,
+      # which is why the trusted publisher on npmjs.com must name this exact file.
+      - uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Trusted publishing attaches provenance on its own, but changesets
+          # invokes publish indirectly and the automatic path has been reported as
+          # unreliable; setting it explicitly costs nothing.
+          NPM_CONFIG_PROVENANCE: true
