@@ -56,10 +56,14 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: 'pnpm build && pnpm start',
+          // `www...` is www *and its dependencies*. Plain `pnpm build` here runs
+          // only this app's own script, which skips turbo and therefore never
+          // builds packages/glass — fine on a machine where dist already exists,
+          // a module-not-found on a clean checkout.
+          command: 'pnpm --filter=www... build && pnpm start',
           url: 'http://localhost:4000',
           reuseExistingServer: !process.env.CI,
-          timeout: 180_000,
+          timeout: 300_000,
         },
       }),
 });

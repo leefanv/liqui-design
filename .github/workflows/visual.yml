@@ -28,6 +28,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Turbo builds packages/glass first. Playwright will build again through
+      # its webServer, but that run is cached and this fails fast and legibly
+      # if the workspace itself is broken.
+      - run: pnpm build
       - run: pnpm --filter www test:visual
       - uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}
