@@ -1,0 +1,226 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "liqui",
+  "homepage": "https://liqui.design",
+  "items": [
+    {
+      "name": "liqui",
+      "type": "registry:style",
+      "title": "liqui",
+      "description": "Liquid glass surfaces for Base UI. Installs the refraction kernel and the glass design tokens.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass", "class-variance-authority"],
+      "registryDependencies": ["utils"],
+      "files": [],
+      "cssVars": {
+        "theme": {
+          "lq-radius": "16px"
+        },
+        "light": {
+          "lq-text": "rgba(28, 28, 40, 0.95)",
+          "lq-text-dim": "rgba(28, 28, 40, 0.55)",
+          "lq-tint": "rgba(255, 255, 255, 0.48)",
+          "lq-tint-deep": "rgba(255, 255, 255, 0.14)",
+          "lq-rim-hi": "rgba(255, 255, 255, 0.85)",
+          "lq-rim-lo": "rgba(255, 255, 255, 0.28)",
+          "lq-highlight": "rgba(255, 255, 255, 0.5)",
+          "lq-accent": "#2f6bff",
+          "lq-danger": "#e5484d",
+          "lq-danger-text": "#c1272c",
+          "lq-scrim": "rgba(12, 14, 28, 0.32)"
+        },
+        "dark": {
+          "lq-text": "rgba(245, 246, 255, 0.96)",
+          "lq-text-dim": "rgba(245, 246, 255, 0.55)",
+          "lq-tint": "rgba(30, 32, 46, 0.62)",
+          "lq-tint-deep": "rgba(18, 20, 32, 0.4)",
+          "lq-rim-hi": "rgba(255, 255, 255, 0.5)",
+          "lq-rim-lo": "rgba(255, 255, 255, 0.12)",
+          "lq-highlight": "rgba(255, 255, 255, 0.18)",
+          "lq-accent": "#6f9dff",
+          "lq-danger": "#ff7076",
+          "lq-danger-text": "#ff7076",
+          "lq-scrim": "rgba(0, 0, 6, 0.48)"
+        }
+      },
+      "docs": "liqui's refraction only renders in Chromium today; Safari and Firefox fall back to frosted blur automatically. Glass needs something to refract — put surfaces over imagery or a gradient, not a flat fill."
+    },
+    {
+      "name": "utils",
+      "type": "registry:lib",
+      "title": "cn",
+      "description": "clsx + tailwind-merge class combiner.",
+      "dependencies": ["clsx", "tailwind-merge"],
+      "files": [
+        {
+          "path": "registry/liqui/lib/utils.ts",
+          "type": "registry:lib",
+          "target": "@lib/utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Glass Button",
+      "description": "A button rendered as a refracting glass surface, with accent and danger tints.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass", "class-variance-authority"],
+      "registryDependencies": ["utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/button.tsx",
+          "type": "registry:ui",
+          "target": "@ui/button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:ui",
+      "title": "Glass Checkbox",
+      "description": "A checkbox whose glass fills with accent when checked, keeping the bezel and rim light.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/checkbox.tsx", "type": "registry:ui", "target": "@ui/checkbox.tsx" }
+      ]
+    },
+    {
+      "name": "field",
+      "type": "registry:ui",
+      "title": "Glass Field",
+      "description": "A labelled form field whose control sits on its own glass surface.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/field.tsx", "type": "registry:ui", "target": "@ui/field.tsx" }
+      ]
+    },
+    {
+      "name": "accordion",
+      "type": "registry:ui",
+      "title": "Glass Accordion",
+      "description": "Collapsible panels where each item is its own resizing glass surface.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/accordion.tsx", "type": "registry:ui", "target": "@ui/accordion.tsx" }
+      ]
+    },
+    {
+      "name": "alert-dialog",
+      "type": "registry:ui",
+      "title": "Glass Alert Dialog",
+      "description": "A modal confirmation dialog on the library's largest glass surface.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/alert-dialog.tsx", "type": "registry:ui", "target": "@ui/alert-dialog.tsx" }
+      ]
+    },
+    {
+      "name": "context-menu",
+      "type": "registry:ui",
+      "title": "Glass Context Menu",
+      "description": "A right-click menu with submenus, checkbox and radio items, on a keep-mounted glass popup.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/context-menu.tsx", "type": "registry:ui", "target": "@ui/context-menu.tsx" }
+      ]
+    },
+    {
+      "name": "button-demo",
+      "type": "registry:example",
+      "title": "Button",
+      "description": "A single glass button.",
+      "registryDependencies": ["button"],
+      "files": [{ "path": "registry/liqui/examples/button-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "button-variants",
+      "type": "registry:example",
+      "title": "Variants",
+      "description": "Variants retint the glass instead of painting over it.",
+      "registryDependencies": ["button"],
+      "files": [
+        { "path": "registry/liqui/examples/button-variants.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "button-glass-dial",
+      "type": "registry:example",
+      "title": "Tuning the glass",
+      "description": "The glass prop reaches the surface underneath the button.",
+      "registryDependencies": ["button"],
+      "files": [
+        { "path": "registry/liqui/examples/button-glass-dial.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "button-disabled",
+      "type": "registry:example",
+      "title": "Disabled",
+      "description": "Disabled buttons drop the hover wash and dim the whole surface.",
+      "registryDependencies": ["button"],
+      "files": [
+        { "path": "registry/liqui/examples/button-disabled.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "checkbox-demo",
+      "type": "registry:example",
+      "title": "Checkbox",
+      "description": "Checked, unchecked, indeterminate and disabled.",
+      "registryDependencies": ["checkbox"],
+      "files": [{ "path": "registry/liqui/examples/checkbox-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "field-demo",
+      "type": "registry:example",
+      "title": "Field",
+      "description": "Label, control and description.",
+      "registryDependencies": ["field"],
+      "files": [{ "path": "registry/liqui/examples/field-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "field-validation",
+      "type": "registry:example",
+      "title": "Validation",
+      "description": "The invalid ring lives on the surface, not the input.",
+      "registryDependencies": ["field"],
+      "files": [
+        { "path": "registry/liqui/examples/field-validation.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "accordion-demo",
+      "type": "registry:example",
+      "title": "Accordion",
+      "description": "Each item is its own glass surface, resizing with its panel.",
+      "registryDependencies": ["accordion"],
+      "files": [
+        { "path": "registry/liqui/examples/accordion-demo.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "alert-dialog-demo",
+      "type": "registry:example",
+      "title": "Alert Dialog",
+      "description": "A destructive confirmation over a dimmed scrim.",
+      "registryDependencies": ["alert-dialog", "button"],
+      "files": [
+        { "path": "registry/liqui/examples/alert-dialog-demo.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "context-menu-demo",
+      "type": "registry:example",
+      "title": "Context Menu",
+      "description": "Submenus, checkbox and radio items, shortcuts and a destructive action.",
+      "registryDependencies": ["context-menu"],
+      "files": [
+        { "path": "registry/liqui/examples/context-menu-demo.tsx", "type": "registry:example" }
+      ]
+    }
+  ]
+}
