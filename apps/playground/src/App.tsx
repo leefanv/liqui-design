@@ -1,10 +1,44 @@
 import * as React from 'react';
-import * as Accordion from './liqui/accordion/Accordion';
-import * as AlertDialog from './liqui/alert-dialog/AlertDialog';
-import * as Checkbox from './liqui/checkbox/Checkbox';
-import * as Menu from './liqui/context-menu/ContextMenu';
-import * as Field from './liqui/field/Field';
-import { Button } from './liqui/button/Button';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from '@registry/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogActions,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@registry/ui/alert-dialog';
+import { Button } from '@registry/ui/button';
+import { Checkbox, CheckboxLabel } from '@registry/ui/checkbox';
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuGroupLabel,
+  ContextMenuItem,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from '@registry/ui/context-menu';
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@registry/ui/field';
 import {
   LiquiGlass,
   type GlassMaterial,
@@ -84,8 +118,8 @@ export default function App() {
   }, []);
 
   return (
-    <Menu.Root>
-      <Menu.Trigger className="desktop" data-theme-root>
+    <ContextMenu>
+      <ContextMenuTrigger className="desktop" data-theme-root>
         <div className="os" aria-hidden>
           <img
             className="os__wallpaper"
@@ -126,10 +160,10 @@ export default function App() {
         <main className="stage">
           <section className="stage__col">
             <h2 className="stage__label">Accordion</h2>
-            <Accordion.Root defaultValue={['lens']} className="stage__accordion">
-              <Accordion.Item value="lens" glass={glass}>
-                <Accordion.Trigger>How the lens is built</Accordion.Trigger>
-                <Accordion.Panel>
+            <Accordion defaultValue={['lens']} className="stage__accordion">
+              <AccordionItem value="lens" glass={glass}>
+                <AccordionTrigger>How the lens is built</AccordionTrigger>
+                <AccordionPanel>
                   <p>
                     A rounded-rect signed distance field gives depth and an outward
                     normal per pixel. A per-profile lookup table turns that depth
@@ -140,24 +174,24 @@ export default function App() {
                     The map feeds <code>feDisplacementMap</code> through a
                     backdrop-filter, so the surface bends whatever sits behind it.
                   </p>
-                </Accordion.Panel>
-              </Accordion.Item>
+                </AccordionPanel>
+              </AccordionItem>
 
-              <Accordion.Item value="resize" glass={glass}>
-                <Accordion.Trigger>Resizing surfaces</Accordion.Trigger>
-                <Accordion.Panel>
+              <AccordionItem value="resize" glass={glass}>
+                <AccordionTrigger>Resizing surfaces</AccordionTrigger>
+                <AccordionPanel>
                   <p>
                     Expanding a panel changes the glass box, so the displacement
                     map is regenerated at the new size — the bezel keeps hugging
                     the edge instead of stretching. Watch the rim while this item
                     opens and closes.
                   </p>
-                </Accordion.Panel>
-              </Accordion.Item>
+                </AccordionPanel>
+              </AccordionItem>
 
-              <Accordion.Item value="tiers" glass={glass}>
-                <Accordion.Trigger>Material tiers</Accordion.Trigger>
-                <Accordion.Panel>
+              <AccordionItem value="tiers" glass={glass}>
+                <AccordionTrigger>Material tiers</AccordionTrigger>
+                <AccordionPanel>
                   <p>
                     <strong>Auto</strong> refracts where the browser supports SVG
                     backdrop filters and falls back to frost elsewhere.{' '}
@@ -165,9 +199,9 @@ export default function App() {
                     <strong>Clear</strong> drops the backdrop filter entirely and
                     leans on the tint.
                   </p>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion.Root>
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
           </section>
 
           <section
@@ -178,30 +212,30 @@ export default function App() {
             <form className="stage__form" onSubmit={(e) => e.preventDefault()}>
               {/* validationMode defaults to onSubmit; onBlur makes the invalid
                   ring reachable without a submit button. */}
-              <Field.Root name="name" validationMode="onBlur">
-                <Field.Label>Name</Field.Label>
-                <Field.Control glass={glass} required placeholder="Ada Lovelace" />
-                <Field.Error match="valueMissing">A name is required</Field.Error>
-              </Field.Root>
+              <Field name="name" validationMode="onBlur">
+                <FieldLabel>Name</FieldLabel>
+                <FieldControl glass={glass} required placeholder="Ada Lovelace" />
+                <FieldError match="valueMissing">A name is required</FieldError>
+              </Field>
 
-              <Field.Root name="email" validationMode="onBlur">
-                <Field.Label>Email</Field.Label>
-                <Field.Control
+              <Field name="email" validationMode="onBlur">
+                <FieldLabel>Email</FieldLabel>
+                <FieldControl
                   glass={glass}
                   type="email"
                   required
                   placeholder="ada@liqui.design"
                 />
-                <Field.Description>
+                <FieldDescription>
                   Tab out of the field to validate.
-                </Field.Description>
-                <Field.Error match="typeMismatch">
+                </FieldDescription>
+                <FieldError match="typeMismatch">
                   That doesn’t look like an email address
-                </Field.Error>
-                <Field.Error match="valueMissing">An email is required</Field.Error>
-              </Field.Root>
+                </FieldError>
+                <FieldError match="valueMissing">An email is required</FieldError>
+              </Field>
 
-              <Field.Root
+              <Field
                 name="passphrase"
                 validationMode="onBlur"
                 validate={(value) =>
@@ -210,15 +244,15 @@ export default function App() {
                     : null
                 }
               >
-                <Field.Label>Passphrase</Field.Label>
-                <Field.Control glass={glass} type="password" placeholder="••••••••" />
-                <Field.Error />
-              </Field.Root>
+                <FieldLabel>Passphrase</FieldLabel>
+                <FieldControl glass={glass} type="password" placeholder="••••••••" />
+                <FieldError />
+              </Field>
 
-              <Field.Root name="disabled" disabled>
-                <Field.Label>Disabled</Field.Label>
-                <Field.Control glass={glass} placeholder="Not editable" />
-              </Field.Root>
+              <Field name="disabled" disabled>
+                <FieldLabel>Disabled</FieldLabel>
+                <FieldControl glass={glass} placeholder="Not editable" />
+              </Field>
             </form>
           </section>
 
@@ -249,63 +283,68 @@ export default function App() {
 
             <h2 className="stage__label stage__label--spaced">Checkbox</h2>
             <div className="stage__checks">
-              <Checkbox.Label>
-                <Checkbox.Root
+              <CheckboxLabel>
+                <Checkbox
                   glass={glass}
                   checked={snapToGrid}
                   onCheckedChange={setSnapToGrid}
                 />
                 Snap to grid
-              </Checkbox.Label>
-              <Checkbox.Label>
-                <Checkbox.Root
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox
                   glass={glass}
                   checked={showHidden}
                   onCheckedChange={setShowHidden}
                 />
                 Show hidden files
-              </Checkbox.Label>
-              <Checkbox.Label>
-                <Checkbox.Root glass={glass} indeterminate />
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox glass={glass} indeterminate />
                 Indeterminate
-              </Checkbox.Label>
-              <Checkbox.Label>
-                <Checkbox.Root glass={glass} defaultChecked disabled />
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox glass={glass} defaultChecked disabled />
                 Disabled
-              </Checkbox.Label>
+              </CheckboxLabel>
             </div>
 
             <h2 className="stage__label stage__label--spaced">Alert dialog</h2>
-            <AlertDialog.Root>
+            <AlertDialog>
               {/* inline-flex buttons stretch as direct children of the column,
                   so the trigger sits in the same wrapper the button row uses. */}
               <div className="stage__buttons">
-                <AlertDialog.Trigger
+                <AlertDialogTrigger
+                  nativeButton={false}
                   render={<Button variant="danger" glass={glass} />}
                 >
                   Move to Trash…
-                </AlertDialog.Trigger>
+                </AlertDialogTrigger>
               </div>
-              <AlertDialog.Content glass={glass}>
-                <AlertDialog.Title>Move 3 items to Trash?</AlertDialog.Title>
-                <AlertDialog.Description>
+              <AlertDialogContent glass={glass}>
+                <AlertDialogTitle>Move 3 items to Trash?</AlertDialogTitle>
+                <AlertDialogDescription>
                   The dialog refracts the dimmed backdrop rather than the
                   wallpaper, so the same frost value reads darker here than on the
                   controls behind it.
-                </AlertDialog.Description>
-                <AlertDialog.Actions>
-                  <AlertDialog.Close render={<Button glass={glass} />}>
+                </AlertDialogDescription>
+                <AlertDialogActions>
+                  <AlertDialogClose
+                    nativeButton={false}
+                    render={<Button glass={glass} />}
+                  >
                     Cancel
-                  </AlertDialog.Close>
-                  <AlertDialog.Close
+                  </AlertDialogClose>
+                  <AlertDialogClose
+                    nativeButton={false}
                     render={<Button variant="danger" glass={glass} />}
                     onClick={() => setLastAction('Moved 3 items to Trash')}
                   >
                     Move to Trash
-                  </AlertDialog.Close>
-                </AlertDialog.Actions>
-              </AlertDialog.Content>
-            </AlertDialog.Root>
+                  </AlertDialogClose>
+                </AlertDialogActions>
+              </AlertDialogContent>
+            </AlertDialog>
           </section>
         </main>
 
@@ -439,85 +478,85 @@ export default function App() {
             )}
           </LiquiGlass>
         </div>
-      </Menu.Trigger>
+      </ContextMenuTrigger>
 
-      <Menu.Content glass={glass}>
-        <Menu.Item
+      <ContextMenuContent glass={glass}>
+        <ContextMenuItem
           onClick={() => setLastAction('New Folder')}
         >
-          <span className="lq-menu-icon">📁</span>
+          <span className="inline-flex w-4 justify-center opacity-85">📁</span>
           New Folder
-          <Menu.Shortcut>⇧⌘N</Menu.Shortcut>
-        </Menu.Item>
-        <Menu.Item onClick={() => setLastAction('Get Info')}>
-          <span className="lq-menu-icon">ℹ️</span>
+          <ContextMenuShortcut>⇧⌘N</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => setLastAction('Get Info')}>
+          <span className="inline-flex w-4 justify-center opacity-85">ℹ️</span>
           Get Info
-          <Menu.Shortcut>⌘I</Menu.Shortcut>
-        </Menu.Item>
-        <Menu.Item disabled>
-          <span className="lq-menu-icon">📋</span>
+          <ContextMenuShortcut>⌘I</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem disabled>
+          <span className="inline-flex w-4 justify-center opacity-85">📋</span>
           Paste
-          <Menu.Shortcut>⌘V</Menu.Shortcut>
-        </Menu.Item>
+          <ContextMenuShortcut>⌘V</ContextMenuShortcut>
+        </ContextMenuItem>
 
-        <Menu.Separator />
+        <ContextMenuSeparator />
 
-        <Menu.SubmenuRoot>
-          <Menu.SubmenuTrigger>
-            <span className="lq-menu-icon">👁️</span>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <span className="inline-flex w-4 justify-center opacity-85">👁️</span>
             View as
-          </Menu.SubmenuTrigger>
-          <Menu.SubmenuContent glass={glass}>
-            <Menu.RadioGroup value={view} onValueChange={setView}>
-              <Menu.RadioItem value="icons">Icons</Menu.RadioItem>
-              <Menu.RadioItem value="list">List</Menu.RadioItem>
-              <Menu.RadioItem value="columns">Columns</Menu.RadioItem>
-              <Menu.RadioItem value="gallery">Gallery</Menu.RadioItem>
-            </Menu.RadioGroup>
-          </Menu.SubmenuContent>
-        </Menu.SubmenuRoot>
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent glass={glass}>
+            <ContextMenuRadioGroup value={view} onValueChange={setView}>
+              <ContextMenuRadioItem value="icons">Icons</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="list">List</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="columns">Columns</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="gallery">Gallery</ContextMenuRadioItem>
+            </ContextMenuRadioGroup>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
 
-        <Menu.SubmenuRoot>
-          <Menu.SubmenuTrigger>
-            <span className="lq-menu-icon">↕️</span>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <span className="inline-flex w-4 justify-center opacity-85">↕️</span>
             Sort by
-          </Menu.SubmenuTrigger>
-          <Menu.SubmenuContent glass={glass}>
-            <Menu.RadioGroup value={sort} onValueChange={setSort}>
-              <Menu.RadioItem value="name">Name</Menu.RadioItem>
-              <Menu.RadioItem value="kind">Kind</Menu.RadioItem>
-              <Menu.RadioItem value="date">Date Modified</Menu.RadioItem>
-              <Menu.RadioItem value="size">Size</Menu.RadioItem>
-            </Menu.RadioGroup>
-          </Menu.SubmenuContent>
-        </Menu.SubmenuRoot>
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent glass={glass}>
+            <ContextMenuRadioGroup value={sort} onValueChange={setSort}>
+              <ContextMenuRadioItem value="name">Name</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="kind">Kind</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="date">Date Modified</ContextMenuRadioItem>
+              <ContextMenuRadioItem value="size">Size</ContextMenuRadioItem>
+            </ContextMenuRadioGroup>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
 
-        <Menu.Separator />
+        <ContextMenuSeparator />
 
-        <Menu.Group>
-          <Menu.GroupLabel>Desktop</Menu.GroupLabel>
-          <Menu.CheckboxItem
+        <ContextMenuGroup>
+          <ContextMenuGroupLabel>Desktop</ContextMenuGroupLabel>
+          <ContextMenuCheckboxItem
             checked={snapToGrid}
             onCheckedChange={setSnapToGrid}
           >
             Snap to Grid
-          </Menu.CheckboxItem>
-          <Menu.CheckboxItem checked={showHidden} onCheckedChange={setShowHidden}>
+          </ContextMenuCheckboxItem>
+          <ContextMenuCheckboxItem checked={showHidden} onCheckedChange={setShowHidden}>
             Show Hidden Files
-          </Menu.CheckboxItem>
-        </Menu.Group>
+          </ContextMenuCheckboxItem>
+        </ContextMenuGroup>
 
-        <Menu.Separator />
+        <ContextMenuSeparator />
 
-        <Menu.Item
-          className="lq-menu-item--danger"
+        <ContextMenuItem
+          variant="danger"
           onClick={() => setLastAction('Move to Trash')}
         >
-          <span className="lq-menu-icon">🗑️</span>
+          <span className="inline-flex w-4 justify-center opacity-85">🗑️</span>
           Move to Trash
-          <Menu.Shortcut>⌘⌫</Menu.Shortcut>
-        </Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+          <ContextMenuShortcut>⌘⌫</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

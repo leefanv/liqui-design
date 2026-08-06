@@ -1,7 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    // Mirrors the aliases in vite.config.ts — Vite resolves at build time, this
+    // is what makes the same specifiers typecheck.
+    "paths": {
+      "@registry/*": ["../www/registry/liqui/*"],
+      "@/lib/utils": ["../www/registry/liqui/lib/utils.ts"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

@@ -27,13 +27,19 @@ import {
 
 ```tsx
 <AlertDialog>
-  <AlertDialogTrigger render={<Button variant="danger">Delete</Button>} />
+  <AlertDialogTrigger
+    nativeButton={false}
+    render={<Button variant="danger">Delete</Button>}
+  />
   <AlertDialogContent>
     <AlertDialogTitle>Delete this workspace?</AlertDialogTitle>
     <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
     <AlertDialogActions>
-      <AlertDialogClose render={<Button>Cancel</Button>} />
-      <AlertDialogClose render={<Button variant="danger">Delete</Button>} />
+      <AlertDialogClose nativeButton={false} render={<Button>Cancel</Button>} />
+      <AlertDialogClose
+        nativeButton={false}
+        render={<Button variant="danger">Delete</Button>}
+      />
     </AlertDialogActions>
   </AlertDialogContent>
 </AlertDialog>
@@ -42,6 +48,15 @@ import {
 `render` is Base UI's composition prop: the trigger and close *become* the
 button rather than wrapping it, so you don't end up with a button inside a
 button.
+
+<Callout type="warn">
+  `nativeButton={false}` is required whenever you compose a trigger or close
+  with a liqui `Button`. The glass anatomy is invalid inside a native
+  `<button>`, so liqui's button is not one — and Base UI logs an error unless
+  the composing component is told that. Omit it and everything still works, but
+  the console fills up. See
+  [Button](/docs/components/button#why-it-isnt-a-native-button).
+</Callout>
 
 ## Notes
 

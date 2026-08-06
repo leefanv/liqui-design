@@ -1,3 +1,9 @@
+@import 'tailwindcss';
+
+/* The components live in the docs app's registry, outside this project, so
+   Tailwind's automatic source detection never sees their class names. */
+@source '../../../www/registry/liqui';
+
 * {
   margin: 0;
   box-sizing: border-box;
@@ -169,23 +175,18 @@ body {
   gap: 12px;
 }
 
-/* Checkbox labels sit on bare wallpaper like the field labels do. */
-.stage__checks .lq-checkbox-row {
+/* Checkbox and field labels sit on bare wallpaper rather than on glass, so they
+   need a shadow to stay legible. Targeted by element rather than by component
+   class: the components are Tailwind-styled now and expose no stable hooks. */
+.stage__checks label,
+.stage__form label,
+.stage__form p {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
-[data-theme='dark'] .stage__checks .lq-checkbox-row {
-  text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
-}
-
-/* Field labels/descriptions also sit on bare wallpaper here. */
-.stage__form .lq-field-label,
-.stage__form .lq-field-description {
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
-}
-
-[data-theme='dark'] .stage__form .lq-field-label,
-[data-theme='dark'] .stage__form .lq-field-description {
+[data-theme='dark'] .stage__checks label,
+[data-theme='dark'] .stage__form label,
+[data-theme='dark'] .stage__form p {
   text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
 }
 
