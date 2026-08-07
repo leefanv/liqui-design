@@ -44,29 +44,27 @@ import {
   type GlassMaterial,
   type GlassProfile,
 } from '@liqui-design/glass';
+import {
+  DEFAULT_OPTICS,
+  GlassControls,
+  type GlassOptics,
+} from '@shared/glass-controls';
 import './demo/app.css';
 
-interface GlassSettings {
-  material: GlassMaterial;
-  profile: GlassProfile;
-  refraction: number;
-  dispersion: number;
-  specular: number;
-  frost: number;
-  blur: number;
-}
-
 // URL params override defaults so variants are screenshotable/linkable.
-function initialSettings(): GlassSettings {
+function initialSettings(): GlassOptics {
   const q = new URLSearchParams(location.search);
+  const num = (key: keyof GlassOptics) =>
+    q.has(key) ? Number(q.get(key)) : (DEFAULT_OPTICS[key] as number);
   return {
-    material: (q.get('material') as GlassMaterial) || 'auto',
-    profile: (q.get('profile') as GlassProfile) || 'squircle',
-    refraction: Number(q.get('refraction') ?? 150),
-    dispersion: Number(q.get('dispersion') ?? 0),
-    specular: Number(q.get('specular') ?? 0.7),
-    frost: Number(q.get('frost') ?? 0.35),
-    blur: Number(q.get('blur') ?? 1),
+    material: (q.get('material') as GlassMaterial) || DEFAULT_OPTICS.material,
+    profile: (q.get('profile') as GlassProfile) || DEFAULT_OPTICS.profile,
+    refraction: num('refraction'),
+    bezel: num('bezel'),
+    dispersion: num('dispersion'),
+    specular: num('specular'),
+    frost: num('frost'),
+    blur: num('blur'),
   };
 }
 
@@ -79,10 +77,7 @@ export default function App() {
   const [showHidden, setShowHidden] = React.useState(false);
   const [snapToGrid, setSnapToGrid] = React.useState(true);
   const [lastAction, setLastAction] = React.useState<string | null>(null);
-  const [glass, setGlass] = React.useState<GlassSettings>(initialSettings);
-
-  const set = <K extends keyof GlassSettings>(key: K, value: GlassSettings[K]) =>
-    setGlass((g) => ({ ...g, [key]: value }));
+  const [glass, setGlass] = React.useState<GlassOptics>(initialSettings);
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -358,97 +353,7 @@ export default function App() {
           <LiquiGlass {...glass} radius={20} bezel={14} className="panel">
             <p className="panel__title">Glass settings</p>
 
-            <label className="panel__row">
-              <span>Material</span>
-              <select
-                value={glass.material}
-                onChange={(e) => set('material', e.target.value as GlassMaterial)}
-              >
-                <option value="auto">Auto (refract → frost)</option>
-                <option value="frost">Frost (cheap)</option>
-                <option value="clear">Clear (cheapest)</option>
-              </select>
-            </label>
-
-            <label className="panel__row">
-              <span>Profile</span>
-              <select
-                value={glass.profile}
-                onChange={(e) => set('profile', e.target.value as GlassProfile)}
-              >
-                <option value="squircle">Squircle (physical)</option>
-                <option value="convex">Convex (physical)</option>
-                <option value="rim">Rim (stylized)</option>
-              </select>
-            </label>
-
-            <label className="panel__row">
-              <span>
-                Refraction <em>{glass.refraction}px</em>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={200}
-                value={glass.refraction}
-                onChange={(e) => set('refraction', Number(e.target.value))}
-              />
-            </label>
-
-            <label className="panel__row">
-              <span>
-                Dispersion <em>{glass.dispersion.toFixed(2)}</em>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={0.4}
-                step={0.02}
-                value={glass.dispersion}
-                onChange={(e) => set('dispersion', Number(e.target.value))}
-              />
-            </label>
-
-            <label className="panel__row">
-              <span>
-                Specular <em>{glass.specular.toFixed(2)}</em>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={glass.specular}
-                onChange={(e) => set('specular', Number(e.target.value))}
-              />
-            </label>
-
-            <label className="panel__row">
-              <span>
-                Frost <em>{glass.frost.toFixed(2)}</em>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={glass.frost}
-                onChange={(e) => set('frost', Number(e.target.value))}
-              />
-            </label>
-
-            <label className="panel__row">
-              <span>
-                Blur <em>{glass.blur}px</em>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={10}
-                value={glass.blur}
-                onChange={(e) => set('blur', Number(e.target.value))}
-              />
-            </label>
+            <GlassControls value={glass} onChange={setGlass} />
           </LiquiGlass>
         </aside>
 

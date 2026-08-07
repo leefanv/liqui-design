@@ -4,6 +4,7 @@ import * as React from 'react';
 import { LiquiGlass } from '@liqui-design/glass';
 
 import { Backdrop, BACKDROPS, type BackdropId } from '@/components/home/backdrops';
+import { DEFAULT_OPTICS, GlassControls, type GlassOptics } from '@/components/glass-controls';
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/liqui/ui/button';
 import { Checkbox, CheckboxLabel } from '@/registry/liqui/ui/checkbox';
@@ -19,20 +20,15 @@ import { Field, FieldControl, FieldLabel } from '@/registry/liqui/ui/field';
  * the registry. If this looks right, what you install looks right.
  */
 
-const DEFAULTS = { frost: 0.35, refraction: 150, bezel: 28, blur: 1, specular: 0.7 };
-
 export function GlassStage() {
   const [backdrop, setBackdrop] = React.useState<BackdropId>('aurora');
-  const [optics, setOptics] = React.useState(DEFAULTS);
+  const [optics, setOptics] = React.useState<GlassOptics>(DEFAULT_OPTICS);
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
   const [checked, setChecked] = React.useState(true);
 
   const stageRef = React.useRef<HTMLDivElement>(null);
   const origin = React.useRef({ px: 0, py: 0, x: 0, y: 0 });
-
-  const set = <K extends keyof typeof DEFAULTS>(key: K, value: number) =>
-    setOptics((o) => ({ ...o, [key]: value }));
 
   // Pointer capture rather than window listeners: the drag keeps following the
   // pointer even when it leaves the handle, and releases cleanly if the browser
@@ -76,11 +72,7 @@ export function GlassStage() {
       <LiquiGlass
         elevated
         radius={24}
-        frost={optics.frost}
-        refraction={optics.refraction}
-        bezel={optics.bezel}
-        blur={optics.blur}
-        specular={optics.specular}
+        {...optics}
         className={cn('w-[21rem] max-w-[calc(100%-2rem)] select-none', dragging && 'cursor-grabbing')}
         style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
         contentClassName="rounded-[inherit] overflow-hidden"
@@ -143,62 +135,21 @@ export function GlassStage() {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-white/20 bg-black/35 p-3 backdrop-blur-md">
-          <Dial label="Frost" value={optics.frost} min={0} max={1} step={0.01} onChange={(v) => set('frost', v)} />
-          <Dial label="Refraction" value={optics.refraction} min={0} max={260} step={1} unit="px" onChange={(v) => set('refraction', v)} />
-          <Dial label="Bezel" value={optics.bezel} min={4} max={48} step={1} unit="px" onChange={(v) => set('bezel', v)} />
-          <Dial label="Blur" value={optics.blur} min={0} max={12} step={0.5} unit="px" onChange={(v) => set('blur', v)} />
-          <button
-            type="button"
-            onClick={() => {
-              setOptics(DEFAULTS);
-              setPos({ x: 0, y: 0 });
-            }}
-            className="mt-1 w-full rounded-lg border border-white/20 py-1 text-[11px] text-white/70 transition hover:bg-white/10"
-          >
-            Reset
-          </button>
-        </div>
+        <GlassControls
+          value={optics}
+          onChange={setOptics}
+          onReset={() => {
+            setOptics(DEFAULT_OPTICS);
+            setPos({ x: 0, y: 0 });
+          }}
+          // Eight dials are taller than the stage on a phone, where the panel
+          // spans the full width rather than sitting in a column. An absolute
+          // cap, not a percentage: the wrapper's height is auto, so a percentage
+          // max-height resolves to none and silently does nothing.
+          className="max-h-80 overflow-y-auto rounded-2xl border border-white/20 bg-black/35 p-3 backdrop-blur-md"
+        />
       </div>
     </div>
   );
 }
 
-function Dial({
-  label,
-  value,
-  min,
-  max,
-  step,
-  unit = '',
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit?: string;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className="mb-2 block text-[11px] text-white/80 last:mb-0">
-      <span className="flex justify-between">
-        {label}
-        <span className="tabular-nums text-white/55">
-          {value}
-          {unit}
-        </span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1 w-full accent-[#6f9dff]"
-      />
-    </label>
-  );
-}

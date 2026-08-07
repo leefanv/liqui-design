@@ -7,6 +7,7 @@
     // is what makes the same specifiers typecheck.
     "paths": {
       "@registry/*": ["../www/registry/liqui/*"],
+      "@shared/*": ["../www/components/*"],
       "@/lib/utils": ["../www/registry/liqui/lib/utils.ts"]
     }
   },

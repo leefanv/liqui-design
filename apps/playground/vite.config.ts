@@ -27,6 +27,8 @@ export default defineConfig({
       // to keep its own copies; they drifted the moment the registry ones were
       // rewritten onto Tailwind.
       { find: /^@registry\//, replacement: resolve('../www/registry/liqui/') },
+      // The optics panel is shared with the home stage so the two cannot drift.
+      { find: /^@shared\//, replacement: resolve('../www/components/') },
       // Registry components import `cn` from where the CLI puts it in a consumer
       // project, so that specifier has to resolve here too.
       { find: /^@\/lib\/utils$/, replacement: resolve('../www/registry/liqui/lib/utils.ts') },
