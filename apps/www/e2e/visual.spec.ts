@@ -14,6 +14,28 @@ test.describe('component previews', () => {
   }
 });
 
+test.describe('code tab', () => {
+  test('the code block does not overlap the tab strip', async ({ page }) => {
+    await page.goto('/docs/components/accordion');
+    await waitForGlass(page);
+    await page.getByRole('tab', { name: 'Code' }).click();
+
+    const strip = await page.locator('[role="tablist"]').first().boundingBox();
+    const block = await page
+      .locator('[role="tabpanel"]:not([hidden]) figure')
+      .first()
+      .boundingBox();
+    if (!strip || !block) throw new Error('tab strip or code block not found');
+
+    // Fumadocs gives a code block inside a tab a negative margin sized to cancel
+    // the panel's own padding. Removing that padding — which is the right thing
+    // to do for the preview panel, and was wrong here — leaves the negative
+    // margin uncancelled and the block bleeds up over the tabs. Geometry rather
+    // than a screenshot: it states the invariant exactly and costs no baseline.
+    expect(block.y).toBeGreaterThanOrEqual(strip.y + strip.height - 1);
+  });
+});
+
 test.describe('home stage', () => {
   test('default optics', async ({ page }) => {
     await page.goto('/');

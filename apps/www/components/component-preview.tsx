@@ -68,10 +68,15 @@ export function ComponentPreview({
 
   return (
     <Tabs items={['Preview', 'Code']} className="my-6">
+      {/* The preview drops the panel padding so its backdrop reaches the edges.
+          The code tab must not: Fumadocs gives a code block inside a tab a -16px
+          margin, which is there to cancel the panel's own 16px padding. Remove
+          the padding and the negative margin has nothing left to cancel, so the
+          block bleeds 16px in every direction and covers the tab strip above it. */}
       <Tab value="Preview" className="p-0">
         {preview}
       </Tab>
-      <Tab value="Code" className="p-0 [&_figure]:my-0">
+      <Tab value="Code">
         <DynamicCodeBlock lang="tsx" code={source} />
       </Tab>
     </Tabs>
