@@ -7,7 +7,7 @@
 Surfaces that actually refract what is behind them — a canvas-generated displacement
 map driving an SVG filter, not a blur with a white overlay.
 
-[Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button)
+[Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button) · [Gallery](https://liquidglassdesign.com/?ref=liqui.design)
 
 [![npm](https://img.shields.io/npm/v/@liqui-design/glass?color=%232f6bff&label=%40liqui-design%2Fglass)](https://www.npmjs.com/package/@liqui-design/glass)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
@@ -19,6 +19,14 @@ map driving an SVG filter, not a blur with a white overlay.
 </div>
 
 ---
+
+## Where it came from
+
+liqui grew out of [Liquid Glass Design](https://liquidglassdesign.com/?ref=liqui.design),
+a curated gallery of liquid glass and glassmorphism references. Every one of them is a
+picture — enough to study the material, never enough to ship it, because the part that
+makes it glass is what the edge does to whatever is behind it, and that is not in a
+screenshot. The gallery keeps the references; this is the half you install.
 
 ## How it ships
 

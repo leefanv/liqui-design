@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 
 import { GlassStage } from '@/components/home/glass-stage';
-import { gitConfig } from '@/lib/shared';
+import { gallery, gitConfig } from '@/lib/shared';
 
 export default function HomePage() {
   return (
@@ -68,7 +69,44 @@ export default function HomePage() {
           automatically — no configuration, but do look at both.
         </Feature>
       </section>
+
+      <section className="mt-14 border-t border-fd-border pt-10 sm:mt-20 sm:grid sm:grid-cols-[auto_1fr] sm:gap-10">
+        <h2 className="mb-3 shrink-0 font-semibold sm:mb-0 sm:w-48">Where this came from</h2>
+        <div className="max-w-2xl">
+          <p className="text-fd-muted-foreground">
+            liqui started as a collection.{' '}
+            <strong className="font-medium text-fd-foreground">{gallery.name}</strong> gathers
+            liquid glass and glassmorphism references — interfaces, artwork, motion — and every one
+            of them is a picture. A picture is enough to study the material and not nearly enough to
+            ship it: you can copy the tint and the blur out of a screenshot, but the part that makes
+            it glass, the way an edge bends what is behind it, isn&apos;t in there to copy.
+          </p>
+          <p className="mt-3 text-fd-muted-foreground">
+            So the gallery kept the references and this became the other half of it — the same
+            material as components you install, in the browser, over your own background.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+            <ExternalLink href={gallery.url}>Browse the gallery</ExternalLink>
+            <ExternalLink href={gallery.guide}>What liquid glass is</ExternalLink>
+            <ExternalLink href={gallery.devResources}>Developer resources</ExternalLink>
+          </div>
+        </div>
+      </section>
     </main>
+  );
+}
+
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-0.5 underline decoration-fd-border underline-offset-4 transition hover:decoration-current"
+    >
+      {children}
+      <ArrowUpRight className="size-3.5 opacity-60" />
+    </a>
   );
 }
 
