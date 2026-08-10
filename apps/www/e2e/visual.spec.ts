@@ -109,6 +109,9 @@ test.describe('no console errors', () => {
   for (const path of [
     '/',
     '/docs',
+    // The directory mounts every demo at once — the one page where a component
+    // that misbehaves off its own page has somewhere to show up.
+    '/docs/components',
     '/docs/components/alert-dialog',
     '/docs/components/select',
     '/docs/handbook/glass',
