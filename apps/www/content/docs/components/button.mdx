@@ -11,10 +11,10 @@ description: A button rendered as a refracting glass surface, with accent and da
 npx shadcn@latest add https://liqui.design/r/button.json
 ```
 
-This writes `components/ui/button.tsx` into your project and installs
-`@liqui-design/glass` — the refraction kernel, which stays a dependency because it is
-not something you should be editing. Everything you *would* want to edit is in
-the file you just received.
+This writes `components/ui/button.tsx` into your project, adds the glass design
+tokens to your `globals.css`, and installs `@liqui-design/glass` — the refraction
+kernel, which stays a dependency because it is not something you should be
+editing. Everything you *would* want to edit is in the file you just received.
 
 Installing more than one? Register the namespace once in `components.json` and
 drop the URLs:

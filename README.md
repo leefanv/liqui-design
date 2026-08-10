@@ -31,6 +31,9 @@ because those are the parts you cannot reasonably maintain by hand.
 npx shadcn@latest add https://liqui.design/r/button.json
 ```
 
+That one command is the whole setup: it writes `components/ui/button.tsx`, adds the
+glass design tokens to your `globals.css`, and installs the kernel.
+
 Installing more than one? Register the namespace once in your `components.json`
 and drop the URLs:
 

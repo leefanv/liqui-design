@@ -56,6 +56,17 @@ ships.
 3. Register both in `apps/www/registry.json`. The `ui` item needs `dependencies`,
    `registryDependencies` and a `target`; the example needs `registryDependencies`
    pointing at the component.
+
+   **Reference liqui's own items by full URL**, as the existing items do
+   (`"https://liqui.design/r/liqui.json"`, not `"liqui"`). The shadcn CLI resolves a
+   bare name against `ui.shadcn.com`, so `"button"` silently installs *shadcn's*
+   button instead of ours. `"utils"` is the deliberate exception — shadcn's `cn` is
+   byte-for-byte ours, and sharing it dedupes with whatever the consumer already has.
+
+   Every `ui` item must depend on the `liqui` style item, because that is what writes
+   the `--lq-*` tokens into the consumer's `globals.css`. Component sources read those
+   tokens without fallbacks: omit it and `variant="accent"` renders as plain glass with
+   no error anywhere.
 4. Write `apps/www/content/docs/components/<name>.mdx` and add it to
    `content/docs/components/meta.json`. Render demos with
    `<ComponentPreview name="<name>-demo" />`.

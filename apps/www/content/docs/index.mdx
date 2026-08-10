@@ -9,7 +9,21 @@ shadcn CLI; only the refraction kernel stays a dependency.
 
 ## Install
 
-Register the namespace once:
+Adding a component is the whole setup:
+
+```bash
+npx shadcn@latest add https://liqui.design/r/button.json
+```
+
+That writes `components/ui/button.tsx` into your project, adds the glass design
+tokens to your `globals.css`, and installs
+[`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass) — the SVG
+filter registry, displacement-map generator and browser fallbacks. That package
+is the one part of liqui you are not meant to edit; everything else lands in
+your repo as plain TSX.
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
 
 ```json title="components.json"
 {
@@ -19,18 +33,9 @@ Register the namespace once:
 }
 ```
 
-Then set up the theme and add whatever you need:
-
 ```bash
-npx shadcn@latest add @liqui-design/liqui
-npx shadcn@latest add @liqui-design/button
+npx shadcn@latest add @liqui-design/button @liqui-design/select
 ```
-
-`@liqui-design/liqui` writes the glass design tokens into your `globals.css` and pulls
-in [`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass) — the SVG filter
-registry, displacement-map generator and browser fallbacks. That package is the
-one part of liqui you are not meant to edit; everything else lands in your repo
-as plain TSX.
 
 <Callout type="warn">
   `@liqui-design/button` is a **registry** item, not an npm package —
@@ -40,11 +45,11 @@ as plain TSX.
   `@liqui-design/glass`, and the CLI installs it for you.
 </Callout>
 
-Prefer not to configure anything? Every component page also gives a direct URL
-that needs no namespace:
+Building your own surfaces on top of `LiquiGlass` instead? The theme is
+installable on its own — it is what every component above pulls in:
 
 ```bash
-npx shadcn@latest add https://liqui.design/r/button.json
+npx shadcn@latest add https://liqui.design/r/liqui.json
 ```
 
 <Callout type="info">
