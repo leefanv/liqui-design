@@ -17,6 +17,11 @@ apps/www/registry/__sources__.ts
 .claude/
 .cursor/
 
+# `next dev` writes its own agent rules into the app directory on every run and
+# re-creates them if deleted, so tracking these only produces churn in diffs.
+apps/*/AGENTS.md
+apps/*/CLAUDE.md
+
 # Playwright
 apps/www/test-results
 apps/www/playwright-report
