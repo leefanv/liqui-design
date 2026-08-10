@@ -1,0 +1,116 @@
+---
+title: Select
+description: A select with a glass trigger and a glass popup, kept from overlapping each other.
+---
+
+{/* Taller than the default: the popup portals to the body and would otherwise
+    hang off the bottom of the backdrop onto the flat page, where the glass has
+    nothing left to refract. */}
+
+<ComponentPreview name="select-demo" className="min-h-[480px]" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/select.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/select
+```
+
+## Usage
+
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+```
+
+```tsx
+<Select defaultValue="squircle">
+  <SelectTrigger>
+    <SelectValue placeholder="Choose a profile" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="squircle">Squircle</SelectItem>
+    <SelectItem value="convex">Convex</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+The full anatomy also ships `SelectGroup`, `SelectGroupLabel` and
+`SelectSeparator`. `SelectContent` renders the portal, the positioner, the glass
+popup and `Select.List` — pass positioner props (`side`, `align`, `sideOffset`)
+straight to it.
+
+## Notes
+
+### The popup does not overlap the trigger
+
+Base UI's select positions the popup *over* the trigger by default
+(`alignItemWithTrigger`), lining the selected row up with the value text. That
+is correct macOS behaviour and the wrong thing for glass: the popup's backdrop
+would then include the trigger's own tint and specular rim, so the top of the
+list refracts a piece of UI instead of the page — and the trigger vanishes under
+a surface built to look exactly like it.
+
+`SelectContent` defaults the prop off and drops the list below the trigger
+instead. Pass it back if you want the native behaviour:
+
+```tsx
+<SelectContent alignItemWithTrigger />
+```
+
+<Callout type="info">
+  Two glass surfaces stacking is not always wrong — the [alert
+  dialog](/docs/components/alert-dialog) does it deliberately over its scrim.
+  What makes it wrong here is that the lower surface is *also* a control, and
+  the upper one hides it while refracting it.
+</Callout>
+
+### This popup cannot be kept mounted
+
+[Context Menu](/docs/components/context-menu#the-portal-stays-mounted) keeps its
+portal in the DOM so the decoded displacement map survives close. `Select.Portal`
+returns `null` while closed, so that trick is unavailable here.
+
+It matters less than it sounds. The map is cached module-wide by size and
+optics, and the SVG filter lives in a registry that outlives any popup, so only
+the very first open pays for generation and decode. Reopens reference an
+already-decoded filter and arrive refracted on the first frame.
+
+### The trigger is not a native button
+
+```tsx
+<BaseSelect.Trigger nativeButton={false} render={<LiquiGlass … />} />
+```
+
+Same constraint as [Button](/docs/components/button): the glass anatomy is a
+stack of `div`s, and a native `<button>` only accepts phrasing content. Base UI
+supplies `role`, `tabIndex` and the key handling once the native element is
+opted out. Base UI's own default for `Select.Trigger` is `nativeButton: true`,
+so this has to be set explicitly — leaving it out produces invalid HTML and a
+console warning.
+
+### Scrolling clips to the radius
+
+`Select.List` carries `max-h-[var(--available-height)]` and scrolls. The glass
+content wrapper therefore gets `overflow-hidden rounded-[inherit]`, otherwise a
+row scrolled to the top square off the popup's corners while the surface behind
+it stays round.

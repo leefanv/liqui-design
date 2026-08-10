@@ -40,6 +40,25 @@ import {
   FieldLabel,
 } from '@registry/ui/field';
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectGroupLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@registry/ui/select';
+import {
+  Slider,
+  SliderControl,
+  SliderLabel,
+  SliderThumb,
+  SliderTrack,
+  SliderValue,
+} from '@registry/ui/slider';
+import { Switch, SwitchLabel } from '@registry/ui/switch';
+import {
   LiquiGlass,
   type GlassMaterial,
   type GlassProfile,
@@ -50,6 +69,13 @@ import {
   type GlassOptics,
 } from '@shared/glass-controls';
 import './demo/app.css';
+
+/** Labels for the closed select — the popup is unmounted, so it can't supply them. */
+const PROFILE_ITEMS = [
+  { value: 'squircle', label: 'Squircle' },
+  { value: 'convex', label: 'Convex' },
+  { value: 'rim', label: 'Rim' },
+];
 
 // URL params override defaults so variants are screenshotable/linkable.
 function initialSettings(): GlassOptics {
@@ -76,6 +102,7 @@ export default function App() {
   const [sort, setSort] = React.useState('name');
   const [showHidden, setShowHidden] = React.useState(false);
   const [snapToGrid, setSnapToGrid] = React.useState(true);
+  const [volume, setVolume] = React.useState(62);
   const [lastAction, setLastAction] = React.useState<string | null>(null);
   const [glass, setGlass] = React.useState<GlassOptics>(initialSettings);
 
@@ -197,6 +224,53 @@ export default function App() {
                 </AccordionPanel>
               </AccordionItem>
             </Accordion>
+
+            <h2 className="stage__label stage__label--spaced">Switch</h2>
+            {/* The switch puts the glass on the track and keeps the thumb
+                opaque; the slider below does the opposite. Both are on screen
+                together because the dials affect them in opposite places. */}
+            <div className="stage__checks">
+              <SwitchLabel>
+                Snap to grid
+                <Switch glass={glass} checked={snapToGrid} onCheckedChange={setSnapToGrid} />
+              </SwitchLabel>
+              <SwitchLabel>
+                Show hidden files
+                <Switch glass={glass} checked={showHidden} onCheckedChange={setShowHidden} />
+              </SwitchLabel>
+              <SwitchLabel>
+                Unavailable
+                <Switch glass={glass} disabled />
+              </SwitchLabel>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Slider</h2>
+            <div className="stage__sliders">
+              <Slider value={volume} onValueChange={(next) => setVolume(next as number)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <SliderLabel>Volume</SliderLabel>
+                  <SliderValue />
+                </div>
+                <SliderControl>
+                  <SliderTrack>
+                    <SliderThumb glass={glass} />
+                  </SliderTrack>
+                </SliderControl>
+              </Slider>
+
+              <Slider defaultValue={[24, 78]} minStepsBetweenValues={4}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <SliderLabel>Exposure range</SliderLabel>
+                  <SliderValue>{(formatted) => `${formatted[0]} – ${formatted[1]}`}</SliderValue>
+                </div>
+                <SliderControl>
+                  <SliderTrack>
+                    <SliderThumb glass={glass} index={0} getAriaLabel={() => 'Minimum'} />
+                    <SliderThumb glass={glass} index={1} getAriaLabel={() => 'Maximum'} />
+                  </SliderTrack>
+                </SliderControl>
+              </Slider>
+            </div>
           </section>
 
           <section
@@ -302,6 +376,35 @@ export default function App() {
                 <Checkbox glass={glass} defaultChecked disabled />
                 Disabled
               </CheckboxLabel>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Select</h2>
+            {/* Wired to the real dial: this select picks the lens profile it is
+                itself rendered with, and stays in sync with the panel. */}
+            <div onContextMenu={(e) => e.stopPropagation()}>
+              <Select
+                items={PROFILE_ITEMS}
+                value={glass.profile}
+                onValueChange={(value) =>
+                  setGlass((current) => ({ ...current, profile: value as GlassProfile }))
+                }
+              >
+                <SelectTrigger glass={glass}>
+                  <SelectValue placeholder="Choose a profile" />
+                </SelectTrigger>
+                <SelectContent glass={glass}>
+                  <SelectGroup>
+                    <SelectGroupLabel>Physical</SelectGroupLabel>
+                    <SelectItem value="squircle">Squircle</SelectItem>
+                    <SelectItem value="convex">Convex</SelectItem>
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectGroupLabel>Stylized</SelectGroupLabel>
+                    <SelectItem value="rim">Rim</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             <h2 className="stage__label stage__label--spaced">Alert dialog</h2>

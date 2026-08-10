@@ -1,0 +1,115 @@
+---
+title: Slider
+description: A slider whose thumb is the refracting surface, sliding along a flat rail.
+---
+
+<ComponentPreview name="slider-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/slider.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/slider
+```
+
+## Usage
+
+```tsx
+import {
+  Slider,
+  SliderControl,
+  SliderLabel,
+  SliderThumb,
+  SliderTrack,
+  SliderValue,
+} from '@/components/ui/slider';
+```
+
+```tsx
+<Slider defaultValue={62}>
+  <div className="flex items-baseline justify-between">
+    <SliderLabel>Volume</SliderLabel>
+    <SliderValue />
+  </div>
+  <SliderControl>
+    <SliderTrack>
+      <SliderThumb />
+    </SliderTrack>
+  </SliderControl>
+</Slider>
+```
+
+`SliderTrack` renders `Slider.Indicator` for you — the accent fill is part of
+the rail, not something you compose in.
+
+## Range
+
+<ComponentPreview name="slider-range" />
+
+Two thumbs, two `index` props. They are the same size, so they resolve to the
+same cached displacement map and the same registered filter — a range slider
+costs one map, not two.
+
+## Notes
+
+### The thumb is the glass, the rail is not
+
+[Switch](/docs/components/switch#only-one-of-the-two-can-be-a-lens) explains the
+constraint: a `backdrop-filter` nested inside another one samples its parent's
+output rather than the page, so a thumb inside a glass track would refract the
+track.
+
+A slider resolves it the other way. The moving part is the one worth looking at,
+so `SliderThumb` is a `LiquiGlass` surface and `SliderTrack` is drawn the cheap
+way — a tinted groove with an inset shadow:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]',
+'shadow-[inset_0_1px_2px_...,inset_0_0_0_0.5px_var(--lq-rim-lo)]',
+```
+
+Because the rail has no backdrop filter of its own, everything under the thumb —
+rail, accent fill and the page behind both — reaches the lens as ordinary
+backdrop and bends together. Drag the thumb past the end of the fill and watch
+the bezel pick up the background instead.
+
+<Callout type="info">
+  If you want the rail to be glass too, make it the `LiquiGlass` and drop the
+  thumb to an opaque puck — the switch anatomy. What does not work is both.
+</Callout>
+
+### Dragging is free
+
+The map is keyed on size and optics. Neither changes while a thumb moves, so an
+entire drag reuses one cached map and one filter; nothing is regenerated per
+frame. This is the same invariant the home page's drag test asserts — a fade
+class reappearing mid-drag would mean a filter had been rebuilt on a plain
+translate.
+
+### Positioning comes from Base UI
+
+`Slider.Thumb` writes `position`, `inset` and `translate` as inline styles to
+place itself along the track. `SliderThumb` hands the glass over through
+`render`, and `LiquiGlass` spreads the `style` it receives, so those survive the
+substitution. Anything you set in a `style` prop of your own merges the same
+way — but do not set `position`, or the thumb stops tracking its value.
+
+### Hit area
+
+`SliderControl` carries `py-2.5`. The rail is 12px tall and the thumb 26px, so
+without that padding the control's box would be shorter than the thing you are
+trying to grab and the top and bottom of the thumb would not be draggable.
