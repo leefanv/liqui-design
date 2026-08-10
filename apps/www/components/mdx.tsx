@@ -4,6 +4,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 import type { MDXComponents } from 'mdx/types';
 
 import { ComponentPreview } from '@/components/component-preview';
+import { ComponentDirectory } from '@/components/component-directory';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -11,6 +12,7 @@ export function getMDXComponents(components?: MDXComponents) {
     // Available in every page without an import — a component doc that has to
     // import its own preview harness on line 1 invites drift.
     ComponentPreview,
+    ComponentDirectory,
     Tabs,
     Tab,
     TypeTable,

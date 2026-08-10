@@ -1,0 +1,28 @@
+---
+title: Components
+description: Every liqui component, shown on a real backdrop.
+---
+
+Nine components so far, each a `LiquiGlass` surface with a Base UI primitive
+driving it. Every tile below is the real component rendering the real material —
+open one to try it, read what is specific about putting it on glass, and copy the
+source `shadcn add` writes into your project.
+
+<Callout type="info">
+  Refraction renders in Chromium. In Safari and Firefox these tiles fall back to
+  frosted blur automatically, which is worth seeing too — see
+  [Glass](/docs/handbook/glass#degradation).
+</Callout>
+
+<ComponentDirectory />
+
+## Installing
+
+Any one of them is a single command, and the first one you add brings the glass
+design tokens with it:
+
+```bash
+npx shadcn@latest add https://liqui.design/r/button.json
+```
+
+See [Quick start](/docs) for the namespace setup if you are adding several.
