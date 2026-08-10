@@ -83,6 +83,9 @@ a gradient with real edges, or content that scrolls underneath.
 | [Checkbox](https://liqui.design/docs/components/checkbox) | Fills with accent while keeping the bezel and rim light |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | Submenus, checkbox and radio items, keep-mounted popup |
 | [Field](https://liqui.design/docs/components/field) | Focus and invalid rings on the surface, not the input |
+| [Select](https://liqui.design/docs/components/select) | Glass trigger and glass popup, kept from overlapping |
+| [Slider](https://liqui.design/docs/components/slider) | The thumb is the lens; the rail is deliberately flat |
+| [Switch](https://liqui.design/docs/components/switch) | The track is the lens; the thumb is deliberately opaque |
 
 ## Browser support
 

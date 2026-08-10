@@ -1,0 +1,88 @@
+---
+title: Switch
+description: A switch whose glass track retints with accent, carrying an opaque thumb.
+---
+
+<ComponentPreview name="switch-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/switch.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/switch
+```
+
+## Usage
+
+```tsx
+import { Switch, SwitchLabel } from '@/components/ui/switch';
+```
+
+```tsx
+<SwitchLabel>
+  Wi-Fi
+  <Switch checked={wifi} onCheckedChange={setWifi} />
+</SwitchLabel>
+```
+
+`SwitchLabel` is a plain `<label>` row with `justify-between`, so the text sits
+on the left and the switch is pushed to the right — the settings-list shape.
+Like `CheckboxLabel`, it dims itself through `has-[[data-disabled]]` rather than
+being told about the switch's state.
+
+## Notes
+
+### Only one of the two can be a lens
+
+A switch is a thumb inside a track, and `backdrop-filter` samples whatever is
+painted *behind* an element. For a thumb sitting inside a glass track, that
+backdrop is the track's own tint — not the page. Make both glass and the thumb
+refracts the colour it is lying on: a smudge, not a lens.
+
+So the track is the surface and the thumb is opaque white, with its own cast
+shadow because the glass layers underneath give a child no depth of their own.
+
+[Slider](/docs/components/slider) has exactly the same conflict and resolves it
+the other way round: there the moving part is the interesting one, so the thumb
+is the glass and the rail is flattened. The rule to carry away is that **one
+surface per control gets to refract** — pick the one that matters.
+
+### On/off is a retint
+
+Switching on doesn't swap the track for a filled pill. It overrides `--lq-tint`
+on the root, so the accent arrives *as glass* and the bezel and specular arc
+survive the transition:
+
+```tsx
+data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]
+```
+
+Same mechanism as [Checkbox](/docs/components/checkbox#checked-state). Retint
+through the token if you want a different on-colour; a `background` would paint
+over the refraction instead of joining it.
+
+### Sizing
+
+The travel distance is hard-coded to the default box:
+
+```
+52px track − 2×2px padding − 26px thumb = 22px
+```
+
+If you resize the switch, `data-[checked]:translate-x-[22px]` and the glass
+`radius` both need to move with it. They are in one file — that is the point of
+the component landing in your repo.

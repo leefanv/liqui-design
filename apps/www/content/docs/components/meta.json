@@ -1,4 +1,14 @@
 {
   "title": "Components",
-  "pages": ["accordion", "alert-dialog", "button", "checkbox", "context-menu", "field"]
+  "pages": [
+    "accordion",
+    "alert-dialog",
+    "button",
+    "checkbox",
+    "context-menu",
+    "field",
+    "select",
+    "slider",
+    "switch"
+  ]
 }

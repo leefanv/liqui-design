@@ -129,6 +129,39 @@
       ]
     },
     {
+      "name": "switch",
+      "type": "registry:ui",
+      "title": "Glass Switch",
+      "description": "A switch whose glass track retints with accent, carrying an opaque thumb.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/switch.tsx", "type": "registry:ui", "target": "@ui/switch.tsx" }
+      ]
+    },
+    {
+      "name": "slider",
+      "type": "registry:ui",
+      "title": "Glass Slider",
+      "description": "A slider whose thumb is the refracting surface, sliding along a flat rail.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/slider.tsx", "type": "registry:ui", "target": "@ui/slider.tsx" }
+      ]
+    },
+    {
+      "name": "select",
+      "type": "registry:ui",
+      "title": "Glass Select",
+      "description": "A select with a glass trigger and a glass popup, kept from overlapping each other.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["utils"],
+      "files": [
+        { "path": "registry/liqui/ui/select.tsx", "type": "registry:ui", "target": "@ui/select.tsx" }
+      ]
+    },
+    {
       "name": "button-demo",
       "type": "registry:example",
       "title": "Button",
@@ -221,6 +254,38 @@
       "files": [
         { "path": "registry/liqui/examples/context-menu-demo.tsx", "type": "registry:example" }
       ]
+    },
+    {
+      "name": "switch-demo",
+      "type": "registry:example",
+      "title": "Switch",
+      "description": "A settings list: on, off and disabled.",
+      "registryDependencies": ["switch"],
+      "files": [{ "path": "registry/liqui/examples/switch-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "slider-demo",
+      "type": "registry:example",
+      "title": "Slider",
+      "description": "A glass thumb travelling along a flat rail.",
+      "registryDependencies": ["slider"],
+      "files": [{ "path": "registry/liqui/examples/slider-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "slider-range",
+      "type": "registry:example",
+      "title": "Range",
+      "description": "Two thumbs on one rail, sharing a single cached map.",
+      "registryDependencies": ["slider"],
+      "files": [{ "path": "registry/liqui/examples/slider-range.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "select-demo",
+      "type": "registry:example",
+      "title": "Select",
+      "description": "Grouped options on a glass popup below the trigger.",
+      "registryDependencies": ["select"],
+      "files": [{ "path": "registry/liqui/examples/select-demo.tsx", "type": "registry:example" }]
     }
   ]
 }

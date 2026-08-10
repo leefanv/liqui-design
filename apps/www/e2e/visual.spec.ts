@@ -2,7 +2,17 @@ import { expect, test } from '@playwright/test';
 
 import { preview, stage, waitForGlass } from './glass';
 
-const COMPONENTS = ['accordion', 'alert-dialog', 'button', 'checkbox', 'context-menu', 'field'];
+const COMPONENTS = [
+  'accordion',
+  'alert-dialog',
+  'button',
+  'checkbox',
+  'context-menu',
+  'field',
+  'select',
+  'slider',
+  'switch',
+];
 
 test.describe('component previews', () => {
   for (const name of COMPONENTS) {
@@ -12,6 +22,19 @@ test.describe('component previews', () => {
       await expect(preview(page)).toHaveScreenshot(`${name}.png`);
     });
   }
+});
+
+test.describe('select popup', () => {
+  // The looped preview above only ever captures a closed select, which is a
+  // picture of the trigger. The popup is the component's real surface — the one
+  // carrying the popup-scale optics — and it is only on screen while open.
+  test('the popup is a refracting surface, not the frost fallback', async ({ page }) => {
+    await page.goto('/docs/components/select');
+    await waitForGlass(page);
+    await page.getByRole('combobox').click();
+    await waitForGlass(page);
+    await expect(preview(page)).toHaveScreenshot('select-open.png');
+  });
 });
 
 test.describe('code tab', () => {
@@ -83,7 +106,13 @@ test.describe('the material', () => {
 });
 
 test.describe('no console errors', () => {
-  for (const path of ['/', '/docs', '/docs/components/alert-dialog', '/docs/handbook/glass']) {
+  for (const path of [
+    '/',
+    '/docs',
+    '/docs/components/alert-dialog',
+    '/docs/components/select',
+    '/docs/handbook/glass',
+  ]) {
     test(path, async ({ page }) => {
       const errors: string[] = [];
       page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
