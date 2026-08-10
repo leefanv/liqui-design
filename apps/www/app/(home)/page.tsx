@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 import { GlassStage } from '@/components/home/glass-stage';
-import { gallery, gitConfig } from '@/lib/shared';
+import { gallery } from '@/lib/shared';
 
 export default function HomePage() {
   return (
@@ -28,22 +28,12 @@ export default function HomePage() {
             Get started
           </Link>
           <Link
-            href="/docs/handbook/glass"
+            href="/docs/components"
             className="rounded-full border border-fd-border px-5 py-2 text-sm font-medium transition hover:bg-fd-muted"
           >
-            The material
+            View components
           </Link>
-          <a
-            href={`https://github.com/${gitConfig.user}/${gitConfig.repo}`}
-            className="rounded-full border border-fd-border px-5 py-2 text-sm font-medium transition hover:bg-fd-muted"
-          >
-            GitHub
-          </a>
         </div>
-
-        <code className="mt-6 inline-block rounded-lg bg-fd-muted px-3 py-1.5 text-sm">
-          npx shadcn@latest add https://liqui.design/r/button.json
-        </code>
       </section>
 
       <GlassStage />
