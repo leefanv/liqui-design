@@ -4,7 +4,7 @@ import './global.css';
 import { Inter } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-import { appName, googleAnalyticsId, siteUrl } from '@/lib/shared';
+import { brandName, googleAnalyticsId, siteUrl } from '@/lib/shared';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -17,8 +17,10 @@ export const metadata: Metadata = {
   // than the per-deployment Vercel URL.
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${appName} — liquid glass components for React`,
-    template: `%s — ${appName}`,
+    // The tab and the search result are where the project is introduced to
+    // someone who has not met it, so both carry the full name.
+    default: `${brandName} — liquid glass components for React`,
+    template: `%s — ${brandName}`,
   },
   description:
     'Liquid glass components for React, built on Base UI. Surfaces that refract what is behind them, installed as source through the shadcn CLI.',

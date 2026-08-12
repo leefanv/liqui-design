@@ -1,4 +1,13 @@
+/**
+ * Two names, used in two ways. `appName` is what the project is called in
+ * running prose and on the command line — the package is `@liqui-design/glass`
+ * and nobody types the capitals. `brandName` is the full name, for the places
+ * that present the project rather than talk about it: the mark in the nav, the
+ * browser tab, the social card.
+ */
 export const appName = 'liqui';
+export const brandName = 'Liqui Design';
+
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';

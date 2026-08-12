@@ -1,13 +1,13 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { ArrowUpRight } from 'lucide-react';
 
-import { appName, docsRoute, gallery, gitConfig } from './shared';
+import { Brand } from '@/components/brand';
+import { docsRoute, gallery, gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      // JSX supported
-      title: appName,
+      title: <Brand />,
     },
     links: [
       { text: 'Docs', url: docsRoute, active: 'nested-url' },
