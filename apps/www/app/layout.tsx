@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Inter } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
-import { appName, siteUrl } from '@/lib/shared';
+import { appName, googleAnalyticsId, siteUrl } from '@/lib/shared';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +30,13 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       <body className="flex flex-col min-h-screen">
         <RootProvider>{children}</RootProvider>
       </body>
+      {/*
+        Only in a production build: `next dev` would otherwise report every
+        local page view into the same property, and localhost traffic is not
+        traffic. The component loads gtag.js after hydration, so it costs
+        nothing on first paint.
+      */}
+      {process.env.NODE_ENV === 'production' && <GoogleAnalytics gaId={googleAnalyticsId} />}
     </html>
   );
 }

@@ -3,6 +3,12 @@ export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
+/**
+ * GA4 measurement ID. Public by design — it ships in the page source of every
+ * site that uses it, so there is nothing gained by moving it into an env var.
+ */
+export const googleAnalyticsId = 'G-WD95MFJ6ZJ';
+
 export const gitConfig = {
   user: 'leefanv',
   repo: 'liqui-design',
