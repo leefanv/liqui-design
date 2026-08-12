@@ -24,6 +24,8 @@ export const gitConfig = {
   branch: 'main',
 };
 
+export const repoUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
+
 /**
  * Every outbound link to the gallery carries `ref` so the traffic the docs send
  * over is attributable on the other side. Built here rather than written into

@@ -2,7 +2,8 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { ArrowUpRight } from 'lucide-react';
 
 import { Brand } from '@/components/brand';
-import { docsRoute, gallery, gitConfig } from './shared';
+import { GitHubStars } from '@/components/github-stars';
+import { docsRoute, gallery, repoUrl } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -23,7 +24,20 @@ export function baseOptions(): BaseLayoutProps {
         url: gallery.url,
         external: true,
       },
+      {
+        // What `githubUrl` would have produced, but with the star count next to
+        // the mark. Written out as an icon item so it lands where Fumadocs puts
+        // GitHub already: top-right of the home nav, and bottom-left of the docs
+        // sidebar, in the row it shares with the theme switch.
+        //
+        // No `label`: an aria-label would replace the link's text, and the count
+        // inside it is the part worth announcing.
+        type: 'icon',
+        url: repoUrl,
+        external: true,
+        text: 'GitHub',
+        icon: <GitHubStars />,
+      },
     ],
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }
