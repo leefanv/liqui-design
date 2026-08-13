@@ -11,11 +11,25 @@
  * so a surface still renders if no token layer is present at all.
  */
 
-.liqui-glass {
-  position: relative;
-  isolation: isolate;
-  border-radius: var(--lq-radius, 16px);
-  color: var(--lq-text, inherit);
+/* In `base` so these stay defaults rather than rules. They are the properties a
+   surface is most often asked to change from outside, and unlayered they win
+   every such attempt no matter how specific the override: an unlayered rule
+   outranks *any* layered one, and Tailwind ships its utilities in a layer. That
+   is not a specificity problem `:where()` can fix — it silently kept `fixed` on
+   a glass dialog rendering as `relative`, which left the popup wherever the
+   document flow put it instead of centred on the viewport.
+
+   `base` is Tailwind's own, declared before `utilities`, so utilities win. With
+   no Tailwind present the layer is created here and any unlayered consumer CSS
+   beats it — which is what a default should do. The structural rules below stay
+   unlayered: nothing outside should be overriding the surface anatomy. */
+@layer base {
+  .liqui-glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--lq-radius, 16px);
+    color: var(--lq-text, inherit);
+  }
 }
 
 .liqui-glass--elevated {
@@ -71,17 +85,33 @@
   );
 }
 
-/* Clear tier has no backdrop-filter to quiet the background, so the tint
-   carries the legibility burden instead. */
+/* Clear tier has no backdrop-filter to quiet the background, so the tint carries
+   the legibility burden alone. It gets there by compositing a neutral wash
+   *under* whatever tint is in play, rather than by overriding --lq-tint.
+   Overriding it would win: a component's retint (the accent a checked Checkbox
+   or Switch sets on itself) lands on this same element from Tailwind's utility
+   layer, and layered rules lose to this unlayered file — so a clear switch could
+   not show "on" at all. The wash reproduces the densities the override used to
+   hardcode, and an accent tint simply composites on top of it. */
+.liqui-glass--clear .liqui-glass__tint {
+  background-image:
+    linear-gradient(
+      135deg,
+      var(--lq-tint, rgba(255, 255, 255, 0.48)),
+      var(--lq-tint-deep, rgba(255, 255, 255, 0.14))
+    ),
+    linear-gradient(135deg, var(--lq-clear-wash), var(--lq-clear-wash-deep));
+}
+
 .liqui-glass--clear {
-  --lq-tint: rgba(255, 255, 255, 0.72);
-  --lq-tint-deep: rgba(255, 255, 255, 0.5);
+  --lq-clear-wash: rgba(255, 255, 255, 0.55);
+  --lq-clear-wash-deep: rgba(255, 255, 255, 0.42);
 }
 
 [data-theme='dark'] .liqui-glass--clear,
 .dark .liqui-glass--clear {
-  --lq-tint: rgba(34, 36, 52, 0.82);
-  --lq-tint-deep: rgba(22, 24, 38, 0.68);
+  --lq-clear-wash: rgba(30, 32, 46, 0.52);
+  --lq-clear-wash-deep: rgba(18, 20, 32, 0.47);
 }
 
 /* Normal-lit specular image (refraction tier): the arc of light along the
