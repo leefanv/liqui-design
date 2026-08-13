@@ -1,0 +1,95 @@
+---
+title: Dialog
+description: A dismissible modal on glass, with a corner dismiss that stays flat.
+---
+
+<ComponentPreview name="dialog-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/dialog.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/dialog
+```
+
+## Usage
+
+```tsx
+import {
+  Dialog,
+  DialogActions,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogDismiss,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+```
+
+```tsx
+<Dialog>
+  <DialogTrigger nativeButton={false} render={<Button>Share workspace</Button>} />
+  <DialogContent>
+    <DialogDismiss />
+    <DialogTitle>Share this workspace</DialogTitle>
+    <DialogDescription>Anyone with the link can open it.</DialogDescription>
+    <DialogActions>
+      <DialogClose nativeButton={false} render={<Button>Cancel</Button>} />
+      <DialogClose nativeButton={false} render={<Button variant="accent">Copy link</Button>} />
+    </DialogActions>
+  </DialogContent>
+</Dialog>
+```
+
+`nativeButton={false}` on the trigger and the closes: a liqui `Button` is not a
+native `<button>` — it cannot be, the glass anatomy is invalid inside one — and
+Base UI warns unless the composing component is told so. See
+[Button](/docs/components/button#why-it-isnt-a-native-button).
+
+## Notes
+
+### Dialog or Alert Dialog
+
+They share a surface and differ in what they will let the user do.
+[Alert Dialog](/docs/components/alert-dialog) refuses `Escape` and
+click-outside, because it is asking a question that has to be answered. `Dialog`
+takes both, plus the corner `DialogDismiss` — it holds content the user is free
+to wander away from.
+
+### Tune it against the scrim
+
+Like Alert Dialog, this is a surface sitting on a dimmed backdrop rather than on
+the page. `--lq-scrim` plus `backdrop-blur-[2px]` have already darkened
+everything behind it, so a `frost` value tuned against bare wallpaper reads far
+too heavy here. Judge dialog optics against the scrim.
+
+### The dismiss stays flat
+
+The × in the corner is not a liqui `Button`. Anything inside the popup has the
+dialog's own tint behind it rather than the page, so a second surface there has
+nothing to bend but the first one — it is the same rule as
+[Switch](/docs/components/switch)'s opaque thumb and
+[Slider](/docs/components/slider)'s flat rail: **one surface per control gets to
+refract**.
+
+A 28px icon target has nothing left over to survive that on. The action buttons
+below it do — their labels carry them and their retint is dense enough — which is
+why they keep their glass and the dismiss is only a hover wash and a focus ring
+painted on the surface already there.
+[Popover](/docs/components/popover#controls-inside-a-popover-go-flat) covers the
+general judgement, and `material: 'clear'` when you need to make it explicit.

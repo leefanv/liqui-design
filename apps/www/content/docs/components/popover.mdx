@@ -1,0 +1,126 @@
+---
+title: Popover
+description: A glass panel anchored to a trigger, with a drawn tail.
+---
+
+{/* Taller than the default box: the popup is portalled and floats over the
+    page, so a 320px preview would show it cropped rather than show it wrong. */}
+
+<ComponentPreview name="popover-demo" className="min-h-[520px]" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/popover.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/popover
+```
+
+## Usage
+
+```tsx
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+```
+
+```tsx
+<Popover>
+  <PopoverTrigger nativeButton={false} render={<Button>Notifications</Button>} />
+  <PopoverContent>
+    <PopoverTitle>Notifications</PopoverTitle>
+    <PopoverDescription>You are all caught up.</PopoverDescription>
+  </PopoverContent>
+</Popover>
+```
+
+`PopoverContent` collapses Base UI's portal, positioner and popup into one
+part. Positioner props pass straight through, so `side`, `align` and
+`sideOffset` work as documented — `sideOffset` just defaults to `10` to clear
+the tail rather than Base UI's `0`.
+
+`nativeButton={false}` on the trigger: a liqui `Button` is not a native
+`<button>` — it cannot be, the glass anatomy is invalid inside one — and Base UI
+warns unless the composing component is told so. See
+[Button](/docs/components/button#why-it-isnt-a-native-button).
+
+## Notes
+
+### The tail is the material, minus the lens
+
+`Popover.Arrow` renders inside the popup but positions itself *outside* its box,
+so what sits behind it is the page rather than the panel — it can wear the same
+blurred, tinted material the popup does, and it does. What it cannot wear is the
+lens: `LiquiGlass` is a rounded rect, and a 20×10 triangle has no room for a
+bezel to refract through.
+
+So the tail is a `clip-path` with the popup's own backdrop blur and `--lq-tint`,
+and the rim stroked along its two slanted edges. The outline path is left open on
+purpose: closing it would draw the rim across the base too, where the tail meets
+the popup and there is no edge to catch light.
+
+Retinting the popup retints the tail with it. What the tail cannot follow is
+`frost` — its blur and fill opacity are the kernel's own formulas
+(`blur + frost × 14`, `0.25 + 0.75 × frost`) frozen at the default 0.35. Move
+`frost` a long way through the `glass` prop and the tail is the thing to check.
+Or drop it:
+
+```tsx
+<PopoverContent arrow={false} sideOffset={6}>
+```
+
+### Controls inside a popover go flat
+
+The tail gets the page behind it. A control *inside* the panel does not — it gets
+the panel. Every child of a glass popup is a `backdrop-filter` inside a
+`backdrop-filter`, sampling its parent's output rather than the page, so its lens
+has nothing to bend but the surface it is lying on. In practice a nested switch
+goes muddy and its accent desaturates: it stops looking like glass and starts
+looking like a stain on the panel. Same conflict
+[Switch](/docs/components/switch#only-one-of-the-two-can-be-a-lens) and
+[Slider](/docs/components/slider) each resolve internally.
+
+The lens is lost either way, so the only question left is whether the control
+still reads. Give it up explicitly where it doesn't:
+
+```tsx
+<Switch glass={{ material: 'clear' }} />
+```
+
+`clear` is the kernel's cheapest tier — tint and rim, no backdrop filter at all.
+The switch keeps its shape, its bezel and its accent retint at full strength, and
+stops competing for a lens it was never going to win.
+
+Which controls need it is a judgement about what carries their meaning. A switch
+or a [checkbox](/docs/components/checkbox) *is* its tint — desaturate the accent
+and on stops looking different from off, which is why both switches above are
+clear. A button carries its meaning in its label and retints densely enough to
+survive, which is why the `Done` beside them, and the action row in
+[Dialog](/docs/components/dialog), keep theirs.
+
+### Reopening is cheap, but not free
+
+Like [Select](/docs/components/select) and unlike
+[Context Menu](/docs/components/context-menu), `Popover.Portal` returns `null`
+while closed, so the keep-mounted trick that makes a context menu open instantly
+is unavailable. It matters less than it sounds: the displacement map is cached by
+size and the SVG filter lives in a registry that outlives the popup, so only the
+very first open pays for generation.

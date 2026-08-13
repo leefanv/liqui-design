@@ -129,6 +129,47 @@
       ]
     },
     {
+      "name": "dialog",
+      "type": "registry:ui",
+      "title": "Glass Dialog",
+      "description": "A dismissible modal on glass, with a corner dismiss that stays flat.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        { "path": "registry/liqui/ui/dialog.tsx", "type": "registry:ui", "target": "@ui/dialog.tsx" }
+      ]
+    },
+    {
+      "name": "popover",
+      "type": "registry:ui",
+      "title": "Glass Popover",
+      "description": "A glass panel anchored to a trigger, with a drawn tail.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/popover.tsx",
+          "type": "registry:ui",
+          "target": "@ui/popover.tsx"
+        }
+      ]
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:ui",
+      "title": "Glass Tooltip",
+      "description": "The smallest floating surface, frosted harder so it stays readable.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/tooltip.tsx",
+          "type": "registry:ui",
+          "target": "@ui/tooltip.tsx"
+        }
+      ]
+    },
+    {
       "name": "switch",
       "type": "registry:ui",
       "title": "Glass Switch",
@@ -286,6 +327,51 @@
       "description": "Grouped options on a glass popup below the trigger.",
       "registryDependencies": ["https://liqui.design/r/select.json"],
       "files": [{ "path": "registry/liqui/examples/select-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "dialog-demo",
+      "type": "registry:example",
+      "title": "Dialog",
+      "description": "A dismissible modal over a dimmed scrim.",
+      "registryDependencies": [
+        "https://liqui.design/r/dialog.json",
+        "https://liqui.design/r/button.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/dialog-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "popover-demo",
+      "type": "registry:example",
+      "title": "Popover",
+      "description": "A panel of controls, each one flattened so the panel keeps the lens.",
+      "registryDependencies": [
+        "https://liqui.design/r/popover.json",
+        "https://liqui.design/r/button.json",
+        "https://liqui.design/r/switch.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/popover-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "tooltip-demo",
+      "type": "registry:example",
+      "title": "Tooltip",
+      "description": "A toolbar sharing one delay, so the group reads as one control.",
+      "registryDependencies": [
+        "https://liqui.design/r/tooltip.json",
+        "https://liqui.design/r/button.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/tooltip-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "tooltip-sides",
+      "type": "registry:example",
+      "title": "Sides",
+      "description": "All four placements, pinned open.",
+      "registryDependencies": [
+        "https://liqui.design/r/tooltip.json",
+        "https://liqui.design/r/button.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/tooltip-sides.tsx", "type": "registry:example" }]
     }
   ]
 }

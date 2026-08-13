@@ -8,10 +8,13 @@ const COMPONENTS = [
   'button',
   'checkbox',
   'context-menu',
+  'dialog',
   'field',
+  'popover',
   'select',
   'slider',
   'switch',
+  'tooltip',
 ];
 
 test.describe('component previews', () => {
@@ -34,6 +37,39 @@ test.describe('select popup', () => {
     await page.getByRole('combobox').click();
     await waitForGlass(page);
     await expect(preview(page)).toHaveScreenshot('select-open.png');
+  });
+});
+
+test.describe('overlays while open', () => {
+  // Same reasoning as the select popup: the looped previews above capture a
+  // closed trigger, and for these three the component *is* the surface that
+  // only exists while open. The tail in particular is drawn from the popup's
+  // tokens rather than refracted, which is exactly the kind of thing that goes
+  // subtly wrong without failing anything else.
+  test('popover', async ({ page }) => {
+    await page.goto('/docs/components/popover');
+    await waitForGlass(page);
+    await page.getByRole('button', { name: 'Notifications' }).click();
+    await waitForGlass(page);
+    await expect(preview(page)).toHaveScreenshot('popover-open.png');
+  });
+
+  test('dialog', async ({ page }) => {
+    await page.goto('/docs/components/dialog');
+    await waitForGlass(page);
+    await page.getByRole('button', { name: 'Share workspace' }).click();
+    await waitForGlass(page);
+    // The popup is portalled to the body and sits over a full-page scrim, so
+    // the preview box is not where it renders.
+    await expect(page).toHaveScreenshot('dialog-open.png');
+  });
+
+  test('tooltip', async ({ page }) => {
+    await page.goto('/docs/components/tooltip');
+    await waitForGlass(page);
+    await page.getByRole('button', { name: 'Undo' }).hover();
+    await waitForGlass(page);
+    await expect(preview(page)).toHaveScreenshot('tooltip-open.png');
   });
 });
 
@@ -113,6 +149,11 @@ test.describe('no console errors', () => {
     // that misbehaves off its own page has somewhere to show up.
     '/docs/components',
     '/docs/components/alert-dialog',
+    // Two floating surfaces, a trigger that has to opt out of the native
+    // button and one that must not, and a second demo that pins four tooltips
+    // open at once.
+    '/docs/components/popover',
+    '/docs/components/tooltip',
     '/docs/components/select',
     '/docs/handbook/glass',
   ]) {

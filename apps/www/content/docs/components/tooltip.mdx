@@ -1,0 +1,106 @@
+---
+title: Tooltip
+description: The smallest floating surface, frosted harder so it stays readable.
+---
+
+<ComponentPreview name="tooltip-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/tooltip.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/tooltip
+```
+
+## Usage
+
+```tsx
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+```
+
+```tsx
+<TooltipProvider delay={300}>
+  <Tooltip>
+    <TooltipTrigger render={<Button size="sm">Undo</Button>} />
+    <TooltipContent>Undo — ⌘Z</TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+`TooltipTrigger` is the one trigger in the library that does **not** want
+`nativeButton={false}`. It doesn't run Base UI's button hook, so it takes the
+element you render as-is and a liqui [Button](/docs/components/button) drops
+straight in.
+
+## Examples
+
+### Sides
+
+<ComponentPreview name="tooltip-sides" />
+
+## Notes
+
+### It carries more frost than anything else
+
+A tooltip is a line of small text with no container of its own, sitting wherever
+the pointer happens to be. At the library default of `frost: 0.35` its legibility
+is whatever the wallpaper underneath decides, which for a component whose whole
+job is to be read is the wrong trade. `TooltipContent` runs `frost: 0.7` —
+roughly Apple's *regular* material. Still glass, still refracting, but carrying
+its own contrast.
+
+The optics are scaled down to match the box, for the same reason
+[Checkbox](/docs/components/checkbox#the-smallest-surface-in-the-library) is:
+
+```ts
+{ radius: 11, blur: 1, refraction: 35, bezel: 9, frost: 0.7 }
+```
+
+A 28px-tall chip driven at a menu's `refraction: 150` is all bezel and no glass.
+
+### No tail, on purpose
+
+[Popover](/docs/components/popover#the-tail-is-the-material-minus-the-lens) has
+one and this doesn't, which is a size decision rather than a taste one.
+
+A tail can wear the popup's blur and tint. What it cannot wear is the kernel's
+specular layer — that is an image generated for the surface's own box, and a
+shape outside that box has no access to it. On a panel the gap shows up as a few
+pixels along one edge of something large. On a 28px chip it is most of the join:
+the tail comes out darker than the edge it hangs off, and the seam ends up more
+noticeable than the pointing it was there to do.
+
+A tooltip is already adjacent to the thing it describes and only exists while
+that thing is hovered, so it has less need to point than a popover does. If you
+want one anyway, the popover's `PopoverArrow` is the pattern to copy — retune the
+blur and fill for `frost: 0.7` before you do.
+
+### One provider per group
+
+`TooltipProvider` shares a delay across the tooltips inside it: once one has
+opened, moving to its neighbours shows theirs instantly. That is what makes a row
+of icon buttons read as one control rather than three. Base UI marks those
+instant openings with `data-instant`, which the popup uses to skip its own
+scale-in — a tooltip that animates while the pointer is already past it is just
+lag.
+
+Skip the provider and each tooltip waits out its own delay.
