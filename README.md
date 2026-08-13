@@ -89,14 +89,17 @@ a gradient with real edges, or content that scrolls underneath.
 | | |
 | --- | --- |
 | [Accordion](https://liqui.design/docs/components/accordion) | Each item is its own surface, resizing with its panel |
-| [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | The only surface that refracts a dimmed scrim |
+| [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | Modal and un-dismissible, refracting a dimmed scrim |
 | [Button](https://liqui.design/docs/components/button) | Glass, accent and danger tints |
 | [Checkbox](https://liqui.design/docs/components/checkbox) | Fills with accent while keeping the bezel and rim light |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | Submenus, checkbox and radio items, keep-mounted popup |
+| [Dialog](https://liqui.design/docs/components/dialog) | The dismissible one; its corner close stays flat |
 | [Field](https://liqui.design/docs/components/field) | Focus and invalid rings on the surface, not the input |
+| [Popover](https://liqui.design/docs/components/popover) | A glass panel with a drawn tail, holding flattened controls |
 | [Select](https://liqui.design/docs/components/select) | Glass trigger and glass popup, kept from overlapping |
 | [Slider](https://liqui.design/docs/components/slider) | The thumb is the lens; the rail is deliberately flat |
 | [Switch](https://liqui.design/docs/components/switch) | The track is the lens; the thumb is deliberately opaque |
+| [Tooltip](https://liqui.design/docs/components/tooltip) | The smallest surface, frosted harder so it stays readable |
 
 ## Browser support
 

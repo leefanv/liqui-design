@@ -33,12 +33,29 @@ import {
   ContextMenuTrigger,
 } from '@registry/ui/context-menu';
 import {
+  Dialog,
+  DialogActions,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogDismiss,
+  DialogTitle,
+  DialogTrigger,
+} from '@registry/ui/dialog';
+import {
   Field,
   FieldControl,
   FieldDescription,
   FieldError,
   FieldLabel,
 } from '@registry/ui/field';
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@registry/ui/popover';
 import {
   Select,
   SelectContent,
@@ -58,6 +75,12 @@ import {
   SliderValue,
 } from '@registry/ui/slider';
 import { Switch, SwitchLabel } from '@registry/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@registry/ui/tooltip';
 import {
   LiquiGlass,
   type GlassMaterial,
@@ -323,32 +346,132 @@ export default function App() {
                 <FieldControl glass={glass} placeholder="Not editable" />
               </Field>
             </form>
+
+            <h2 className="stage__label stage__label--spaced">Popover</h2>
+            {/* The panel keeps the lens; its controls go clear. A child of a
+                glass surface has that surface — not the wallpaper — behind it,
+                so its own lens would only bend the panel it is lying on. Flip
+                the switches to `glass` to watch that happen. */}
+            <div className="stage__buttons">
+              <Popover>
+                <PopoverTrigger
+                  nativeButton={false}
+                  render={<Button glass={glass} />}
+                >
+                  Notifications
+                </PopoverTrigger>
+                <PopoverContent glass={glass}>
+                  <PopoverTitle>Notifications</PopoverTitle>
+                  <PopoverDescription>
+                    The tail is outside the panel's box, so it refracts the
+                    wallpaper along with everything else.
+                  </PopoverDescription>
+                  <div className="stage__checks" style={{ marginTop: 14 }}>
+                    <SwitchLabel>
+                      Mentions
+                      <Switch
+                        glass={{ ...glass, material: 'clear' }}
+                        checked={showHidden}
+                        onCheckedChange={setShowHidden}
+                      />
+                    </SwitchLabel>
+                    <SwitchLabel>
+                      Replies
+                      <Switch
+                        glass={{ ...glass, material: 'clear' }}
+                        checked={snapToGrid}
+                        onCheckedChange={setSnapToGrid}
+                      />
+                    </SwitchLabel>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Dialog</h2>
+            <Dialog>
+              <div className="stage__buttons">
+                <DialogTrigger
+                  nativeButton={false}
+                  render={<Button glass={glass} />}
+                >
+                  Share…
+                </DialogTrigger>
+              </div>
+              <DialogContent glass={glass}>
+                <DialogDismiss />
+                <DialogTitle>Share this workspace</DialogTitle>
+                <DialogDescription>
+                  Dismissible, unlike the alert dialog. The × is a wash on the
+                  glass already here rather than a surface of its own.
+                </DialogDescription>
+                <DialogActions>
+                  <DialogClose nativeButton={false} render={<Button glass={glass} />}>
+                    Cancel
+                  </DialogClose>
+                  <DialogClose
+                    nativeButton={false}
+                    render={<Button variant="accent" glass={glass} />}
+                    onClick={() => setLastAction('Copied the share link')}
+                  >
+                    Copy link
+                  </DialogClose>
+                </DialogActions>
+              </DialogContent>
+            </Dialog>
           </section>
 
           <section className="stage__col">
-            <h2 className="stage__label">Button</h2>
-            <div className="stage__buttons">
-              <Button glass={glass} onClick={() => setLastAction('Glass button')}>
-                Glass
-              </Button>
-              <Button
-                variant="accent"
-                glass={glass}
-                onClick={() => setLastAction('Accent button')}
-              >
-                Accent
-              </Button>
-              <Button
-                variant="danger"
-                glass={glass}
-                onClick={() => setLastAction('Danger button')}
-              >
-                Danger
-              </Button>
-              <Button glass={glass} disabled>
-                Disabled
-              </Button>
-            </div>
+            <h2 className="stage__label">Button · Tooltip</h2>
+            {/* One provider for the row: after the first tooltip opens, the
+                neighbours skip the delay. Worth having over the wallpaper —
+                a tooltip is the smallest surface here, and the first place an
+                over-driven bezel shows. */}
+            <TooltipProvider delay={300}>
+              <div className="stage__buttons">
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button glass={glass} onClick={() => setLastAction('Glass button')} />
+                    }
+                  >
+                    Glass
+                  </TooltipTrigger>
+                  <TooltipContent glass={glass}>The default surface</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="accent"
+                        glass={glass}
+                        onClick={() => setLastAction('Accent button')}
+                      />
+                    }
+                  >
+                    Accent
+                  </TooltipTrigger>
+                  <TooltipContent glass={glass}>Retinted, not painted over</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="danger"
+                        glass={glass}
+                        onClick={() => setLastAction('Danger button')}
+                      />
+                    }
+                  >
+                    Danger
+                  </TooltipTrigger>
+                  <TooltipContent glass={glass}>Same trick, different token</TooltipContent>
+                </Tooltip>
+                <Button glass={glass} disabled>
+                  Disabled
+                </Button>
+              </div>
+            </TooltipProvider>
 
             <h2 className="stage__label stage__label--spaced">Checkbox</h2>
             <div className="stage__checks">

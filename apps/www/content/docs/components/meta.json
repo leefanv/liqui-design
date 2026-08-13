@@ -6,9 +6,12 @@
     "button",
     "checkbox",
     "context-menu",
+    "dialog",
     "field",
+    "popover",
     "select",
     "slider",
-    "switch"
+    "switch",
+    "tooltip"
   ]
 }
