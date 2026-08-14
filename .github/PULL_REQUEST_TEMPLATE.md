@@ -9,6 +9,7 @@ catch problems which otherwise surface in someone else's project.
 
 ## Checklist
 
+- [ ] Base branch is `dev` (only a release PR targets `main`)
 - [ ] `pnpm typecheck` and `pnpm build` pass
 - [ ] Changed `packages/glass`? Added a changeset (`pnpm changeset`) and ran
       `pnpm --filter @liqui-design/glass test:package`
