@@ -1,5 +1,42 @@
 # @liqui-design/glass
 
+## 0.2.2
+
+### Patch Changes
+
+- 3bd20fa: Keep component retints working on the `clear` material.
+
+  The clear tier used to reach legibility by overriding `--lq-tint` on the surface
+  itself. That override won against anything a component set on the same element:
+  a checked Checkbox or Switch writes its accent from a Tailwind utility, utilities
+  are layered, and layered rules lose to this package's unlayered stylesheet. So
+  `material="clear"` silently turned every checked control back into a neutral
+  white track — an on/off switch that could not show "on", with nothing logged
+  anywhere.
+
+  The tier now composites a neutral wash _underneath_ whatever tint is in play
+  instead of replacing it. Densities are unchanged for surfaces that don't retint;
+  retinted ones now come through in their own colour. This matters most for
+  controls nested on another glass surface, where `clear` is the recommended way to
+  give up a lens they can't use.
+
+- 3bd20fa: Let utility classes override a surface's base `position`, `border-radius`,
+  `isolation` and `color`.
+
+  Those four are defaults, but they were shipped as unlayered rules, and an
+  unlayered rule outranks _any_ layered one no matter how specific — so Tailwind
+  utilities on a glass surface lost silently. `fixed` on a glass dialog stayed
+  `relative`, leaving the popup wherever the document flow put it instead of
+  centred on the viewport, and `text-white` on an accent button never replaced
+  `--lq-text`. Neither logged anything; both looked like the component had been
+  styled that way on purpose.
+
+  They now live in Tailwind's own `base` layer, which is declared before
+  `utilities`, so an override wins. With no Tailwind present the layer is created
+  by this file and any unlayered consumer CSS beats it — which is what a default
+  should do. The surface anatomy (the backdrop, tint, specular and content layers)
+  stays unlayered: nothing outside should be overriding that.
+
 ## 0.2.1
 
 ### Patch Changes
