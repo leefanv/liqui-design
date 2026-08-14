@@ -14,6 +14,31 @@ cd liqui-design
 pnpm install
 ```
 
+## Branches
+
+```
+feature/*  ──PR──> dev ──PR──> main ──auto──> production
+hotfix/*   ──PR──> dev ──PR──> main ──auto──> production
+```
+
+`dev` and `main` are both protected and neither accepts a direct push. Everything
+arrives through a pull request, including anything you write yourself.
+
+- **`dev`** is where work lands. Branch from it, and open your PR back into it.
+  Name the branch `feature/<what>`, or `hotfix/<what>` if you are fixing something
+  that is already in production.
+- **`main`** is production. It only ever receives a PR from `dev`, and merging one
+  deploys the site and runs the release workflow.
+
+A hotfix takes the same route as a feature. It is a separate prefix so the branch
+list says which is which, not a shortcut past `dev` — skipping `dev` means the next
+`dev` → `main` PR silently reverts the fix.
+
+CI runs on every PR and again on `dev` and `main` after a merge, which is what
+catches two PRs that passed separately and conflict together. Releases run from
+`main` alone: merging to `main` opens a "Version Packages" PR, and merging *that*
+publishes to npm.
+
 ## Layout
 
 ```
@@ -145,6 +170,9 @@ and say *why* where it isn't obvious. Releases are automated: merging to `main` 
 "Version Packages" PR, and merging that publishes.
 
 ## Before opening a PR
+
+Open it against `dev`, not `main` — see [Branches](#branches). GitHub will offer
+`main` as the base, so this is the one thing worth checking twice.
 
 ```bash
 pnpm typecheck
