@@ -1,0 +1,44 @@
+name: Branch policy
+
+# Runs on every pull request, including the ones into dev where it has nothing to
+# check. That is deliberate: a required status check has to be reported on every
+# PR, or the ones it never runs for sit at "Expected" and can't be merged at all.
+on:
+  pull_request:
+
+concurrency:
+  group: branch-policy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  base:
+    name: PR base
+    runs-on: ubuntu-latest
+    steps:
+      # The default branch is main, so that is what GitHub pre-fills as the base
+      # for a new PR, and feature work aimed at dev lands one dropdown away from
+      # going straight to production. Nothing else catches that: the diff looks
+      # right, CI passes, and it only shows up as a release nobody meant to cut.
+      - name: Check the base branch
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          if [ "$BASE" != 'main' ]; then
+            echo "Base is $BASE. Nothing to check."
+            exit 0
+          fi
+
+          # Only two heads may open a PR into main: dev, promoting what has
+          # already settled there, and the release branch changesets opens on its
+          # own. A hotfix is not an exception — it goes through dev like anything
+          # else, or the next dev -> main PR quietly reverts it.
+          case "$HEAD" in
+            dev | changeset-release/*)
+              echo "$HEAD -> main is allowed."
+              ;;
+            *)
+              echo "::error::'$HEAD' cannot open a pull request into main. Re-target this PR at dev: gh pr edit <number> --base dev"
+              exit 1
+              ;;
+          esac
