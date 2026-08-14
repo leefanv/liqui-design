@@ -32,6 +32,10 @@ export default defineConfig({
       // Registry components import `cn` from where the CLI puts it in a consumer
       // project, so that specifier has to resolve here too.
       { find: /^@\/lib\/utils$/, replacement: resolve('../www/registry/liqui/lib/utils.ts') },
+      // Same reason, for the components that import each other: toggle-group
+      // reaches for toggle by the specifier the CLI rewrites into
+      // `@/components/ui/toggle`, so it has to resolve here too.
+      { find: /^@\/registry\//, replacement: resolve('../www/registry/') },
     ],
   },
 });

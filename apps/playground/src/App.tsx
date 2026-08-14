@@ -76,6 +76,15 @@ import {
 } from '@registry/ui/slider';
 import { Switch, SwitchLabel } from '@registry/ui/switch';
 import {
+  Tabs,
+  TabsIndicator,
+  TabsList,
+  TabsPanel,
+  TabsTab,
+} from '@registry/ui/tabs';
+import { Toggle } from '@registry/ui/toggle';
+import { ToggleGroup } from '@registry/ui/toggle-group';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -419,6 +428,62 @@ export default function App() {
                 </DialogActions>
               </DialogContent>
             </Dialog>
+
+            <h2 className="stage__label stage__label--spaced">Tabs</h2>
+            {/* The pill is the only glass in the strip — the third component
+                to answer "which of these two boxes refracts", and the second
+                (after the slider) to answer it with "the one that moves". */}
+            <div className="stage__tabs">
+              <Tabs defaultValue="lens">
+                <TabsList>
+                  <TabsTab value="lens">Lens</TabsTab>
+                  <TabsTab value="tint">Tint</TabsTab>
+                  <TabsTab value="rim">Rim</TabsTab>
+                  <TabsIndicator glass={glass} />
+                </TabsList>
+                <TabsPanel value="lens">
+                  The pill keeps one size as it travels, so the whole slide
+                  reuses a single cached displacement map.
+                </TabsPanel>
+                <TabsPanel value="tint">
+                  Drive the dials on the right and the indicator is the surface
+                  that changes — the groove under it never had a filter.
+                </TabsPanel>
+                <TabsPanel value="rim">
+                  Turn the bezel up far enough and this is where it shows first:
+                  a small box has little room to bend anything.
+                </TabsPanel>
+              </Tabs>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Toggle</h2>
+            {/* Standalone toggles are each their own lens; the group below is
+                one lens with flat toggles on it. Same rule, opposite answers,
+                because a `multiple` group has nothing that moves. */}
+            <div className="stage__buttons">
+              <Toggle glass={glass} defaultPressed>
+                Focus
+              </Toggle>
+              <Toggle glass={glass}>Stage Manager</Toggle>
+              <Toggle glass={glass} defaultPressed disabled>
+                Managed
+              </Toggle>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Toggle group</h2>
+            <div className="stage__buttons">
+              <ToggleGroup glass={glass} multiple defaultValue={['bold']} aria-label="Text style">
+                <Toggle value="bold" aria-label="Bold" className="w-9 font-bold">
+                  B
+                </Toggle>
+                <Toggle value="italic" aria-label="Italic" className="w-9 font-serif italic">
+                  I
+                </Toggle>
+                <Toggle value="underline" aria-label="Underline" className="w-9 underline">
+                  U
+                </Toggle>
+              </ToggleGroup>
+            </div>
           </section>
 
           <section className="stage__col">

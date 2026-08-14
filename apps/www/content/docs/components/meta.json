@@ -12,6 +12,9 @@
     "select",
     "slider",
     "switch",
+    "tabs",
+    "toggle",
+    "toggle-group",
     "tooltip"
   ]
 }
