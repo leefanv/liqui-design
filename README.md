@@ -6,8 +6,8 @@
 
 **Liquid glass components for React, built on [Base UI](https://base-ui.com).**
 
-Surfaces that actually refract what is behind them — a canvas-generated displacement
-map driving an SVG filter, not a blur with a white overlay.
+Surfaces that actually refract what is behind them, using a canvas-generated
+displacement map and an SVG filter instead of a blur with a white overlay.
 
 English · [简体中文](./README.zh-CN.md)
 
@@ -20,37 +20,17 @@ English · [简体中文](./README.zh-CN.md)
 
 ---
 
-## The name
-
-The project is **Liqui Design**. In running prose and on the command line it is just
-liqui — the package is `@liqui-design/glass`, the docs are at liqui.design, and nobody
-types the capitals.
-
-## Where it came from
-
-Liqui Design grew out of [Liquid Glass Design](https://liquidglassdesign.com/?ref=liqui.design),
-a curated gallery of liquid glass and glassmorphism references. It is a separate site,
-and the reason the two names rhyme. Every reference in it is a picture — enough to study
-the material, never enough to ship it, because the part that makes it glass is what the
-edge does to whatever is behind it, and that is not in a screenshot. The gallery keeps
-the references; this is the half you install.
-
-## How it ships
-
-Components are **source code in your project**, installed with the shadcn CLI. You own
-the file, you edit the file. Only the refraction kernel — the displacement-map maths,
-the document-wide SVG filter registry, and the browser fallbacks — stays a dependency,
-because those are the parts you cannot reasonably maintain by hand.
+## Install
 
 ```bash
 npx shadcn@latest add https://liqui.design/r/button.json
 ```
 
-That one command is the whole setup: it writes `components/ui/button.tsx`, adds the
-glass design tokens to your `globals.css`, and installs the kernel.
+That writes `components/ui/button.tsx` into your project, adds the glass design
+tokens to your `globals.css`, and installs the `@liqui-design/glass` package.
 
-Installing more than one? Register the namespace once in your `components.json`
-and drop the URLs:
+If you plan to add more than one component, register the namespace once in your
+`components.json`:
 
 ```json
 {
@@ -64,16 +44,22 @@ and drop the URLs:
 npx shadcn@latest add @liqui-design/button
 ```
 
-> `@liqui-design/button` is a registry item, not an npm package — the namespace
-> is a key in your own `components.json` and resolves through the shadcn CLI.
-> The only thing that comes from npm is
+> `@liqui-design/button` is a registry item, not an npm package. The namespace is
+> a key in your own `components.json`, and the shadcn CLI resolves it. The only
+> thing published to npm is
 > [`@liqui-design/glass`](https://www.npmjs.com/package/@liqui-design/glass),
 > which the CLI installs for you.
 
-liqui is built on the same Base UI base as shadcn/ui (`shadcn init -b base`), so an
-existing `components.json`, `cn()` and Tailwind token setup carries over unchanged.
+### Requirements
 
-## Use it
+- React 18 or 19
+- Tailwind CSS v4
+
+liqui uses the same Base UI base as shadcn/ui (`shadcn init -b base`), so an
+existing `components.json`, `cn()` helper and Tailwind token setup carries over
+unchanged.
+
+## Usage
 
 ```tsx
 import { Button } from '@/components/ui/button';
@@ -87,9 +73,20 @@ export default function Page() {
 }
 ```
 
-Note the background. **Glass refracts what is behind it**, so a surface on a flat fill
-has nothing to show and will look like a slightly grey box. Put it over imagery, video,
-a gradient with real edges, or content that scrolls underneath.
+Note the background. Glass refracts whatever sits behind it, so a surface on a
+flat fill has nothing to work with and looks like a slightly grey box. Put these
+components over imagery, video, a gradient with real edges, or content that
+scrolls underneath.
+
+## What you install
+
+Components arrive as source code in your project. You own the files and edit them
+like anything else in your codebase.
+
+The refraction kernel is the exception. The displacement-map maths, the
+document-wide SVG filter registry and the browser fallbacks stay in the
+`@liqui-design/glass` package, since that is the part you would not want to
+maintain by hand.
 
 ## Components
 
@@ -116,20 +113,23 @@ a gradient with real edges, or content that scrolls underneath.
 | Safari | — | Drops `backdrop-filter` entirely when it references an SVG filter. WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) has an implementation in review |
 | Firefox | — | Same |
 
-The fallback to frosted blur is automatic and needs no configuration, but it is worth
-looking at: a design tuned to `frost: 0` can be unreadable once the lens is gone,
-because in the refraction tier the lens was doing work the tint would otherwise have to
-do. See the [glass handbook](https://liqui.design/docs/handbook/glass#degradation).
+Falling back to frosted blur is automatic and needs no configuration, but check
+how it looks. A design tuned with `frost: 0` can end up unreadable once the lens
+is gone, because the lens was doing work the tint would otherwise have to do. The
+[glass handbook](https://liqui.design/docs/handbook/glass#degradation) goes
+through this.
 
-## Requirements
+## Background
 
-- React 18 or 19
-- Tailwind CSS v4
+liqui grew out of [Liquid Glass Design](https://liquidglassdesign.com/?ref=liqui.design),
+a curated gallery of liquid glass and glassmorphism references, and the two are
+still separate sites. The gallery collects the look; this is the part you can
+install.
 
 ## Repository
 
 ```
-packages/glass    @liqui-design/glass — the refraction kernel
+packages/glass    @liqui-design/glass, the refraction kernel
 apps/www          documentation site, and the registry the CLI installs from
 apps/playground   Vite app for tuning the optics against a real backdrop
 ```
