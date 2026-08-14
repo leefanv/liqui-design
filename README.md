@@ -12,10 +12,6 @@ map driving an SVG filter, not a blur with a white overlay.
 [![npm](https://img.shields.io/npm/v/@liqui-design/glass?color=%232f6bff&label=%40liqui-design%2Fglass)](https://www.npmjs.com/package/@liqui-design/glass)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-<img src="./.github/assets/hero.jpg" alt="liqui components over a desktop wallpaper: an accordion, a form, buttons, checkboxes and a context menu, each bending the background through its rim" width="100%">
-
-<sub>Every surface above is refracting the wallpaper behind it — look at where the curves cross an edge. Run it yourself with <code>pnpm dev:playground</code>.</sub>
-
 </div>
 
 ---
