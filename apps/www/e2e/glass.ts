@@ -72,6 +72,22 @@ async function settle(page: Page) {
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r(null))));
 }
 
+/**
+ * Drags the home page's loose surface up and to the left, over an edge in the
+ * backdrop. Shared because two suites need the same gesture: one asserts that
+ * no filter was rebuilt by it, the other photographs the result.
+ */
+export async function dragSurface(page: Page) {
+  const handle = page.getByText('drag me over an edge');
+  const box = await handle.boundingBox();
+  if (!box) throw new Error('drag handle not found');
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 160, box.y + box.height / 2 - 100, { steps: 12 });
+  await page.mouse.up();
+}
+
 /** A docs preview surface, without the surrounding page chrome. */
 export function preview(page: Page, index = 0): Locator {
   return page.locator('[data-preview]').nth(index);

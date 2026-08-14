@@ -10,8 +10,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "registry:build": "tsx ./scripts/build-registry.mts",
     "postinstall": "fumadocs-mdx",
-    "test:visual": "playwright test",
-    "test:visual:update": "playwright test --update-snapshots"
+    "test:checks": "playwright test checks.spec.ts",
+    "test:visual": "playwright test visual.spec.ts",
+    "test:visual:update": "playwright test visual.spec.ts --update-snapshots"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
