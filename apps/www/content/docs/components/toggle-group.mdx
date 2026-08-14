@@ -1,0 +1,103 @@
+---
+title: Toggle Group
+description: One glass strip holding several toggles, which flatten so the strip keeps the lens.
+---
+
+<ComponentPreview name="toggle-group-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/toggle-group.json
+```
+
+This one brings [Toggle](/docs/components/toggle) with it — the two share a
+context, and a group with nothing to group is not a component.
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/toggle-group
+```
+
+## Usage
+
+```tsx
+import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup } from '@/components/ui/toggle-group';
+```
+
+```tsx
+<ToggleGroup aria-label="Text alignment" defaultValue={['left']}>
+  <Toggle value="left" aria-label="Align left">
+    <AlignLeftIcon />
+  </Toggle>
+  <Toggle value="center" aria-label="Align center">
+    <AlignCenterIcon />
+  </Toggle>
+</ToggleGroup>
+```
+
+The value is an array even when only one toggle can be pressed at a time — that
+is Base UI's shape, and it is what makes `multiple` a single prop rather than a
+different component.
+
+## Multiple
+
+<ComponentPreview name="toggle-group-multiple" />
+
+```tsx
+<ToggleGroup multiple value={style} onValueChange={setStyle}>
+```
+
+## Notes
+
+### The strip is the glass, the toggles are not
+
+[Tabs](/docs/components/tabs#the-indicator-is-the-glass-the-strip-is-not) looks
+almost identical and resolves this the opposite way, which is worth sitting with
+for a second, because the rule is the same in both places: only one surface in a
+control gets to refract, and it should be the one that carries the meaning.
+
+A tab strip has exactly one selection, so it has exactly one thing that moves,
+and a moving lens is the best thing refraction can be. A toggle group with
+`multiple` has no such thing — two toggles can be lit at once, and there is no
+single travelling surface available to be the lens. So the group refracts, once,
+for the whole control, and a pressed toggle is accent laid over glass that is
+already there.
+
+That is the same call the dialog's corner dismiss makes: a second lens inside a
+surface has nothing to bend but the first one.
+
+### Flattening is context, not a prop
+
+`Toggle` reads whether it owns its surface from a context the group provides:
+
+```tsx
+<ToggleOwnsSurface.Provider value={false}>
+```
+
+So a toggle behaves correctly by being in the right place, and the same import
+works standalone and in a group without a `variant` to remember. It is also why
+`toggle-group` installs `toggle` — the context has to be the same module object
+in both files.
+
+If you want a group of *glass* toggles instead — separate pills, each its own
+lens — do not use `ToggleGroup`; that is a row of standalone `Toggle`s, and it is
+what [the toggle page](/docs/components/toggle) shows.
+
+### Orientation
+
+`orientation="vertical"` stacks the strip. `data-orientation` lands on the group
+root, not on the content wrapper the toggles actually sit in, so the wrapper
+reads it back off the root through `group-data-*` — the same pattern `Button`
+uses to reach its own content from outside.

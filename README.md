@@ -103,6 +103,9 @@ maintain by hand.
 | [Select](https://liqui.design/docs/components/select) | Glass trigger and glass popup, kept from overlapping |
 | [Slider](https://liqui.design/docs/components/slider) | The thumb is the lens; the rail is deliberately flat |
 | [Switch](https://liqui.design/docs/components/switch) | The track is the lens; the thumb is deliberately opaque |
+| [Tabs](https://liqui.design/docs/components/tabs) | The indicator is the lens, sliding along a flat groove |
+| [Toggle](https://liqui.design/docs/components/toggle) | A latching button whose glass fills while it is on |
+| [Toggle Group](https://liqui.design/docs/components/toggle-group) | One strip, one lens, and toggles that flatten inside it |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | The smallest surface, frosted harder so it stays readable |
 
 ## Browser support

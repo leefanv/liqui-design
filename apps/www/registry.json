@@ -203,6 +203,47 @@
       ]
     },
     {
+      "name": "tabs",
+      "type": "registry:ui",
+      "title": "Glass Tabs",
+      "description": "A segmented control whose indicator is the refracting surface, sliding along a flat groove.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        { "path": "registry/liqui/ui/tabs.tsx", "type": "registry:ui", "target": "@ui/tabs.tsx" }
+      ]
+    },
+    {
+      "name": "toggle",
+      "type": "registry:ui",
+      "title": "Glass Toggle",
+      "description": "A two-state button whose glass fills with accent while it is on.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        { "path": "registry/liqui/ui/toggle.tsx", "type": "registry:ui", "target": "@ui/toggle.tsx" }
+      ]
+    },
+    {
+      "name": "toggle-group",
+      "type": "registry:ui",
+      "title": "Glass Toggle Group",
+      "description": "One glass strip holding several toggles, which flatten so the strip keeps the lens.",
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": [
+        "https://liqui.design/r/liqui.json",
+        "https://liqui.design/r/toggle.json",
+        "utils"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/ui/toggle-group.tsx",
+          "type": "registry:ui",
+          "target": "@ui/toggle-group.tsx"
+        }
+      ]
+    },
+    {
       "name": "button-demo",
       "type": "registry:example",
       "title": "Button",
@@ -372,6 +413,56 @@
         "https://liqui.design/r/button.json"
       ],
       "files": [{ "path": "registry/liqui/examples/tooltip-sides.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "tabs-demo",
+      "type": "registry:example",
+      "title": "Tabs",
+      "description": "A glass pill travelling along a flat groove.",
+      "registryDependencies": ["https://liqui.design/r/tabs.json"],
+      "files": [{ "path": "registry/liqui/examples/tabs-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "tabs-vertical",
+      "type": "registry:example",
+      "title": "Vertical",
+      "description": "The same indicator, travelling down instead of across.",
+      "registryDependencies": ["https://liqui.design/r/tabs.json"],
+      "files": [{ "path": "registry/liqui/examples/tabs-vertical.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "toggle-demo",
+      "type": "registry:example",
+      "title": "Toggle",
+      "description": "Three independent surfaces: on, off and disabled.",
+      "registryDependencies": ["https://liqui.design/r/toggle.json"],
+      "files": [{ "path": "registry/liqui/examples/toggle-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "toggle-group-demo",
+      "type": "registry:example",
+      "title": "Toggle Group",
+      "description": "One strip, one lens, and toggles that flatten inside it.",
+      "registryDependencies": [
+        "https://liqui.design/r/toggle-group.json",
+        "https://liqui.design/r/toggle.json"
+      ],
+      "files": [
+        { "path": "registry/liqui/examples/toggle-group-demo.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "toggle-group-multiple",
+      "type": "registry:example",
+      "title": "Multiple",
+      "description": "Several toggles lit at once — the case with no single surface to move.",
+      "registryDependencies": [
+        "https://liqui.design/r/toggle-group.json",
+        "https://liqui.design/r/toggle.json"
+      ],
+      "files": [
+        { "path": "registry/liqui/examples/toggle-group-multiple.tsx", "type": "registry:example" }
+      ]
     }
   ]
 }

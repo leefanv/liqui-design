@@ -8,7 +8,8 @@
     "paths": {
       "@registry/*": ["../www/registry/liqui/*"],
       "@shared/*": ["../www/components/*"],
-      "@/lib/utils": ["../www/registry/liqui/lib/utils.ts"]
+      "@/lib/utils": ["../www/registry/liqui/lib/utils.ts"],
+      "@/registry/*": ["../www/registry/*"]
     }
   },
   "include": ["src", "vite.config.ts"]

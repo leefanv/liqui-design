@@ -203,6 +203,17 @@ body {
   text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
 }
 
+/* A tab panel is body copy sitting on bare wallpaper, same problem the slider
+   labels have — and it inherits, so one declaration covers the panel and the
+   inactive tab labels above it. */
+.stage__tabs {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='dark'] .stage__tabs {
+  text-shadow: 0 1px 3px rgba(0, 0, 10, 0.45);
+}
+
 .stage code {
   font-family: 'SF Mono', ui-monospace, monospace;
   font-size: 0.92em;

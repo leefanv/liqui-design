@@ -1,0 +1,143 @@
+---
+title: Tabs
+description: A segmented control whose indicator is the refracting surface, sliding along a flat groove.
+---
+
+<ComponentPreview name="tabs-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/tabs.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/tabs
+```
+
+## Usage
+
+```tsx
+import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs';
+```
+
+```tsx
+<Tabs defaultValue="lens">
+  <TabsList>
+    <TabsTab value="lens">Lens</TabsTab>
+    <TabsTab value="tint">Tint</TabsTab>
+    <TabsIndicator />
+  </TabsList>
+  <TabsPanel value="lens">…</TabsPanel>
+  <TabsPanel value="tint">…</TabsPanel>
+</Tabs>
+```
+
+`TabsIndicator` goes inside `TabsList`, after the tabs. It positions itself from
+the CSS variables Base UI writes onto it, so it does not care where in the list
+it appears — but it is absolutely positioned, and putting it last keeps the
+source order matching the paint order.
+
+## Vertical
+
+<ComponentPreview name="tabs-vertical" />
+
+`orientation="vertical"` turns the strip into a column and moves the indicator
+down instead of across. Nothing in the component switches on it: the indicator
+carries one `translate` declaration reading both axes, and only one of them is
+ever non-zero.
+
+```tsx
+'[translate:var(--active-tab-left)_var(--active-tab-top)]'
+```
+
+## Notes
+
+### The indicator is the glass, the strip is not
+
+This is the third time the library has had to pick which of two nested boxes
+gets to refract — a `backdrop-filter` inside another one samples its parent's
+output instead of the page, so only one of them can be a real lens.
+[Switch](/docs/components/switch#only-one-of-the-two-can-be-a-lens) gives the
+constraint; [Slider](/docs/components/slider) answers it by putting the glass on
+the part that moves, and tabs land in the same place.
+
+The argument is about what refraction is *for*. A lens shows itself by dragging
+the background through its bezel, which needs the bezel to travel over
+something. A tab strip has exactly one thing that travels. Make the card the
+lens and the pill a flat wash, and the pill has nothing to say and the card is a
+nicer background; make the pill the lens and the whole control is about the one
+element you are actually watching.
+
+So `TabsList` is drawn the cheap way, the same groove `SliderTrack` uses, and
+`TabsIndicator` is the `LiquiGlass`:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-text)_10%,transparent)]',
+'shadow-[inset_0_1px_2px_...,inset_0_0_0_0.5px_var(--lq-rim-lo)]',
+```
+
+<Callout type="info">
+  The groove is faint on purpose. It sits behind the indicator, so it is part of
+  what the lens bends — at 10% it is thin enough that the page still reaches the
+  bezel through it.
+</Callout>
+
+### Why the tabs are `flex-1`
+
+Because the indicator's box *is* the lens's box, and the kernel keys its
+displacement map on size. A pill that changes width while it slides asks for a
+new map on every frame of the transition, and the map cache is a 48-entry LRU —
+one slide across a wide-enough gap would evict every other surface's map on its
+way past, so an unrelated popup pays to regenerate the next time it opens.
+
+Equal-width segments make that impossible: the box never changes at all, so one
+cached map and one registered filter serve every slide, the way a
+[slider drag](/docs/components/slider#dragging-is-free) reuses one. It is also
+how a segmented control is proportioned anyway.
+
+If you do override it and end up with uneven tabs, the pill still only
+interpolates its position — width and height are applied on a single frame:
+
+```tsx
+'transition-[translate] duration-[220ms]';
+```
+
+That is one new map per tab change rather than one per frame. The trade is that
+the resize snaps while the slide glides, which is the visible price of not
+melting the cache.
+
+### The indicator starts hidden
+
+Base UI puts a `hidden` attribute on `Tabs.Indicator` until it has measured the
+active tab, so the first box `LiquiGlass` measures may be 0×0. That is handled —
+the kernel ignores zero-sized measurements and picks the real one up from the
+`ResizeObserver` entry that fires when the strip is revealed — but it is why the
+pill appears a frame after the rest of the strip on a cold load.
+
+`renderBeforeHydration` on the indicator narrows that window after
+server-rendering by inlining a small positioning script. `TabsIndicator` passes
+the prop straight through; it is off by default, as in Base UI.
+
+### Panels
+
+`TabsPanel` is not glass, and this is deliberate. Tabs are chrome and the panel
+is where your content goes; giving it a surface of its own would put a second
+lens directly under the first for no reason. Wrap it in a `LiquiGlass` yourself
+if the design calls for a card — the panel is a sibling of the list, not a
+child, so it is free to be one.
+
+Panels of different heights make the strip jump. The demo pins a `min-h-20` on
+each; a grid viewport with every panel in `grid-area: 1 / 1` is the other usual
+answer.

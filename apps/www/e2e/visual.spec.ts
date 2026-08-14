@@ -35,6 +35,9 @@ const COMPONENTS = [
   'select',
   'slider',
   'switch',
+  'tabs',
+  'toggle',
+  'toggle-group',
   'tooltip',
 ];
 
@@ -91,6 +94,21 @@ test.describe('overlays while open', () => {
     await page.getByRole('button', { name: 'Undo' }).hover();
     await waitForGlass(page);
     await expect(preview(page)).toHaveScreenshot('tooltip-open.png');
+  });
+});
+
+test.describe('tabs indicator', () => {
+  // The looped preview only ever captures the first tab, and the first tab is
+  // the one place the pill's box coincides with the strip's own corner. Moving
+  // it is what proves the lens travelled rather than being repainted: the pill
+  // has to arrive at the same size, on a cached map, with its bezel bending the
+  // backdrop it landed on.
+  test('the pill refracts wherever it lands', async ({ page }) => {
+    await page.goto('/docs/components/tabs');
+    await waitForGlass(page);
+    await page.getByRole('tab', { name: 'Rim' }).first().click();
+    await waitForGlass(page);
+    await expect(preview(page)).toHaveScreenshot('tabs-moved.png');
   });
 });
 

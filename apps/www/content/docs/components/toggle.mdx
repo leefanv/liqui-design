@@ -1,0 +1,94 @@
+---
+title: Toggle
+description: A two-state button whose glass fills with accent while it is on.
+---
+
+<ComponentPreview name="toggle-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/toggle.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/toggle
+```
+
+## Usage
+
+```tsx
+import { Toggle } from '@/components/ui/toggle';
+```
+
+```tsx
+<Toggle defaultPressed>Focus</Toggle>
+```
+
+```tsx
+const [focus, setFocus] = React.useState(true);
+
+<Toggle pressed={focus} onPressedChange={setFocus}>
+  Focus
+</Toggle>;
+```
+
+Put several in a [Toggle Group](/docs/components/toggle-group) to share one
+strip, one lens and one arrow-key roving focus.
+
+## Notes
+
+### On is a retint
+
+Pressing overrides `--lq-tint` rather than painting a fill over the surface, so
+the bezel and the specular arc survive the state change and the accent arrives
+*as glass*:
+
+```tsx
+data-[pressed]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_84%,transparent)]
+```
+
+Same mechanism as [Checkbox](/docs/components/checkbox#checked-state) and
+[Switch](/docs/components/switch#onoff-is-a-retint). Retint through the token to
+change the on-colour; a `background` would paint over the refraction instead of
+joining it.
+
+### Don't render it as a Button
+
+It looks like the obvious composition and it is the one thing to avoid:
+
+```tsx
+// Don't.
+<Toggle render={<Button />}>Focus</Toggle>
+```
+
+Both components use `data-pressed`, and they mean different things by it. Base
+UI puts `data-pressed` on a *pressable trigger* while its popup is open — a
+momentary state, which is why [Button](/docs/components/button) shrinks to 0.97
+on it. On a `Toggle` the same attribute is the latched on-state, so a button
+composed this way stays permanently scaled down while it is on.
+
+`Toggle` is therefore built on `LiquiGlass` directly rather than on `Button`,
+and shares its optics by matching them, not by wrapping it. It presses the same
+way — `active:scale-[0.97]`, which only lasts as long as the pointer is down.
+
+### The native button
+
+Like `Button`, the glass variant passes `nativeButton={false}`: the glass
+anatomy is a stack of divs and a native `<button>` only accepts phrasing
+content, so Base UI supplies `role`, `tabIndex` and the key handling instead.
+
+Inside a `ToggleGroup` the toggle renders flat, and there the native `<button>`
+comes back — there is no wrapper to put inside it, so none of the reasons to opt
+out apply.
