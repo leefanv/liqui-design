@@ -34,6 +34,15 @@ A hotfix takes the same route as a feature. It is a separate prefix so the branc
 list says which is which, not a shortcut past `dev` — skipping `dev` means the next
 `dev` → `main` PR silently reverts the fix.
 
+The default branch is `main`, so GitHub pre-fills `main` as the base for a new PR
+and feature work is one dropdown away from going straight to production. The
+**Branch policy** check fails any PR into `main` whose head is not `dev` or the
+release branch changesets opens. If you see it go red, re-target the PR:
+
+```bash
+gh pr edit <number> --base dev
+```
+
 CI runs on every PR and again on `dev` and `main` after a merge, which is what
 catches two PRs that passed separately and conflict together. Releases run from
 `main` alone: merging to `main` opens a "Version Packages" PR, and merging *that*
