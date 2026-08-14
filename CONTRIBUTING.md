@@ -71,10 +71,40 @@ ships.
    `content/docs/components/meta.json`. Render demos with
    `<ComponentPreview name="<name>-demo" />`.
 5. `pnpm registry:build && pnpm dev:www` and look at it.
+6. Add the demo to `apps/www/e2e/visual.spec.ts` and accept a baseline for it —
+   see below.
 
 Component pages should explain what is specific to putting *this* component on glass —
 why the button is not a native `<button>`, why the field's input cannot be the glass
 root. A restatement of Base UI's props is not worth writing.
+
+## The two test suites
+
+```bash
+pnpm --filter www test:checks          # what CI runs
+pnpm --filter www test:visual          # screenshots, compared to your baselines
+pnpm --filter www test:visual:update   # accept the current render as the baseline
+```
+
+**`e2e/checks.spec.ts` is the CI gate.** Console errors on the pages that
+exercise the awkward patterns, plus a couple of layout and filter-cache
+invariants. Every one of them asserts something directly, so there is no
+baseline to keep and nothing drifts when a browser updates.
+
+**`e2e/visual.spec.ts` is a local tool and CI does not run it.** It keeps
+baselines only for the platform you are on — the committed set is macOS
+(`-chromium-darwin.png`), and if you work on Linux you will generate your own
+`-chromium-linux.png` alongside them. Commit whichever set your machine
+produces; neither is authoritative, because **visual acceptance here is a
+person's job, not the suite's**. Baselines catch a change against the last
+render somebody accepted; they cannot catch a render that was wrong from the
+start, and twice now this repo has locked a defect into a green baseline. Use
+the suite the way you would use `git diff`: run it before a change touching the
+optics, run it after, look at what moved.
+
+Do look. A green run means nothing *large* moved — the diff tolerance is sized
+for the canvas's own run-to-run jitter and is wide enough to hide a whole
+tooltip tail, which it has.
 
 ## Rules that are specific to glass
 
@@ -119,10 +149,11 @@ and say *why* where it isn't obvious. Releases are automated: merging to `main` 
 ```bash
 pnpm typecheck
 pnpm build
+pnpm --filter www test:checks
 pnpm --filter @liqui-design/glass test:package   # publint + attw, if you touched the package
 ```
 
-CI runs the same three. `test:package` catches exports-map and type-resolution breakage
+CI runs the same four. `test:package` catches exports-map and type-resolution breakage
 that only surfaces in a consumer's project, where it is expensive to trace back.
 
 Check your change in **both** Chromium and Safari. The fallback path is easy to break

@@ -1,6 +1,27 @@
 import { expect, test } from '@playwright/test';
 
-import { preview, stage, waitForGlass } from './glass';
+import { dragSurface, preview, stage, waitForGlass } from './glass';
+
+/**
+ * The screenshot suite — a local tool, not a CI gate.
+ *
+ * It runs on whatever platform you are on and keeps baselines only for that
+ * platform (`-chromium-darwin.png` here). CI does not run it: matching CI's
+ * Linux rendering from a developer machine meant generating a second set of
+ * baselines inside an emulated amd64 container, which put "can I add a
+ * component" at the mercy of a local Docker daemon and bought less than it
+ * looked like. Baselines catch *changes* against the last accepted render; they
+ * cannot catch a render that was wrong to begin with, and twice now they have
+ * faithfully locked in a defect and stayed green. Visual acceptance is a
+ * human's job here; this suite is for the diff you get afterwards.
+ *
+ * Use it before and after a change that touches the optics:
+ *
+ *     pnpm --filter www test:visual           # compare against your baselines
+ *     pnpm --filter www test:visual:update    # accept the new render
+ *
+ * See `checks.spec.ts` for what CI does run.
+ */
 
 const COMPONENTS = [
   'accordion',
@@ -43,8 +64,8 @@ test.describe('select popup', () => {
 test.describe('overlays while open', () => {
   // Same reasoning as the select popup: the looped previews above capture a
   // closed trigger, and for these three the component *is* the surface that
-  // only exists while open. The tail in particular is drawn from the popup's
-  // tokens rather than refracted, which is exactly the kind of thing that goes
+  // only exists while open. The popover's tail in particular wears the popup's
+  // material without its lens, which is exactly the kind of thing that goes
   // subtly wrong without failing anything else.
   test('popover', async ({ page }) => {
     await page.goto('/docs/components/popover');
@@ -73,28 +94,6 @@ test.describe('overlays while open', () => {
   });
 });
 
-test.describe('code tab', () => {
-  test('the code block does not overlap the tab strip', async ({ page }) => {
-    await page.goto('/docs/components/accordion');
-    await waitForGlass(page);
-    await page.getByRole('tab', { name: 'Code' }).click();
-
-    const strip = await page.locator('[role="tablist"]').first().boundingBox();
-    const block = await page
-      .locator('[role="tabpanel"]:not([hidden]) figure')
-      .first()
-      .boundingBox();
-    if (!strip || !block) throw new Error('tab strip or code block not found');
-
-    // Fumadocs gives a code block inside a tab a negative margin sized to cancel
-    // the panel's own padding. Removing that padding — which is the right thing
-    // to do for the preview panel, and was wrong here — leaves the negative
-    // margin uncancelled and the block bleeds up over the tabs. Geometry rather
-    // than a screenshot: it states the invariant exactly and costs no baseline.
-    expect(block.y).toBeGreaterThanOrEqual(strip.y + strip.height - 1);
-  });
-});
-
 test.describe('home stage', () => {
   test('default optics', async ({ page }) => {
     await page.goto('/');
@@ -113,20 +112,9 @@ test.describe('home stage', () => {
   test('dragging moves the surface without disturbing the optics', async ({ page }) => {
     await page.goto('/');
     await waitForGlass(page);
-
-    const handle = page.getByText('drag me over an edge');
-    const box = await handle.boundingBox();
-    if (!box) throw new Error('drag handle not found');
-
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 - 160, box.y + box.height / 2 - 100, { steps: 12 });
-    await page.mouse.up();
-
-    // Moving the surface must not regenerate anything: the map is keyed on size
-    // and optics, neither of which changed. A fade class reappearing here would
-    // mean a filter was recreated on a plain translate.
-    await expect(page.locator('.liqui-glass__refract--fade')).toHaveCount(0);
+    await dragSurface(page);
+    // The invariant behind this picture — that no filter was rebuilt — is
+    // asserted directly in checks.spec.ts. This is the look of it.
     await expect(stage(page)).toHaveScreenshot('home-dragged.png');
   });
 });
@@ -139,36 +127,4 @@ test.describe('the material', () => {
     // fill. If this ever stops looking flat, the page's argument is broken.
     await expect(page.locator('[data-preview="flat"]')).toHaveScreenshot('handbook-flat.png');
   });
-});
-
-test.describe('no console errors', () => {
-  for (const path of [
-    '/',
-    '/docs',
-    // The directory mounts every demo at once — the one page where a component
-    // that misbehaves off its own page has somewhere to show up.
-    '/docs/components',
-    '/docs/components/alert-dialog',
-    // Two floating surfaces, a trigger that has to opt out of the native
-    // button and one that must not, and a second demo that pins four tooltips
-    // open at once.
-    '/docs/components/popover',
-    '/docs/components/tooltip',
-    '/docs/components/select',
-    '/docs/handbook/glass',
-  ]) {
-    test(path, async ({ page }) => {
-      const errors: string[] = [];
-      page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-      page.on('pageerror', (e) => errors.push(String(e)));
-
-      await page.goto(path);
-      await waitForGlass(page);
-
-      // Favicon 404s are noise; anything else is a defect. The Base UI
-      // nativeButton warning reached production once through a documented
-      // snippet, which is why this check exists at all.
-      expect(errors.filter((e) => !/favicon|404/i.test(e))).toEqual([]);
-    });
-  }
 });

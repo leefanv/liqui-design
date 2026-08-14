@@ -1,10 +1,20 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Visual regression for the glass, which is the one thing in this repo that
- * typechecking and building cannot tell you anything about. Several defects so
- * far — an SSR tier mismatch, unreadable preview text, a console error on a
- * documented pattern — passed every other check and were only visible on screen.
+ * Two suites, run in different places.
+ *
+ * `checks.spec.ts` is what CI runs: console errors, layout invariants and
+ * filter-cache behaviour, each asserted directly. No baselines, so nothing here
+ * drifts with a graphics-stack update.
+ *
+ * `visual.spec.ts` is the screenshot suite, and it is a local tool. It keeps
+ * baselines only for the platform you run it on, because keeping a second set
+ * for CI's Linux meant generating them in an emulated amd64 container and put
+ * "can I add a component" at the mercy of a local Docker daemon. It was also
+ * worth less than it looked: a baseline catches a *change* against the last
+ * accepted render, never a render that was wrong to begin with — twice now the
+ * suite has locked a defect into a baseline and stayed green through it.
+ * Visual acceptance is a human's job here.
  *
  * Chromium only, on purpose: refraction does not render anywhere else, so a
  * WebKit or Firefox baseline would be a picture of the fallback and would go
@@ -20,9 +30,17 @@ export default defineConfig({
 
   expect: {
     toHaveScreenshot: {
-      // The displacement map is generated per-pixel from a canvas, so a few
-      // channels of drift across driver versions is expected. Anything that
-      // matters visually moves far more than this.
+      // The displacement map is generated per-pixel from a canvas, and the
+      // result is not bit-stable between runs on one machine: measured
+      // run-to-run jitter on the tooltip and handbook previews is 400–1,000
+      // pixels with nothing changed at all. This bound is sized for that.
+      //
+      // Which means it is also a blind spot worth knowing about. On a 663×320
+      // preview, 1% is ~2,100 pixels — more than a whole tooltip tail, and in
+      // fact a tail was added, restyled and removed under this bound without
+      // ever failing a test. Tightening it just trades the blind spot for a
+      // flaky suite. Treat a green run as "nothing large moved", not as
+      // "nothing moved", and look at the previews yourself.
       maxDiffPixelRatio: 0.01,
       threshold: 0.2,
       animations: 'disabled',
@@ -50,8 +68,8 @@ export default defineConfig({
   ],
 
   // Only manage a server when we are not pointed at one. Setting BASE_URL lets
-  // the suite run against an already-running instance — the deployed site, or
-  // the host's server from inside the Linux container used to make baselines.
+  // the suite run against an already-running instance — a `next start` you are
+  // keeping warm across several runs, or the deployed site.
   ...(process.env.BASE_URL
     ? {}
     : {
