@@ -2,8 +2,11 @@ name: CI
 
 on:
   pull_request:
+  # Both protected branches. `pull_request` already covers the way code gets in,
+  # so this is the after-the-merge run: it catches a semantic conflict between two
+  # PRs that each passed on their own.
   push:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: ci-${{ github.ref }}

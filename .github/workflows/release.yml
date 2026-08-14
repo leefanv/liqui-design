@@ -1,6 +1,9 @@
 name: Release
 
 on:
+  # main only, deliberately. dev is where changes accumulate and a changeset can
+  # still be rewritten; main is the branch a version on npm is allowed to come
+  # from. Adding dev here would publish every merged feature.
   push:
     branches: [main]
 
