@@ -1,11 +1,15 @@
 <div align="center">
 
-# liqui
+<img src="./apps/www/app/logo.svg" alt="" width="88" height="88">
+
+# Liqui Design
 
 **Liquid glass components for React, built on [Base UI](https://base-ui.com).**
 
 Surfaces that actually refract what is behind them — a canvas-generated displacement
 map driving an SVG filter, not a blur with a white overlay.
+
+English · [简体中文](./README.zh-CN.md)
 
 [Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button) · [Gallery](https://liquidglassdesign.com/?ref=liqui.design)
 
@@ -16,13 +20,20 @@ map driving an SVG filter, not a blur with a white overlay.
 
 ---
 
+## The name
+
+The project is **Liqui Design**. In running prose and on the command line it is just
+liqui — the package is `@liqui-design/glass`, the docs are at liqui.design, and nobody
+types the capitals.
+
 ## Where it came from
 
-liqui grew out of [Liquid Glass Design](https://liquidglassdesign.com/?ref=liqui.design),
-a curated gallery of liquid glass and glassmorphism references. Every one of them is a
-picture — enough to study the material, never enough to ship it, because the part that
-makes it glass is what the edge does to whatever is behind it, and that is not in a
-screenshot. The gallery keeps the references; this is the half you install.
+Liqui Design grew out of [Liquid Glass Design](https://liquidglassdesign.com/?ref=liqui.design),
+a curated gallery of liquid glass and glassmorphism references. It is a separate site,
+and the reason the two names rhyme. Every reference in it is a picture — enough to study
+the material, never enough to ship it, because the part that makes it glass is what the
+edge does to whatever is behind it, and that is not in a screenshot. The gallery keeps
+the references; this is the half you install.
 
 ## How it ships
 
