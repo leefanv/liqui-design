@@ -50,12 +50,57 @@ import {
   FieldLabel,
 } from '@registry/ui/field';
 import {
+  Menu,
+  MenuCheckboxItem,
+  MenuContent,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSeparator,
+  MenuShortcut,
+  MenuSub,
+  MenuSubContent,
+  MenuSubTrigger,
+  MenuTrigger,
+} from '@registry/ui/menu';
+import {
+  Menubar,
+  MenubarCheckboxItem,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from '@registry/ui/menubar';
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+  NumberFieldLabel,
+} from '@registry/ui/number-field';
+import {
   Popover,
   PopoverContent,
   PopoverDescription,
   PopoverTitle,
   PopoverTrigger,
 } from '@registry/ui/popover';
+import {
+  Progress,
+  ProgressLabel,
+  ProgressTrack,
+  ProgressValue,
+} from '@registry/ui/progress';
+import { Radio, RadioGroup, RadioLabel } from '@registry/ui/radio-group';
+import { Toaster, useToast } from '@registry/ui/toast';
 import {
   Select,
   SelectContent,
@@ -135,12 +180,23 @@ export default function App() {
   const [showHidden, setShowHidden] = React.useState(false);
   const [snapToGrid, setSnapToGrid] = React.useState(true);
   const [volume, setVolume] = React.useState(62);
+  const [quality, setQuality] = React.useState('balanced');
+  const [copied, setCopied] = React.useState(18);
   const [lastAction, setLastAction] = React.useState<string | null>(null);
   const [glass, setGlass] = React.useState<GlassOptics>(initialSettings);
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // The progress bar climbs on its own. A growing fill is the case that would
+  // thrash the map cache if it were a lens — it is a wash instead, so this runs
+  // forever without regenerating anything. Watch the dials: they move the
+  // track's bezel, and the fill never gets one.
+  React.useEffect(() => {
+    const timer = setInterval(() => setCopied((n) => (n >= 100 ? 0 : n + 2)), 220);
+    return () => clearInterval(timer);
+  }, []);
 
   // Dev hook: `?autopen` opens the menu automatically (used for screenshots).
   React.useEffect(() => {
@@ -302,6 +358,43 @@ export default function App() {
                   </SliderTrack>
                 </SliderControl>
               </Slider>
+            </div>
+            <h2 className="stage__label stage__label--spaced">Progress</h2>
+            {/* Third answer to "which box refracts", and the first one that is
+                about time rather than nesting: the track keeps the lens because
+                a fill that grows would ask for a new displacement map on every
+                frame and evict every other surface's on the way past. */}
+            <div className="stage__progress">
+              <Progress value={copied}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <ProgressLabel>Copying 248 items</ProgressLabel>
+                  <ProgressValue />
+                </div>
+                <ProgressTrack glass={glass} />
+              </Progress>
+
+              <Progress value={null}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <ProgressLabel>Looking for devices</ProgressLabel>
+                  <ProgressValue>{() => 'Searching…'}</ProgressValue>
+                </div>
+                <ProgressTrack glass={glass} />
+              </Progress>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Number field</h2>
+            {/* One surface with three controls on it. Drag the label: the value
+                scrubs, and nothing about the group's box changes, so the map
+                the lens is drawn from is never regenerated. */}
+            <div className="stage__form">
+              <NumberField id="bezel" defaultValue={24} min={0} max={200} step={2}>
+                <NumberFieldLabel htmlFor="bezel">Bezel width</NumberFieldLabel>
+                <NumberFieldGroup glass={glass}>
+                  <NumberFieldDecrement />
+                  <NumberFieldInput />
+                  <NumberFieldIncrement />
+                </NumberFieldGroup>
+              </NumberField>
             </div>
           </section>
 
@@ -470,6 +563,45 @@ export default function App() {
               </Toggle>
             </div>
 
+            <h2 className="stage__label stage__label--spaced">Menubar</h2>
+            {/* The third strip on this page, after the tabs and the toggle
+                group, and the one that reaches Toggle Group's conclusion: no
+                travelling element, so the bar refracts once and an open menu is
+                a wash on it. */}
+            <div className="stage__buttons" onContextMenu={(e) => e.stopPropagation()}>
+              <Menubar glass={glass}>
+                <MenubarMenu>
+                  <MenubarTrigger>File</MenubarTrigger>
+                  <MenubarContent glass={glass}>
+                    <MenubarItem onClick={() => setLastAction('New Window')}>
+                      New Window
+                      <MenubarShortcut>⌘N</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarSub>
+                      <MenubarSubTrigger>Open Recent</MenubarSubTrigger>
+                      <MenubarSubContent glass={glass}>
+                        <MenubarItem>wallpaper.jpg</MenubarItem>
+                        <MenubarItem>bezel-study.fig</MenubarItem>
+                      </MenubarSubContent>
+                    </MenubarSub>
+                    <MenubarSeparator />
+                    <MenubarItem variant="danger">Close Window</MenubarItem>
+                  </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                  <MenubarTrigger>View</MenubarTrigger>
+                  <MenubarContent glass={glass}>
+                    <MenubarCheckboxItem checked={showHidden} onCheckedChange={setShowHidden}>
+                      Show Hidden Files
+                    </MenubarCheckboxItem>
+                    <MenubarCheckboxItem checked={snapToGrid} onCheckedChange={setSnapToGrid}>
+                      Snap to Grid
+                    </MenubarCheckboxItem>
+                  </MenubarContent>
+                </MenubarMenu>
+              </Menubar>
+            </div>
+
             <h2 className="stage__label stage__label--spaced">Toggle group</h2>
             <div className="stage__buttons">
               <ToggleGroup glass={glass} multiple defaultValue={['bold']} aria-label="Text style">
@@ -566,6 +698,35 @@ export default function App() {
               </CheckboxLabel>
             </div>
 
+            <h2 className="stage__label stage__label--spaced">Radio group</h2>
+            {/* A list, not a strip: the options do not share a box, so there is
+                nothing to nest and each one is its own lens — the opposite
+                conclusion from the toggle group two columns over. */}
+            <div className="stage__checks">
+              <RadioGroup
+                value={quality}
+                onValueChange={(value) => setQuality(value as string)}
+                aria-label="Export quality"
+              >
+                <RadioLabel>
+                  <Radio glass={glass} value="fast" />
+                  Fast
+                </RadioLabel>
+                <RadioLabel>
+                  <Radio glass={glass} value="balanced" />
+                  Balanced
+                </RadioLabel>
+                <RadioLabel>
+                  <Radio glass={glass} value="best" />
+                  Best quality
+                </RadioLabel>
+                <RadioLabel>
+                  <Radio glass={glass} value="lossless" disabled />
+                  Lossless
+                </RadioLabel>
+              </RadioGroup>
+            </div>
+
             <h2 className="stage__label stage__label--spaced">Select</h2>
             {/* Wired to the real dial: this select picks the lens profile it is
                 itself rendered with, and stays in sync with the panel. */}
@@ -593,6 +754,62 @@ export default function App() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Menu</h2>
+            {/* Two lenses that must not meet: the popup hangs off a glass
+                button, and a `sideOffset` smaller than the trigger's bezel has
+                the list refracting the button instead of the wallpaper. */}
+            <div className="stage__buttons" onContextMenu={(e) => e.stopPropagation()}>
+              <Menu>
+                <MenuTrigger nativeButton={false} render={<Button glass={glass} />}>
+                  View
+                </MenuTrigger>
+                <MenuContent glass={glass}>
+                  <MenuGroup>
+                    <MenuGroupLabel>Arrange</MenuGroupLabel>
+                    <MenuRadioGroup value={view} onValueChange={setView}>
+                      <MenuRadioItem value="icons">as Icons</MenuRadioItem>
+                      <MenuRadioItem value="list">as List</MenuRadioItem>
+                      <MenuRadioItem value="columns">as Columns</MenuRadioItem>
+                    </MenuRadioGroup>
+                  </MenuGroup>
+
+                  <MenuSeparator />
+
+                  <MenuCheckboxItem checked={showHidden} onCheckedChange={setShowHidden}>
+                    Show Hidden Files
+                  </MenuCheckboxItem>
+                  <MenuCheckboxItem checked={snapToGrid} onCheckedChange={setSnapToGrid}>
+                    Snap to Grid
+                  </MenuCheckboxItem>
+
+                  <MenuSeparator />
+
+                  <MenuSub>
+                    <MenuSubTrigger>Sort By</MenuSubTrigger>
+                    <MenuSubContent glass={glass}>
+                      <MenuItem onClick={() => setSort('name')}>Name</MenuItem>
+                      <MenuItem onClick={() => setSort('date')}>Date Modified</MenuItem>
+                      <MenuItem onClick={() => setSort('size')}>Size</MenuItem>
+                    </MenuSubContent>
+                  </MenuSub>
+
+                  <MenuItem onClick={() => setLastAction('Entered full screen')}>
+                    Enter Full Screen
+                    <MenuShortcut>⌃⌘F</MenuShortcut>
+                  </MenuItem>
+                  <MenuItem disabled>Customise Toolbar…</MenuItem>
+                </MenuContent>
+              </Menu>
+            </div>
+
+            <h2 className="stage__label stage__label--spaced">Toast</h2>
+            {/* A column, not a stack. Raise three and watch the gaps: an
+                overlapping stack would put the front toast's backdrop on the
+                card behind it, and the newest one would stop refracting. */}
+            <div className="stage__buttons">
+              <ToastButtons glass={glass} />
             </div>
 
             <h2 className="stage__label stage__label--spaced">Alert dialog</h2>
@@ -674,6 +891,9 @@ export default function App() {
             )}
           </LiquiGlass>
         </div>
+
+        {/* Portals to <body>; it sits here only because App has no wrapper. */}
+        <Toaster glass={glass} />
       </ContextMenuTrigger>
 
       <ContextMenuContent glass={glass}>
@@ -754,5 +974,44 @@ export default function App() {
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+/**
+ * Raising a toast needs a component inside the provider, which is the one thing
+ * about this component that is not a prop.
+ */
+function ToastButtons({ glass }: { glass: GlassOptics }) {
+  const toast = useToast();
+  const count = React.useRef(0);
+
+  return (
+    <>
+      <Button
+        glass={glass}
+        onClick={() => {
+          count.current += 1;
+          toast.add({
+            title: `File ${count.current} exported`,
+            description: 'Saved to Downloads.',
+          });
+        }}
+      >
+        Notify
+      </Button>
+      <Button
+        glass={glass}
+        variant="accent"
+        onClick={() =>
+          toast.add({
+            title: 'Version restored',
+            description: 'Back to how it was on Tuesday.',
+            actionProps: { children: 'Undo', onClick: () => {} },
+          })
+        }
+      >
+        With an action
+      </Button>
+    </>
   );
 }

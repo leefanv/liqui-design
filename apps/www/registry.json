@@ -63,6 +63,7 @@
       "type": "registry:ui",
       "title": "Glass Button",
       "description": "A button rendered as a refracting glass surface, with accent and danger tints.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass", "class-variance-authority"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -78,6 +79,7 @@
       "type": "registry:ui",
       "title": "Glass Checkbox",
       "description": "A checkbox whose glass fills with accent when checked, keeping the bezel and rim light.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -89,6 +91,7 @@
       "type": "registry:ui",
       "title": "Glass Field",
       "description": "A labelled form field whose control sits on its own glass surface.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -100,6 +103,7 @@
       "type": "registry:ui",
       "title": "Glass Accordion",
       "description": "Collapsible panels where each item is its own resizing glass surface.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -111,6 +115,7 @@
       "type": "registry:ui",
       "title": "Glass Alert Dialog",
       "description": "A modal confirmation dialog on the library's largest glass surface.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -122,6 +127,7 @@
       "type": "registry:ui",
       "title": "Glass Context Menu",
       "description": "A right-click menu with submenus, checkbox and radio items, on a keep-mounted glass popup.",
+      "meta": { "added": "2026-08-06" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -133,6 +139,7 @@
       "type": "registry:ui",
       "title": "Glass Dialog",
       "description": "A dismissible modal on glass, with a corner dismiss that stays flat.",
+      "meta": { "added": "2026-08-13" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -144,6 +151,7 @@
       "type": "registry:ui",
       "title": "Glass Popover",
       "description": "A glass panel anchored to a trigger, with a drawn tail.",
+      "meta": { "added": "2026-08-13" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -159,6 +167,7 @@
       "type": "registry:ui",
       "title": "Glass Tooltip",
       "description": "The smallest floating surface, frosted harder so it stays readable.",
+      "meta": { "added": "2026-08-13" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -174,6 +183,7 @@
       "type": "registry:ui",
       "title": "Glass Switch",
       "description": "A switch whose glass track retints with accent, carrying an opaque thumb.",
+      "meta": { "added": "2026-08-10" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -185,6 +195,7 @@
       "type": "registry:ui",
       "title": "Glass Slider",
       "description": "A slider whose thumb is the refracting surface, sliding along a flat rail.",
+      "meta": { "added": "2026-08-10" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -196,6 +207,7 @@
       "type": "registry:ui",
       "title": "Glass Select",
       "description": "A select with a glass trigger and a glass popup, kept from overlapping each other.",
+      "meta": { "added": "2026-08-10" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -207,6 +219,7 @@
       "type": "registry:ui",
       "title": "Glass Tabs",
       "description": "A segmented control whose indicator is the refracting surface, sliding along a flat groove.",
+      "meta": { "added": "2026-08-14" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -218,6 +231,7 @@
       "type": "registry:ui",
       "title": "Glass Toggle",
       "description": "A two-state button whose glass fills with accent while it is on.",
+      "meta": { "added": "2026-08-14" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
       "files": [
@@ -229,6 +243,7 @@
       "type": "registry:ui",
       "title": "Glass Toggle Group",
       "description": "One glass strip holding several toggles, which flatten so the strip keeps the lens.",
+      "meta": { "added": "2026-08-14" },
       "dependencies": ["@base-ui/react", "@liqui-design/glass"],
       "registryDependencies": [
         "https://liqui.design/r/liqui.json",
@@ -241,6 +256,102 @@
           "type": "registry:ui",
           "target": "@ui/toggle-group.tsx"
         }
+      ]
+    },
+    {
+      "name": "menu",
+      "type": "registry:ui",
+      "title": "Glass Menu",
+      "description": "A dropdown menu with submenus, checkbox and radio items, on a keep-mounted glass popup.",
+      "meta": { "added": "2026-08-20" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/menu.tsx",
+          "type": "registry:ui",
+          "target": "@ui/menu.tsx"
+        }
+      ]
+    },
+    {
+      "name": "radio-group",
+      "type": "registry:ui",
+      "title": "Glass Radio Group",
+      "description": "A list of options, each its own glass surface, carrying an opaque dot.",
+      "meta": { "added": "2026-08-20" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/radio-group.tsx",
+          "type": "registry:ui",
+          "target": "@ui/radio-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress",
+      "type": "registry:ui",
+      "title": "Glass Progress",
+      "description": "A progress bar whose track is the refracting surface, filled by a wash of accent.",
+      "meta": { "added": "2026-08-20" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/progress.tsx",
+          "type": "registry:ui",
+          "target": "@ui/progress.tsx"
+        }
+      ]
+    },
+    {
+      "name": "menubar",
+      "type": "registry:ui",
+      "title": "Glass Menubar",
+      "description": "One glass strip holding several menus, whose triggers flatten inside it.",
+      "meta": { "added": "2026-08-21" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": [
+        "https://liqui.design/r/liqui.json",
+        "https://liqui.design/r/menu.json",
+        "utils"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/ui/menubar.tsx",
+          "type": "registry:ui",
+          "target": "@ui/menubar.tsx"
+        }
+      ]
+    },
+    {
+      "name": "number-field",
+      "type": "registry:ui",
+      "title": "Glass Number Field",
+      "description": "One glass group holding a numeric input and two flattened steppers.",
+      "meta": { "added": "2026-08-21" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        {
+          "path": "registry/liqui/ui/number-field.tsx",
+          "type": "registry:ui",
+          "target": "@ui/number-field.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:ui",
+      "title": "Glass Toast",
+      "description": "Notifications laid out in a column, so every surface keeps the page behind it.",
+      "meta": { "added": "2026-08-21" },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass"],
+      "registryDependencies": ["https://liqui.design/r/liqui.json", "utils"],
+      "files": [
+        { "path": "registry/liqui/ui/toast.tsx", "type": "registry:ui", "target": "@ui/toast.tsx" }
       ]
     },
     {
@@ -463,6 +574,100 @@
       "files": [
         { "path": "registry/liqui/examples/toggle-group-multiple.tsx", "type": "registry:example" }
       ]
+    },
+    {
+      "name": "menu-demo",
+      "type": "registry:example",
+      "title": "Menu",
+      "description": "A glass trigger and a glass popup that never overlap, with a submenu inside.",
+      "registryDependencies": ["https://liqui.design/r/menu.json", "https://liqui.design/r/button.json"],
+      "files": [
+        {
+          "path": "registry/liqui/examples/menu-demo.tsx",
+          "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "radio-group-demo",
+      "type": "registry:example",
+      "title": "Radio Group",
+      "description": "One lens per option, and a disabled one that keeps its rim.",
+      "registryDependencies": ["https://liqui.design/r/radio-group.json"],
+      "files": [
+        {
+          "path": "registry/liqui/examples/radio-group-demo.tsx",
+          "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "progress-demo",
+      "type": "registry:example",
+      "title": "Progress",
+      "description": "Three bars at different fills, refracting along their whole length.",
+      "registryDependencies": ["https://liqui.design/r/progress.json"],
+      "files": [
+        {
+          "path": "registry/liqui/examples/progress-demo.tsx",
+          "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "progress-indeterminate",
+      "type": "registry:example",
+      "title": "Indeterminate",
+      "description": "No value to show, so the wash covers the track and breathes instead.",
+      "registryDependencies": ["https://liqui.design/r/progress.json"],
+      "files": [
+        {
+          "path": "registry/liqui/examples/progress-indeterminate.tsx",
+          "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "menubar-demo",
+      "type": "registry:example",
+      "title": "Menubar",
+      "description": "Three menus in one strip, with a submenu, checkbox and radio items.",
+      "registryDependencies": [
+        "https://liqui.design/r/menubar.json",
+        "https://liqui.design/r/menu.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/menubar-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "number-field-demo",
+      "type": "registry:example",
+      "title": "Number Field",
+      "description": "A scrubbable label over a glass group with two flat steppers.",
+      "registryDependencies": ["https://liqui.design/r/number-field.json"],
+      "files": [
+        { "path": "registry/liqui/examples/number-field-demo.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "number-field-format",
+      "type": "registry:example",
+      "title": "Formatting",
+      "description": "The same field as a percentage, formatted through Intl.NumberFormat.",
+      "registryDependencies": ["https://liqui.design/r/number-field.json"],
+      "files": [
+        { "path": "registry/liqui/examples/number-field-format.tsx", "type": "registry:example" }
+      ]
+    },
+    {
+      "name": "toast-demo",
+      "type": "registry:example",
+      "title": "Toast",
+      "description": "A column of notifications, each with the page behind it.",
+      "registryDependencies": [
+        "https://liqui.design/r/toast.json",
+        "https://liqui.design/r/button.json"
+      ],
+      "files": [{ "path": "registry/liqui/examples/toast-demo.tsx", "type": "registry:example" }]
     }
   ]
 }

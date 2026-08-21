@@ -31,11 +31,17 @@ const COMPONENTS = [
   'context-menu',
   'dialog',
   'field',
+  'menu',
+  'menubar',
+  'number-field',
   'popover',
+  'progress',
+  'radio-group',
   'select',
   'slider',
   'switch',
   'tabs',
+  'toast',
   'toggle',
   'toggle-group',
   'tooltip',
@@ -94,6 +100,52 @@ test.describe('overlays while open', () => {
     await page.getByRole('button', { name: 'Undo' }).hover();
     await waitForGlass(page);
     await expect(preview(page)).toHaveScreenshot('tooltip-open.png');
+  });
+});
+
+test.describe('menu popup', () => {
+  // The looped preview above captures a closed menu, which is a picture of a
+  // button. The popup is the surface that carries the popup-scale optics, and
+  // the thing worth looking at is the gap: it opens against a glass trigger,
+  // and an overlap there would have the list refracting the button instead of
+  // the page.
+  test('the popup clears the trigger it hangs from', async ({ page }) => {
+    await page.goto('/docs/components/menu');
+    await waitForGlass(page);
+    await page.getByRole('button', { name: 'View' }).click();
+    await waitForGlass(page);
+    await expect(page).toHaveScreenshot('menu-open.png');
+  });
+});
+
+test.describe('menubar', () => {
+  // Closed, the strip is the whole component and the preview above covers it.
+  // Open is where the two decisions show at once: the trigger lit as a wash on
+  // glass that is already there, and a popup sitting one bezel off the strip
+  // rather than the eight a standalone menu needs.
+  test('an open menu lights its trigger without adding a surface', async ({ page }) => {
+    await page.goto('/docs/components/menubar');
+    await waitForGlass(page);
+    await page.getByRole('menuitem', { name: 'File' }).click();
+    await waitForGlass(page);
+    await expect(page).toHaveScreenshot('menubar-open.png');
+  });
+});
+
+test.describe('toast column', () => {
+  // The preview above is a picture of two buttons: the toasts are portalled to
+  // the body and only exist once raised. This is the component's actual claim —
+  // three surfaces in a column, each with the page behind it rather than the
+  // toast in front of it — and there is no other way to see it.
+  test('three toasts stay three separate surfaces', async ({ page }) => {
+    await page.goto('/docs/components/toast');
+    await waitForGlass(page);
+    for (let i = 0; i < 3; i += 1) {
+      await page.getByRole('button', { name: 'Notify' }).click();
+    }
+    await page.getByText('File 3 exported').waitFor();
+    await waitForGlass(page);
+    await expect(page).toHaveScreenshot('toast-column.png');
   });
 });
 

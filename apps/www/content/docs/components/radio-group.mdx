@@ -1,0 +1,121 @@
+---
+title: Radio Group
+description: A list of options, each its own glass surface, carrying an opaque dot.
+---
+
+<ComponentPreview name="radio-group-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/radio-group.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/radio-group
+```
+
+## Usage
+
+```tsx
+import { Radio, RadioGroup, RadioLabel } from '@/components/ui/radio-group';
+```
+
+```tsx
+<RadioGroup value={quality} onValueChange={setQuality} aria-label="Export quality">
+  <RadioLabel>
+    <Radio value="fast" />
+    Fast
+  </RadioLabel>
+  <RadioLabel>
+    <Radio value="balanced" />
+    Balanced
+  </RadioLabel>
+</RadioGroup>
+```
+
+`RadioLabel` is a plain `<label>` row, so the whole line is the hit area, and it
+dims itself through `has-[[data-disabled]]` rather than being told about the
+radio's state — the same wrapper [Checkbox](/docs/components/checkbox) ships.
+
+Inside a [Field](/docs/components/field), give `RadioGroup` the `name` and let
+the field supply the label and error; the group is a Base UI form control like
+any other.
+
+## Notes
+
+### The group is not a surface
+
+[Toggle Group](/docs/components/toggle-group) is one glass strip whose toggles
+go flat inside it. A radio group looks like it should get the same treatment and
+does not, and the difference is not taste.
+
+A toggle group's children share one box: they sit against each other inside a
+single strip, so there *is* a surface that can hold the lens, and the toggles
+inside it have to flatten because a `backdrop-filter` nested in another one
+samples its parent's output instead of the page.
+
+A radio group is a list. Each option is a small box with text beside it and a
+gap under it, and the group has no box of its own — a surface drawn around it
+would be a card the options happen to be lying on, which is a different
+component. So there is nothing to nest, and each radio is its own lens exactly
+as each checkbox is.
+
+The rule that keeps producing different answers is the same one every time:
+**one surface per control gets to refract.** Here every option *is* a control.
+
+### The dot is opaque
+
+Inside the ring it is [Switch](/docs/components/switch#only-one-of-the-two-can-be-a-lens)'s
+problem again. A dot sitting inside a glass ring has the ring's own accent tint
+behind it, not the page, so a glass dot would bend the colour it is lying on and
+read as a smudge.
+
+It is solid white with a cast shadow, because the glass layers underneath give a
+child no depth of its own:
+
+```tsx
+'block size-[7px] rounded-full bg-white',
+'shadow-[0_1px_2px_rgba(10,15,40,0.35)]',
+```
+
+### Selecting is a retint
+
+Nothing swaps in a filled circle. `data-[checked]` overrides `--lq-tint` on the
+root, so the accent arrives *as glass* and the bezel and specular arc survive
+the change:
+
+```tsx
+data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]
+```
+
+Same mechanism as [Checkbox](/docs/components/checkbox#checked-state) and
+Switch. Retint through the token to change the selected colour; a `background`
+would paint over the refraction rather than joining it.
+
+### Two places say "circle"
+
+`rounded-full` is the shape of the DOM element. `radius: 10` is the shape the
+displacement map is generated for, and it is the one the light follows. They are
+set independently and both have to say circle:
+
+```tsx
+const RADIO_GLASS = { radius: 10, blur: 1, refraction: 20, bezel: 6 };
+```
+
+At 20px this is the smallest surface in the library, tied with the checkbox, and
+the first place an over-driven `refraction` smears. If you scale the radio up,
+move `radius` to half the new box and leave the other two alone until it looks
+wrong — the bezel is a fraction of the box, so a bigger box already gets a
+proportionally softer edge.

@@ -88,8 +88,14 @@ ships.
 2. Add at least one demo in `apps/www/registry/liqui/examples/<name>-demo.tsx` with a
    default export.
 3. Register both in `apps/www/registry.json`. The `ui` item needs `dependencies`,
-   `registryDependencies` and a `target`; the example needs `registryDependencies`
-   pointing at the component.
+   `registryDependencies`, a `target` and `meta.added` — today's date, as
+   `YYYY-MM-DD`. That date is the whole of the **New** badge: the component is
+   marked new in the sidebar and the component directory while it is both
+   younger than 30 days and among the 6 most recent, and the badge then
+   disappears without anyone editing anything. `registry:build` refuses a `ui`
+   item with no date, or one dated in the future — a badge that never expires is
+   the failure mode every hand-kept "what's new" list eventually has. The
+   numbers, and why they are those numbers, are in `apps/www/lib/whats-new.tsx`.
 
    **Reference liqui's own items by full URL**, as the existing items do
    (`"https://liqui.design/r/liqui.json"`, not `"liqui"`). The shadcn CLI resolves a
