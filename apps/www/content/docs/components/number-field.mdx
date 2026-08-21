@@ -1,0 +1,121 @@
+---
+title: Number Field
+description: One glass group holding a numeric input and two flattened steppers.
+---
+
+<ComponentPreview name="number-field-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/number-field.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/number-field
+```
+
+## Usage
+
+```tsx
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+  NumberFieldLabel,
+} from '@/components/ui/number-field';
+```
+
+```tsx
+const id = React.useId();
+
+<NumberField id={id} defaultValue={24} min={0} max={200} step={2}>
+  <NumberFieldLabel htmlFor={id}>Bezel width</NumberFieldLabel>
+  <NumberFieldGroup>
+    <NumberFieldDecrement />
+    <NumberFieldInput />
+    <NumberFieldIncrement />
+  </NumberFieldGroup>
+</NumberField>;
+```
+
+The `id` goes on the root and the label points back at it. Base UI puts that id
+on the input, so this is the one place the wiring is manual.
+
+## Formatting
+
+<ComponentPreview name="number-field-format" />
+
+`format` takes `Intl.NumberFormatOptions` straight through, so a percentage, a
+currency or a unit is a prop rather than a wrapper:
+
+```tsx
+<NumberField format={{ style: 'percent', maximumFractionDigits: 0 }} step={0.05} />
+```
+
+The value stays a number — `0.35` above — and only its presentation changes.
+
+## Notes
+
+### One surface, three controls
+
+The group is the glass and everything in it is flat. A control inside a glass
+box has that box's tint behind it rather than the page, so a lens there bends
+the surface it is lying on: three lenses in a 180px-wide box would be three
+smudges. Same rule as [Dialog](/docs/components/dialog)'s dismiss and
+[Toggle Group](/docs/components/toggle-group)'s toggles.
+
+The steppers are drawn as divisions of the group rather than as buttons — a
+hairline, a hover wash, nothing else:
+
+```tsx
+'shadow-[inset_-1px_0_0_color-mix(in_srgb,var(--lq-text)_14%,transparent)]';
+```
+
+A raised key would need its own cast shadow to look raised, and a shadow laid on
+top of glass is the one thing the material cannot sit under: it darkens the
+refraction instead of falling across it.
+
+### The input is inside the glass, not the glass
+
+The `<input>` is a transparent element in the content layer.
+[Field](/docs/components/field) explains why at length: an `<input>` is a
+replaced element, and the backdrop, tint and specular layers cannot render
+inside one. The focus ring lives on the group and is driven by `has-*`, so the
+surface reacts to a state that belongs to its child:
+
+```tsx
+'has-[input:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]';
+```
+
+### The label is a scrub handle
+
+Drag `NumberFieldLabel` left or right and the value follows. Base UI hides the
+pointer for the duration and draws the arrow cursor in its place, which is why
+the label is a component here instead of a `<label>` you bring — the gesture
+needs an element Base UI controls.
+
+It is the same interaction the [slider](/docs/components/slider) offers with a
+thumb, minus the surface. Worth knowing it is there: on a dense form it is
+faster than either the steppers or the keyboard, and there is nothing on screen
+advertising it.
+
+### Sizing
+
+The group is `w-45` and `h-9.5` with `radius: 12`, which is
+[Field](/docs/components/field)'s control at the same optics. If you make it
+taller, move `radius` with it; if you make it much shorter, bring `bezel` down
+too, or the two steppers end up entirely inside the refracting rim.

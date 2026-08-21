@@ -1,0 +1,139 @@
+---
+title: Progress
+description: A progress bar whose track is the refracting surface, filled by a wash of accent.
+---
+
+<ComponentPreview name="progress-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/progress.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/progress
+```
+
+## Usage
+
+```tsx
+import { Progress, ProgressLabel, ProgressTrack, ProgressValue } from '@/components/ui/progress';
+```
+
+```tsx
+<Progress value={68}>
+  <div className="flex items-baseline justify-between">
+    <ProgressLabel>Rendering</ProgressLabel>
+    <ProgressValue />
+  </div>
+  <ProgressTrack />
+</Progress>
+```
+
+`ProgressTrack` renders the indicator itself. Unlike
+[`SliderTrack`](/docs/components/slider), which has thumbs to place inside it,
+there is nothing else that can go in a progress bar — so the part you would
+otherwise have to remember is not yours to forget.
+
+`ProgressValue` formats through `Intl.NumberFormat` and takes a render function
+for the cases that are not a percentage:
+
+```tsx
+<ProgressValue>{() => 'Done'}</ProgressValue>
+```
+
+## Indeterminate
+
+<ComponentPreview name="progress-indeterminate" />
+
+`value={null}` is Base UI's indeterminate state. It stops writing an inline
+width, which is what lets the component's own classes take over:
+
+```tsx
+'data-[indeterminate]:w-full data-[indeterminate]:animate-pulse';
+```
+
+A wash over the whole track that breathes, rather than a bar sweeping across it.
+The sweep is the more familiar idiom and it is deliberately not here: it needs a
+`@keyframes` block, and a registry item is one file dropped into your project —
+a component that silently depends on CSS you were never given is worse than one
+that uses an animation Tailwind already ships. If you want the sweep, add the
+keyframes to your stylesheet and swap the class:
+
+```css title="globals.css"
+@keyframes progress-sweep {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 400% 0;
+  }
+}
+```
+
+```tsx
+'data-[indeterminate]:w-1/4 data-[indeterminate]:[animation:progress-sweep_1.4s_ease-in-out_infinite]';
+```
+
+## Notes
+
+### The fill is a wash, not a lens
+
+[Slider](/docs/components/slider) puts the glass on the thumb because the thumb
+is what moves. A progress bar also has something that moves, and it still does
+not get the lens — the difference is *how* it moves.
+
+The displacement map is keyed on the surface's size and cached in a 48-entry
+LRU. A thumb slides at one size, so a whole drag reuses a single map. A fill
+grows: a refracting fill would ask for a new map on every frame and evict every
+other surface's map on the way past, and an unrelated popup would pay to
+regenerate the next time it opened — because a download finished. It is the same
+cache that makes [tabs](/docs/components/tabs#why-the-tabs-are-flex-1) keep
+their pill one width.
+
+So the fixed box keeps the lens, and the fill is a translucent accent laid over
+glass that is already refracting:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-accent)_78%,transparent)]';
+```
+
+Which is why the bar bends the background along its whole length rather than
+only in the empty part — the filled section is accent-tinted glass, not paint.
+[Dialog](/docs/components/dialog)'s corner dismiss is the same move: a wash on a
+surface that is already there beats a second surface.
+
+### Where the wash sits in the stack
+
+Above the specular layer, because `LiquiGlass` renders content on top of every
+glass layer and the indicator is content. On a bar filled to 100% the shine
+therefore reads slightly softer than on an empty one.
+
+That is the honest cost of the fill not being a surface. At 14px tall it is
+barely visible; on a much taller bar it will be, and the fix is to drop the
+wash's opacity rather than to promote it to glass.
+
+### Sizing
+
+Bezel is a fraction of the box, and the constraint on a bar is its *height*:
+
+```tsx
+const TRACK_GLASS = { radius: 7, blur: 1, refraction: 22, bezel: 5 };
+```
+
+Five px of bezel on a 14px bar already meets in the middle. Make the bar
+shorter and the numbers have to come down with it or the whole thing smears into
+one gradient; make it taller and `radius` should go to half the height, or the
+map's corners stop matching the `rounded-[inherit]` the element is drawn with.

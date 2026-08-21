@@ -1,0 +1,133 @@
+---
+title: Toast
+description: Notifications laid out in a column, so every surface keeps the page behind it.
+---
+
+<ComponentPreview name="toast-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/toast.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/toast
+```
+
+## Usage
+
+Wrap the app once, and drop the viewport next to it:
+
+```tsx title="app/layout.tsx"
+import { Toaster, ToastProvider } from '@/components/ui/toast';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <ToastProvider>
+          {children}
+          <Toaster />
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+Then raise one from anywhere inside the provider:
+
+```tsx
+import { useToast } from '@/components/ui/toast';
+
+const toast = useToast();
+
+toast.add({
+  title: 'Version restored',
+  description: 'The document is back to how it was on Tuesday.',
+  actionProps: { children: 'Undo', onClick: restore },
+});
+```
+
+`useToast` is Base UI's `useToastManager`, so `close`, `update` and `promise`
+all come with it. `Toaster` renders the default body — title, description, the
+action if the toast carries one, and a dismiss. Rewrite the map inside it for a
+different shape; the file is in your project.
+
+## Notes
+
+### A stack is a lens on a lens
+
+The usual arrangement puts the newest toast in front and the older ones behind
+it, scaled down and peeking out by a few pixels. It is what the platform does
+and it looks right — for opaque cards.
+
+Glass cannot do it. `backdrop-filter` samples whatever is painted behind an
+element, and a toast that sits on top of another toast has that toast's tint
+behind it across almost its whole box. It would refract a flat fill instead of
+the page, which is the failure the [handbook](/docs/handbook/glass) opens with,
+and it would land on the newest toast — the one that matters most.
+
+So the toasts are a column with a real gap between them:
+
+```tsx
+'[--offset-y:calc(var(--toast-offset-y)*-1+(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))]';
+```
+
+`--toast-offset-y` is the measured height of everything before this toast, and
+Base UI keeps it current whether or not the viewport is hovered — which is what
+lets the column exist without an expanded state to hover into. The gap is not
+spacing. It is the thing that gives each surface a page to refract.
+
+<Callout type="info">
+  Three at a time is the provider's default, and it is worth keeping. A column
+  does not collapse into a neat pile the way a stack does, so the limit is what
+  stops a busy minute from becoming a wall of glass.
+</Callout>
+
+### Transforms are free
+
+A toast slides up 150% of its own height on entry, and swipes away under a
+finger. None of that disturbs the lens: the kernel measures with
+`ResizeObserver` and `offsetWidth`, which are layout sizes, so a transform never
+changes the box the displacement map was generated for.
+
+That is a rule worth carrying to your own surfaces — and its inverse is the one
+that bites. `getBoundingClientRect` returns the *transformed* rect, so
+measuring a surface mid-animation bakes an undersized map that nothing re-fires
+to correct.
+
+### Everything inside the toast is flat
+
+The dismiss and the action are hover washes, not surfaces. A control inside the
+toast has the toast's own tint behind it rather than the page, so a lens there
+would bend the card it is lying on — the same reason
+[Dialog](/docs/components/dialog)'s corner dismiss is flat, and the reason a
+[popover](/docs/components/popover) drops its controls to `clear`.
+
+### Swiping
+
+`swipeDirection` defaults to `['down', 'right']`, matching the bottom-right
+viewport. Move the viewport and move it with them, or the gesture that dismisses
+a toast will be the one that pushes it further onto the screen.
+
+The transition is disabled while a drag is in progress:
+
+```tsx
+'data-[swiping]:transition-none';
+```
+
+Without it the toast eases towards the pointer instead of tracking it, which
+feels like lag rather than like holding something.

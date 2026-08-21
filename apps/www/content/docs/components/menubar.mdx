@@ -1,0 +1,116 @@
+---
+title: Menubar
+description: One glass strip holding several menus, whose triggers flatten inside it.
+---
+
+<ComponentPreview name="menubar-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/menubar.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/menubar
+```
+
+This one installs [Menu](/docs/components/menu) alongside it, and that is not a
+convenience — the popups *are* Menu's, re-exported under menubar names.
+
+## Usage
+
+```tsx
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarShortcut,
+  MenubarTrigger,
+} from '@/components/ui/menubar';
+```
+
+```tsx
+<Menubar>
+  <MenubarMenu>
+    <MenubarTrigger>File</MenubarTrigger>
+    <MenubarContent>
+      <MenubarItem>
+        New Window
+        <MenubarShortcut>⌘N</MenubarShortcut>
+      </MenubarItem>
+    </MenubarContent>
+  </MenubarMenu>
+
+  <MenubarMenu>
+    <MenubarTrigger>Edit</MenubarTrigger>
+    <MenubarContent>…</MenubarContent>
+  </MenubarMenu>
+</Menubar>
+```
+
+Submenus, checkbox items, radio groups, group labels and separators are all
+there under `Menubar*` names. They are the same components the menu ships, so
+anything true of a menu item is true here.
+
+## Notes
+
+### The strip is the lens
+
+A menubar is several controls sharing one box, which is exactly
+[Toggle Group](/docs/components/toggle-group)'s shape, and it gets Toggle
+Group's answer rather than [Tabs](/docs/components/tabs)': the strip refracts,
+once, and the triggers are flat.
+
+The reason is that there is nothing here that travels. Tabs put the lens on the
+indicator because a tab strip has exactly one thing that moves and moving is how
+a lens shows itself. In a menubar the state is *which menu is open*, and an open
+trigger is a highlight — a wash of accent over glass that is already there. A
+second lens inside the strip would have nothing behind it but the strip.
+
+So `MenubarTrigger` keeps its native `<button>`, unlike
+[Button](/docs/components/button) and unlike a standalone
+[menu](/docs/components/menu#the-trigger-has-to-opt-out-of-the-native-button)
+trigger. There is no glass anatomy to put inside it, so none of the reasons to
+opt out apply.
+
+### The popups sit closer
+
+A standalone menu hangs off a glass button and has to clear that button's bezel,
+or the popup ends up refracting the trigger. Here the anchor is a flat trigger
+*inside* the strip, so the gap only has to clear the strip's own edge:
+
+```tsx
+sideOffset = 4; // MenubarContent, against the menu's 8
+```
+
+Everything else about the popup is unchanged, including the keep-mounted portal.
+With three or four menus in a bar that is three or four popups living in the
+DOM — see [the note on Menu](/docs/components/menu#the-popup-stays-in-the-dom)
+if that trade is wrong for your app.
+
+### It is a row of menus, not a new component
+
+`Menubar` supplies the shared behaviour — arrow keys move between menus, and
+once one is open, hovering another opens it. The parts are re-exported:
+
+```tsx
+export { MenuItem as MenubarItem } from '@/components/ui/menu';
+```
+
+Restyle an item in `menu.tsx` and the menubar follows. That is the opposite of
+the relationship [Menu and Context Menu](/docs/components/menu#it-is-a-copy-of-context-menu-on-purpose)
+have, and it is possible here only because Base UI builds the menubar out of
+menu roots rather than out of a parallel component.

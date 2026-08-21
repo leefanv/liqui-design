@@ -12,6 +12,7 @@ apps/www/public/r
 apps/www/registry/__index__.tsx
 .source
 apps/www/registry/__sources__.ts
+apps/www/registry/__added__.ts
 
 # local agent/editor tooling
 .claude/
