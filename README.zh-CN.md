@@ -107,6 +107,24 @@ export default function Page() {
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | 一条玻璃，一枚透镜，里面的按钮全部扁平化 |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | 最小的表面，磨砂更重以保证可读性 |
 
+## 模板
+
+组件页一次只展示一个表面。模板是一整屏，而这才是这套材质需要经得起考验的地方：
+十几枚透镜同时在场，背景有真实结构，密度是产品真正会用到的密度。
+
+| | |
+| --- | --- |
+| [Media Player](https://liqui.design/templates/media-player) | 封面、播放控制、曲库和音效设置。切换曲目会改变每一个表面所折射的内容 |
+
+模板的安装方式与组件一致，并会把它用到的组件一并带上：
+
+```bash
+npx shadcn@latest add https://liqui.design/r/media-player.json
+```
+
+封面和背景都由 CSS 生成，所以没有图片文件需要复制，也不会有 404 —— 何况带硬边的
+渐变本来就是折射需要的东西。
+
 ## 浏览器支持
 
 | | 折射 | 说明 |

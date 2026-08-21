@@ -9,6 +9,7 @@ export const appName = 'liqui';
 export const brandName = 'Liqui Design';
 
 export const docsRoute = '/docs';
+export const templatesRoute = '/templates';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 

@@ -668,6 +668,69 @@
         "https://liqui.design/r/button.json"
       ],
       "files": [{ "path": "registry/liqui/examples/toast-demo.tsx", "type": "registry:example" }]
+    },
+    {
+      "name": "media-player",
+      "type": "registry:block",
+      "title": "Media Player",
+      "description": "A full-screen player: cover art, transport, library and sound settings, built so that changing track changes what every surface refracts.",
+      "categories": ["template"],
+      "meta": {
+        "entry": "registry/liqui/components/media-player/media-player.tsx"
+      },
+      "dependencies": ["@base-ui/react", "@liqui-design/glass", "lucide-react"],
+      "registryDependencies": [
+        "https://liqui.design/r/liqui.json",
+        "https://liqui.design/r/button.json",
+        "https://liqui.design/r/context-menu.json",
+        "https://liqui.design/r/field.json",
+        "https://liqui.design/r/popover.json",
+        "https://liqui.design/r/select.json",
+        "https://liqui.design/r/slider.json",
+        "https://liqui.design/r/switch.json",
+        "https://liqui.design/r/tabs.json",
+        "https://liqui.design/r/toggle.json",
+        "https://liqui.design/r/tooltip.json",
+        "utils"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/components/media-player/media-player.tsx",
+          "type": "registry:block",
+          "target": "@components/media-player/media-player.tsx"
+        },
+        {
+          "path": "registry/liqui/components/media-player/library-panel.tsx",
+          "type": "registry:component",
+          "target": "@components/media-player/library-panel.tsx"
+        },
+        {
+          "path": "registry/liqui/components/media-player/on-panel.ts",
+          "type": "registry:component",
+          "target": "@components/media-player/on-panel.ts"
+        },
+        {
+          "path": "registry/liqui/components/media-player/now-playing.tsx",
+          "type": "registry:component",
+          "target": "@components/media-player/now-playing.tsx"
+        },
+        {
+          "path": "registry/liqui/components/media-player/player-backdrop.tsx",
+          "type": "registry:component",
+          "target": "@components/media-player/player-backdrop.tsx"
+        },
+        {
+          "path": "registry/liqui/components/media-player/transport-bar.tsx",
+          "type": "registry:component",
+          "target": "@components/media-player/transport-bar.tsx"
+        },
+        {
+          "path": "registry/liqui/lib/media-player-data.ts",
+          "type": "registry:lib",
+          "target": "@lib/media-player-data.ts"
+        }
+      ],
+      "docs": "MediaPlayer fills its container — give the element you render it into a real height (h-dvh for a full page). Cover art is generated in CSS, so there are no image files to copy and nothing to 404; swap coverArt() in lib/media-player-data.ts for your own artwork when you wire up real audio."
     }
   ]
 }
