@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 
 import { Brand } from '@/components/brand';
 import { GitHubStars } from '@/components/github-stars';
-import { docsRoute, gallery, repoUrl } from './shared';
+import { docsRoute, gallery, repoUrl, templatesRoute } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -12,6 +12,7 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       { text: 'Docs', url: docsRoute, active: 'nested-url' },
+      { text: 'Templates', url: templatesRoute, active: 'nested-url' },
       {
         // Off-site on purpose: the gallery is where the look is collected,
         // this site is where it becomes code. The arrow marks the hop.

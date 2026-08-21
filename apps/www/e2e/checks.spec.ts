@@ -34,6 +34,11 @@ test.describe('no console errors', () => {
     // would show up.
     '/docs/components/toast',
     '/docs/handbook/glass',
+    // The templates. A whole page of glass at once is where a surface that
+    // misbehaves at density shows up, and the index renders a template inside a
+    // scaled container — the one place a map could be built at the wrong size.
+    '/templates',
+    '/templates/media-player',
   ]) {
     test(path, async ({ page }) => {
       const errors: string[] = [];

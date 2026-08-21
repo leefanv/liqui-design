@@ -22,7 +22,7 @@ type RegistryItem = {
   type: string;
   title?: string;
   description?: string;
-  meta?: { added?: string };
+  meta?: { entry?: string; added?: string };
   files?: RegistryFile[];
 };
 
@@ -47,9 +47,28 @@ const previewable = registry.items.filter(
   (item) => PREVIEWABLE_TYPES.has(item.type) && item.files?.some((f) => f.path.endsWith('.tsx')),
 );
 
+// An example is one file, so "the first .tsx" identifies it. A block is a
+// directory of them, and only one has the default export — which is not
+// something the file list's order should be trusted to encode, since that order
+// is otherwise free to change. `meta.entry` says it outright; shadcn passes the
+// field through untouched.
+function entryFile(item: RegistryItem): RegistryFile {
+  const files = item.files!;
+  if (item.meta?.entry) {
+    const named = files.find((f) => f.path === item.meta!.entry);
+    if (!named) {
+      throw new Error(
+        `${item.name}: meta.entry is "${item.meta.entry}", which is not in its files.`,
+      );
+    }
+    return named;
+  }
+  return files.find((f) => f.path.endsWith('.tsx'))!;
+}
+
 const entries = previewable
   .map((item) => {
-    const file = item.files!.find((f) => f.path.endsWith('.tsx'))!;
+    const file = entryFile(item);
     // registry.json paths are relative to the app root; the generated index sits
     // one level down in registry/, so `@/` keeps the specifier valid either way.
     const importPath = `@/${file.path.replace(/\.tsx$/, '')}`;
@@ -132,13 +151,14 @@ ${dates}
 // server component, so the strings never reach the client — keep it that way.
 const sources = previewable
   .map((item) => {
-    const file = item.files!.find((f) => f.path.endsWith('.tsx'))!;
+    const file = entryFile(item);
     const text = readFileSync(join(appRoot, file.path), 'utf8')
       // Demos import from where the source lives in this repo; the CLI writes
       // those files elsewhere in a consumer project, so the displayed code is
       // rewritten to match. Otherwise copy-pasting a demo yields an import that
       // resolves to nothing.
       .replace(/@\/registry\/liqui\/ui\//g, '@/components/ui/')
+      .replace(/@\/registry\/liqui\/components\//g, '@/components/')
       .replace(/@\/registry\/liqui\/lib\//g, '@/lib/')
       .trimEnd();
     return `  ${JSON.stringify(item.name)}: ${JSON.stringify(text)},`;

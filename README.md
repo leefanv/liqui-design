@@ -114,6 +114,27 @@ maintain by hand.
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | One strip, one lens, and toggles that flatten inside it |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | The smallest surface, frosted harder so it stays readable |
 
+## Templates
+
+Component pages show one surface at a time. A template is a whole screen, which
+is where the material has to hold up: a dozen lenses at once, over a backdrop
+with real structure, at the density a product actually ships at.
+
+| | |
+| --- | --- |
+| [Media Player](https://liqui.design/templates/media-player) | Cover art, transport, library and sound settings. Changing track changes what every surface refracts |
+
+Templates install the same way components do, and bring their components with
+them:
+
+```bash
+npx shadcn@latest add https://liqui.design/r/media-player.json
+```
+
+Cover art and backdrops are generated in CSS, so there are no image files to
+copy and nothing to 404 — and gradients with hard edges in them are what
+refraction needs anyway.
+
 ## Browser support
 
 | | Refraction | Notes |
