@@ -34,11 +34,18 @@ const filterIds = new Map<string, string>();
 let nextId = 0;
 
 /**
- * Cap mirrors the image cache's LRU: a surface animating its box requests a
- * filter per intermediate size. Eviction removes the oldest filter node; a
- * mid-animation element referencing it re-requests on its next frame anyway.
+ * Bounded LRU, matching the image cache: a surface animating its box requests a
+ * filter per intermediate size, so an unbounded registry would grow a <filter>
+ * node per intermediate height and never release them.
+ *
+ * Eviction has to go by least-recently-used, not by age. A filter node still
+ * referenced by a surface on screen must not be the one that gets removed: the
+ * surface's `url(#id)` would resolve to nothing, Chromium would drop the whole
+ * backdrop-filter chain, and it would never recover — the reference is memoised
+ * on size and optics, neither of which changed, so nothing re-requests it. That
+ * is why the hit path below re-inserts.
  */
-const FILTER_CACHE_MAX = 128;
+const FILTER_CACHE_MAX = 256;
 
 function ensureHost(): SVGSVGElement {
   if (host && host.isConnected) return host;
@@ -85,7 +92,12 @@ export function ensureFilter(params: FilterParams): { id: string; cold: boolean 
   // those in glassImages), so id dedup can key on it plus the optics.
   const key = `${w}x${h}|r${refraction}|d${dispersion}|${mapHref.length}:${mapHref.slice(-24)}`;
   const existing = filterIds.get(key);
-  if (existing) return { id: existing, cold: false };
+  if (existing) {
+    // Re-insert to mark most-recently-used (Map preserves insertion order).
+    filterIds.delete(key);
+    filterIds.set(key, existing);
+    return { id: existing, cold: false };
+  }
 
   const id = `lq-refract-${nextId++}`;
   const filter = el('filter', {
