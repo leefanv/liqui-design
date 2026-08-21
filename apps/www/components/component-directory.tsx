@@ -4,6 +4,7 @@ import { ComponentPreview } from '@/components/component-preview';
 import { Index } from '@/registry/__index__';
 import { source } from '@/lib/source';
 import { docsRoute } from '@/lib/shared';
+import { NewBadge } from '@/lib/whats-new';
 
 const COMPONENTS_URL = `${docsRoute}/components`;
 
@@ -70,6 +71,9 @@ export function ComponentDirectory() {
               >
                 {page.data.title}
               </Link>
+              {/* Outside the link: the badge is about the component, not part
+                  of its name, and it must not pick up the hover underline. */}
+              <NewBadge name={slug} />
             </h3>
           </div>
         );

@@ -93,7 +93,12 @@ export default function Page() {
 | [Context Menu](https://liqui.design/docs/components/context-menu) | 支持子菜单、复选与单选项，弹层可保持挂载 |
 | [Dialog](https://liqui.design/docs/components/dialog) | 可关闭的那一个，角上的关闭按钮保持扁平 |
 | [Field](https://liqui.design/docs/components/field) | 聚焦环和错误环画在表面上，而不是 input 上 |
+| [Menu](https://liqui.design/docs/components/menu) | 下拉菜单，与作为触发器的玻璃按钮保持不重叠 |
+| [Menubar](https://liqui.design/docs/components/menubar) | 一条玻璃承载多个菜单，触发器在其中扁平化 |
+| [Number Field](https://liqui.design/docs/components/number-field) | 一块玻璃一个镜面，加减按钮只是它的分区 |
 | [Popover](https://liqui.design/docs/components/popover) | 带指示尾巴的玻璃面板，内部承载扁平化的控件 |
+| [Progress](https://liqui.design/docs/components/progress) | 轨道是透镜，填充只是覆在其上的一层色晕 |
+| [Radio Group](https://liqui.design/docs/components/radio-group) | 它是一份列表而非一条整块，所以每个选项各自成镜 |
 | [Select](https://liqui.design/docs/components/select) | 玻璃触发器配玻璃弹层，并避免两者重叠 |
 | [Slider](https://liqui.design/docs/components/slider) | 滑块是那枚透镜，轨道刻意保持扁平 |
 | [Switch](https://liqui.design/docs/components/switch) | 轨道是透镜，滑块刻意保持不透明 |
@@ -101,6 +106,24 @@ export default function Page() {
 | [Toggle](https://liqui.design/docs/components/toggle) | 会保持按下状态的按钮，打开时玻璃被染成强调色 |
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | 一条玻璃，一枚透镜，里面的按钮全部扁平化 |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | 最小的表面，磨砂更重以保证可读性 |
+
+## 模板
+
+组件页一次只展示一个表面。模板是一整屏，而这才是这套材质需要经得起考验的地方：
+十几枚透镜同时在场，背景有真实结构，密度是产品真正会用到的密度。
+
+| | |
+| --- | --- |
+| [Media Player](https://liqui.design/templates/media-player) | 封面、播放控制、曲库和音效设置。切换曲目会改变每一个表面所折射的内容 |
+
+模板的安装方式与组件一致，并会把它用到的组件一并带上：
+
+```bash
+npx shadcn@latest add https://liqui.design/r/media-player.json
+```
+
+封面和背景都由 CSS 生成，所以没有图片文件需要复制，也不会有 404 —— 何况带硬边的
+渐变本来就是折射需要的东西。
 
 ## 浏览器支持
 

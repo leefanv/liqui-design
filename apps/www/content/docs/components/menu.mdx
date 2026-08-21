@@ -1,0 +1,121 @@
+---
+title: Menu
+description: A dropdown menu with submenus, checkbox and radio items, on a keep-mounted glass popup.
+---
+
+<ComponentPreview name="menu-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/menu.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/menu
+```
+
+## Usage
+
+```tsx
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuShortcut,
+  MenuTrigger,
+} from '@/components/ui/menu';
+```
+
+```tsx
+<Menu>
+  <MenuTrigger nativeButton={false} render={<Button />}>
+    View
+  </MenuTrigger>
+  <MenuContent>
+    <MenuItem>
+      Enter Full Screen
+      <MenuShortcut>⌃⌘F</MenuShortcut>
+    </MenuItem>
+    <MenuSeparator />
+    <MenuItem variant="danger">Reset to Defaults</MenuItem>
+  </MenuContent>
+</Menu>
+```
+
+The parts are the ones [Context Menu](/docs/components/context-menu) has, minus
+the right-click trigger: `MenuGroup`, `MenuGroupLabel`, `MenuCheckboxItem`,
+`MenuRadioGroup`, `MenuRadioItem`, `MenuSub`, `MenuSubTrigger` and
+`MenuSubContent` all behave identically.
+
+## Notes
+
+### The trigger has to opt out of the native button
+
+`nativeButton={false}` is not optional when the trigger renders a `Button`, and
+leaving it off is a console warning rather than a broken layout — which is how
+it once reached production here through a documented snippet.
+
+The reason is [Button](/docs/components/button)'s: glass is a stack of divs, and
+a native `<button>` only takes phrasing content, so `Button` already renders as
+a non-native button. `MenuTrigger` defaults to a real `<button>`, and Base UI
+checks that the two agree. Telling the trigger what it is rendering is what
+makes them agree.
+
+A trigger that is *not* glass — a plain icon button, a table row — wants the
+native element and should be left alone.
+
+### Two lenses, kept apart
+
+A context menu opens at the pointer, over whatever the page happens to be
+showing. A menu opens against a trigger, and that trigger is usually glass too.
+Overlap them and the popup's `backdrop-filter` samples the trigger's tint and
+specular rim instead of the page: the top of the list refracts a piece of UI,
+and the trigger disappears under a surface built to look exactly like it.
+
+[Select](/docs/components/select) meets this head-on, because Base UI's
+`alignItemWithTrigger` deliberately lays the popup *over* the trigger. A menu
+only has to avoid drifting into it, which `MenuContent` does with two defaults:
+
+```tsx
+sideOffset = 8;   // clears the trigger's own bezel
+align = 'start';  // hangs off the trigger's edge, not centred on it
+```
+
+Eight rather than the six a popover uses, because the gap has to clear a bezel
+rather than just look like a gap. Both are plain props — pass `sideOffset={0}`
+and you can watch the failure happen.
+
+### The popup stays in the DOM
+
+`MenuContent` portals with `keepMounted`, so a closed menu keeps its filter and
+its decoded displacement map. Reopening is then instant, where an unmounted
+popup pays the `feImage` decode window again on every open and reads as lag.
+
+The cost is that the popup's markup is always present. If a menu holds hundreds
+of items, or its content is expensive to render, drop the prop in your copy —
+the filter registry makes a remount cheap even without it, just not free.
+
+### It is a copy of Context Menu, on purpose
+
+The two files are nearly identical and neither imports the other. Base UI keeps
+menus and context menus as separate components with separate contexts, and the
+CLI writes one file per registry item — so sharing the item classes would need a
+third file that neither component works without, installed by both, for the
+benefit of a string.
+
+Divergence is the actual risk, and it is worth knowing which way to fix it: if
+you restyle items in one, restyle them in the other, or pull both into a shared
+module in your own project where a third file costs nothing.

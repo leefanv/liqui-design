@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 import { dragSurface, waitForGlass } from './glass';
 
@@ -25,7 +25,20 @@ test.describe('no console errors', () => {
     '/docs/components/popover',
     '/docs/components/tooltip',
     '/docs/components/select',
+    // The third trigger that has to opt out of the native button, and the one
+    // whose documented snippet says so — which is how the warning got out last
+    // time.
+    '/docs/components/menu',
+    // The one component with a provider around it, whose viewport is portalled
+    // and fixed — mounted on the directory page too, where a second viewport
+    // would show up.
+    '/docs/components/toast',
     '/docs/handbook/glass',
+    // The templates. A whole page of glass at once is where a surface that
+    // misbehaves at density shows up, and the index renders a template inside a
+    // scaled container — the one place a map could be built at the wrong size.
+    '/templates',
+    '/templates/media-player',
   ]) {
     test(path, async ({ page }) => {
       const errors: string[] = [];
@@ -47,21 +60,85 @@ test.describe('code tab', () => {
   test('the code block does not overlap the tab strip', async ({ page }) => {
     await page.goto('/docs/components/accordion');
     await waitForGlass(page);
-    await page.getByRole('tab', { name: 'Code' }).click();
+    const strip = page.locator('[role="tablist"]').first();
+    const block = page.locator('[role="tabpanel"]:not([hidden]) figure').first();
 
-    const strip = await page.locator('[role="tablist"]').first().boundingBox();
-    const block = await page
-      .locator('[role="tabpanel"]:not([hidden]) figure')
-      .first()
-      .boundingBox();
-    if (!strip || !block) throw new Error('tab strip or code block not found');
+    // Click and measure together, and retry the pair.
+    //
+    // Two things go wrong if this runs once. A click that lands before the page
+    // has hydrated does nothing at all, leaving Preview visible — and Preview
+    // holds a live component, not a code block, so there is nothing to measure.
+    // A click that lands *during* hydration switches the tab and then re-mounts
+    // it, so a handle resolved a moment earlier is measuring a detached node and
+    // reads null. Neither is worth a fixed wait: hydration here is gated on a
+    // lazy component map that grows with every demo added to the registry, so
+    // any number picked today is wrong later. Clicking a tab that is already
+    // active is a no-op, which is what makes retrying the whole thing safe.
+    await expect(async () => {
+      await page.getByRole('tab', { name: 'Code' }).click();
 
-    // Fumadocs gives a code block inside a tab a negative margin sized to cancel
-    // the panel's own padding. Removing that padding — which is the right thing
-    // to do for the preview panel, and was wrong here — leaves the negative
-    // margin uncancelled and the block bleeds up over the tabs. Geometry rather
-    // than a screenshot: it states the invariant exactly and costs no baseline.
-    expect(block.y).toBeGreaterThanOrEqual(strip.y + strip.height - 1);
+      const stripBox = await strip.boundingBox();
+      const blockBox = await block.boundingBox();
+      expect(stripBox, 'tab strip has no box').not.toBeNull();
+      expect(blockBox, 'code block has no box').not.toBeNull();
+
+      // Fumadocs gives a code block inside a tab a negative margin sized to
+      // cancel the panel's own padding. Removing that padding — which is the
+      // right thing to do for the preview panel, and was wrong here — leaves
+      // the negative margin uncancelled and the block bleeds up over the tabs.
+      // Geometry rather than a screenshot: it states the invariant exactly and
+      // costs no baseline.
+      expect(blockBox!.y).toBeGreaterThanOrEqual(stripBox!.y + stripBox!.height - 1);
+    }).toPass();
+  });
+});
+
+test.describe('the New badge', () => {
+  // The badge is derived from ship dates rather than a hand-kept list, so it is
+  // *supposed* to reach zero — a test asserting one exists would come true only
+  // until the newest component turns thirty days old, and then fail on a
+  // Tuesday for no reason.
+  //
+  // What can be asserted at any moment is that the two places showing it agree.
+  // The sidebar gets its badge from a page-tree plugin and the directory tiles
+  // render one directly, which are different code paths onto the same data: if
+  // a Fumadocs upgrade quietly drops `transformPageTree`, the sidebar empties
+  // while the tiles carry on, and that is a difference. Both empty is also
+  // agreement, which is what keeps this green a month from now.
+  test('the sidebar and the directory mark the same components', async ({ page }) => {
+    await page.goto('/docs/components');
+    await waitForGlass(page);
+
+    const named = async (scope: Locator) =>
+      (
+        await scope
+          .locator('a[href^="/docs/components/"]')
+          .filter({ hasText: 'New' })
+          .evaluateAll((links) =>
+            links.map((link) => link.getAttribute('href')!.split('/').pop()!),
+          )
+      ).sort();
+
+    const sidebar = await named(page.locator('#nd-sidebar'));
+    // A tile's badge sits beside the link rather than inside it, so the filter
+    // above would miss it; the heading is the element that holds both.
+    const tiles = (
+      await page
+        // The tiles are the only h3s on the page; the sidebar is links.
+        .locator('h3')
+        .filter({ hasText: 'New' })
+        .evaluateAll((headings) =>
+          headings.map((h) => h.querySelector('a')?.getAttribute('href')?.split('/').pop() ?? ''),
+        )
+    )
+      .filter(Boolean)
+      .sort();
+
+    expect(sidebar).toEqual(tiles);
+    // The cap in lib/whats-new.tsx. A window with no cap lights the whole
+    // sidebar the week a batch lands, which is the failure this number exists
+    // to prevent — so it is worth failing here if it ever stops being applied.
+    expect(sidebar.length).toBeLessThanOrEqual(6);
   });
 });
 
@@ -86,7 +163,11 @@ test.describe('the filter registry', () => {
     // the difference between an SSR tier mismatch and a slow machine.
     await waitForGlass(page);
 
-    const surfaces = page.locator('.liqui-glass--refract');
-    expect(await surfaces.count()).toBeGreaterThan(0);
+    // Polled, not sampled once. The helper waits for the fade classes to be
+    // gone, and "gone" is also true in the moment before the first filter has
+    // been built — so on a page that mounts every demo at once, a single read
+    // can land in that window and see nothing. Retrying distinguishes "not yet"
+    // from "never", which is the thing this test is actually about.
+    await expect.poll(() => page.locator('.liqui-glass--refract').count()).toBeGreaterThan(0);
   });
 });
