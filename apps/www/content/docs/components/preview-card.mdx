@@ -1,0 +1,115 @@
+---
+title: Preview Card
+description: Popover's surface with the frost turned up, because this one lands on a sentence.
+---
+
+<ComponentPreview name="preview-card-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/preview-card.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/preview-card
+```
+
+## Usage
+
+```tsx
+import {
+  PreviewCard,
+  PreviewCardContent,
+  PreviewCardDescription,
+  PreviewCardTitle,
+  PreviewCardTrigger,
+} from '@/components/ui/preview-card';
+```
+
+```tsx
+<PreviewCard>
+  <p>
+    … a <PreviewCardTrigger href="/docs/handbook/glass">displacement map</PreviewCardTrigger> …
+  </p>
+  <PreviewCardContent>
+    <PreviewCardTitle>Displacement map</PreviewCardTitle>
+    <PreviewCardDescription>…</PreviewCardDescription>
+  </PreviewCardContent>
+</PreviewCard>
+```
+
+The trigger renders an `<a>`. Compose your router's link onto it with `render`:
+
+```tsx
+<PreviewCardTrigger render={<NextLink href="/docs" />}>displacement map</PreviewCardTrigger>
+```
+
+## Delay
+
+<ComponentPreview name="preview-card-delay" />
+
+## Notes
+
+### The frost is higher than a popover's
+
+```tsx
+const POPUP_GLASS = { elevated: true, radius: 18, blur: 1, refraction: 120, bezel: 24, frost: 0.6 };
+```
+
+Every other popup in the library opens because you asked for it, and lands on
+layout: a [menu](/docs/components/menu) over a page, a
+[dialog](/docs/components/dialog) over a scrim, a
+[tooltip](/docs/components/tooltip) over a button. A preview card opens because
+your pointer drifted onto a link, and it lands on the paragraph you were reading.
+
+At the popover's `frost: 0.35` the words underneath come through the middle of
+the card, and the reader loses the sentence they were in — not to a design
+choice, but to a hover they did not make. So this one sits at `0.6`: the bezel
+still bends the edges of whatever is behind it, and the body is opaque enough to
+read on.
+
+`frost` is the kernel's density dial — Apple's "clear" at 0 and "regular" at 1 —
+and it interpolates the tint opacity while adding up to 14px of blur on top of
+`blur`. Turning it up is how liqui buys legibility without giving up the lens,
+and this is the component that needs to buy some.
+
+### Which means the tail's numbers are not the popover's
+
+The tail is not a `LiquiGlass`. It cannot be — the surface is a rounded
+rectangle, and a 20×10 triangle has no room for a bezel to refract through — so
+it is a `clip-path` wearing the popup's material by hand:
+
+```tsx
+const ARROW_BACKDROP = 'blur(9.4px) saturate(1.7)'; // blur + frost × 14
+const ARROW_TINT = '…52% → 70%…'; // 0.25 + 0.75 × frost
+```
+
+Those are the kernel's own formulas evaluated at *this* component's frost.
+[Popover](/docs/components/popover) says the tail does not follow `frost` and
+warns you to check it; this component is what that warning looks like when it
+is taken up. Change `frost` through the `glass` prop and the two constants above
+are the thing to fix.
+
+### Delay is a performance decision too
+
+`delay` defaults to 600ms and `closeDelay` to 300ms, and the obvious reason is
+manners — a card that fires on every link the pointer crosses is a page that
+flinches.
+
+The less obvious reason is that the popup's displacement map is generated the
+first time it opens at a given size. A card that fires while the reader is still
+travelling is asking for that work at the worst moment, on a pointer path that
+may cross four more triggers. Six hundred milliseconds means they stopped, and it
+means the surface is being built for someone who is going to look at it.

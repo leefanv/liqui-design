@@ -1,0 +1,148 @@
+---
+title: Combobox
+description: A glass field and popup whose height snaps as you filter, because every height is a map.
+---
+
+<ComponentPreview name="combobox-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/combobox.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/combobox
+```
+
+## Usage
+
+```tsx
+import {
+  Combobox,
+  ComboboxClear,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxInputGroup,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from '@/components/ui/combobox';
+```
+
+```tsx
+<Combobox items={profiles}>
+  <label htmlFor={id}>Surface profile</label>
+  <ComboboxInputGroup>
+    <ComboboxInput id={id} placeholder="e.g. Squircle" />
+    <ComboboxClear />
+    <ComboboxTrigger />
+  </ComboboxInputGroup>
+
+  <ComboboxContent>
+    <ComboboxEmpty>No profile by that name.</ComboboxEmpty>
+    <ComboboxList>
+      {(profile: string) => (
+        <ComboboxItem key={profile} value={profile}>
+          {profile}
+        </ComboboxItem>
+      )}
+    </ComboboxList>
+  </ComboboxContent>
+</Combobox>
+```
+
+Base UI filters `items` for you and infers the item type from `value` or
+`defaultValue`, so `ComboboxList` takes a render function rather than children.
+
+There is no `ComboboxLabel`. Base UI's `Combobox.Label` labels the *trigger*, and
+warns in the console when an input is the form control — which is the anatomy
+this component ships. Use a native `<label htmlFor>`, or put the whole thing in a
+[Field](/docs/components/field) and use `FieldLabel`. A part that is wrong for
+the anatomy would be worse than no part at all.
+
+## Multiple
+
+<ComponentPreview name="combobox-multiple" />
+
+## Notes
+
+### Snapping is not a compromise here
+
+[NavigationMenu](/docs/components/navigation-menu#the-panel-moves-and-does-not-resize)
+refuses to animate its popup's size, because the displacement map is keyed on
+size and a 350ms resize walks through a new one on every frame — 48 cache
+entries gone because someone moved the pointer sideways.
+
+A filtered list resizes far more often than that. It can move on every
+keystroke. It is nevertheless fine, and the difference is exactly the one worth
+understanding about this cache:
+
+- A resize **animation** produces a new size per frame. Unbounded, never
+  repeated, every one of them a miss.
+- A filtered list lands on **discrete** heights — one per number of visible rows.
+  A handful of values, capped by `max-h` on the list, and they repeat constantly
+  as you type and backspace. After the first pass through them, every one is a
+  hit.
+
+So the popup transitions opacity and its entry scale, and never its height. The
+snap is what keeps the cache useful.
+
+```tsx
+'transition-[transform,opacity] duration-150';
+'max-h-[min(20rem,var(--available-height))]';
+```
+
+That `max-h` is doing double duty. It is the usual "do not let the list eat the
+viewport", and it is also the bound on how many distinct maps this component can
+ever ask for.
+
+### The field is Input's surface
+
+The `<input>` is a transparent element inside the glass, not the glass itself —
+a replaced element has nowhere to put the backdrop, tint and specular layers.
+The full version of that argument is on [Input](/docs/components/input#the-input-cannot-be-the-surface).
+
+One thing changes. `Input` reaches into its own child with `has-[input:focus-visible]`;
+here the focus can be on the input *or* on a chip, so the group uses
+`focus-within` instead:
+
+```tsx
+'focus-within:shadow-[0_0_0_3px_…var(--lq-accent)…]';
+```
+
+### Everything in the group is flat
+
+The clear button, the open trigger and every chip are colour on glass that is
+already there. A chip with its own bezel would be a lens inside the field's
+lens, with nothing behind it but the field's tint — the case
+[ToggleGroup](/docs/components/toggle-group) flattens its toggles for, and
+[Toolbar](/docs/components/toolbar) flattens everything for.
+
+Which is also why the chips wrap *inside* the group rather than under it: they
+are content on the surface, so the surface grows a row at a time to hold them.
+Another discrete resize, another small set of repeating heights.
+
+### The popup clips, the field does not
+
+```tsx
+contentClassName = 'overflow-hidden rounded-[inherit]';
+```
+
+Only on the popup. The list scrolls, and without the clip a scrolled row squares
+off the corners the surface is drawn with —
+[Select](/docs/components/select) carries the identical line for the identical
+reason. The field has nothing that scrolls, so it does not clip, which is what
+lets a focus ring bloom outside its box.

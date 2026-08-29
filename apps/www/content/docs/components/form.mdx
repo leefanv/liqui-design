@@ -1,0 +1,110 @@
+---
+title: Form
+description: Server errors routed to the field they belong to, and no surface of its own.
+---
+
+<ComponentPreview name="form-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/form.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/form
+```
+
+## Usage
+
+```tsx
+import { Form } from '@/components/ui/form';
+```
+
+```tsx
+const [errors, setErrors] = React.useState({});
+
+<Form
+  errors={errors}
+  onSubmit={async (event) => {
+    event.preventDefault();
+    const response = await save(new FormData(event.currentTarget));
+    setErrors(response.errors ?? {});
+  }}
+>
+  <Field name="handle">
+    <FieldLabel>Handle</FieldLabel>
+    <FieldControl required />
+    <FieldError match="valueMissing">A handle is required.</FieldError>
+    <FieldError />
+  </Field>
+  <Button type="submit">Claim handle</Button>
+</Form>;
+```
+
+`errors` is keyed by the `name` on each [`Field`](/docs/components/field). A bare
+`<FieldError />` with no `match` renders whatever the form routed to that field.
+
+## Notes
+
+### It is the errors, and nothing else
+
+There is no surface here, and there should not be. A form is a set of controls
+that each already carry their own glass; a panel behind them would be the
+backdrop every one of those lenses bends. That is the argument spelled out on
+[Fieldset](/docs/components/fieldset), one level down and unchanged.
+
+What the component is actually for is this:
+
+```tsx
+<Form errors={{ handle: 'That handle is reserved.' }}>
+```
+
+Base UI routes each message to the field with that `name`, so a server rejection
+lands under the control it is about rather than in a banner at the top of the
+page. Then `Field.Control` clears it on the next change to that field — the
+error goes away as you fix it, without your state having to notice.
+
+That behaviour is the entire reason to reach for `<Form>` over a `<form>`, and
+it is worth knowing that it is *internal*: you set `errors` once from the
+response and never have to unset it.
+
+### Validation timing
+
+```tsx
+<Form validationMode="onBlur">
+```
+
+`onSubmit` is the default, and it means what it says: fields are checked when
+the form is submitted, and re-check on change afterwards. That is the timing
+[Input](/docs/components/input#which-means-the-states-belong-to-a-child)'s
+invalid ring is built around — it waits for `data-touched` too, so a required
+field is not red before anyone has been near it.
+
+`validationMode` on a `Field` overrides the form's, which is how one awkward
+control gets `onChange` without dragging the rest of the page with it.
+
+### Server functions
+
+A form driven by `useActionState` passes `action` instead of `onSubmit`, and the
+error plumbing is identical:
+
+```tsx
+const [state, formAction, pending] = React.useActionState(submit, {});
+
+<Form action={formAction} errors={state.serverErrors}>
+```
+
+Everything in this component is a `<form>` underneath, so React's own form
+handling applies unchanged.

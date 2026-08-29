@@ -33,6 +33,16 @@ test.describe('no console errors', () => {
     // and fixed — mounted on the directory page too, where a second viewport
     // would show up.
     '/docs/components/toast',
+    // Two more triggers that have to opt out of the native button, and the two
+    // components whose Base UI parts warn loudest when they are assembled
+    // wrongly: a combobox whose label belongs to the trigger rather than the
+    // input, and a drawer whose trigger is handed a liqui Button.
+    '/docs/components/combobox',
+    '/docs/components/drawer',
+    // A single popup shared by several triggers, portalled, with a viewport
+    // inside it — and the one place a tail is rendered inside a popup that
+    // clips.
+    '/docs/components/navigation-menu',
     '/docs/handbook/glass',
     // The templates. A whole page of glass at once is where a surface that
     // misbehaves at density shows up, and the index renders a template inside a

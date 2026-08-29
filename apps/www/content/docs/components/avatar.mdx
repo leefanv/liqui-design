@@ -1,0 +1,150 @@
+---
+title: Avatar
+description: A lens with a picture set into it, inset by the width of its own bezel.
+---
+
+<ComponentPreview name="avatar-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/avatar.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/avatar
+```
+
+## Usage
+
+```tsx
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+```
+
+```tsx
+<Avatar>
+  <AvatarImage src="/lena.jpg" alt="Lena Toth" />
+  <AvatarFallback delay={600}>LT</AvatarFallback>
+</Avatar>
+```
+
+`AvatarFallback` renders when the image fails or when there is no image at all.
+`delay` holds it back for the given number of milliseconds so a picture that is
+merely slow does not flash initials on its way in.
+
+## Sizes
+
+<ComponentPreview name="avatar-sizes" />
+
+```tsx
+<Avatar size={56}>…</Avatar>
+```
+
+## Notes
+
+### The picture is inset by the bezel
+
+`LiquiGlass` renders content above every glass layer. That is the right stacking
+for every other component in the library — a menu item does not reach the edge,
+a [progress](/docs/components/progress) track is mostly empty, a
+[button](/docs/components/button) is a label in the middle of a box — and it is
+exactly wrong for an avatar, whose content is the whole disc by default.
+
+A full-bleed photo covers the tint, the specular arc and the entire bezel. Not
+dims: covers. What is left is a round `<img>` with a shadow under it, and the
+surface underneath is doing real per-pixel work that nobody can see.
+
+So the picture is inset by the width of the bezel:
+
+```tsx
+<span className="block size-full" style={{ padding: ring }}>{children}</span>
+```
+
+The glass keeps a ring of itself all the way round, and that ring is the part
+that refracts the page. The avatar reads as a porthole — a lens with something
+behind it, which is what the material is for. With no picture the whole disc is
+glass and the initials float on it.
+
+### `size` is a prop, not a class
+
+Three numbers are derived from the diameter, and none of them can come from a
+`size-*` class:
+
+```tsx
+const ring = Math.max(3, Math.round(size * 0.17));
+
+<LiquiGlass radius={size / 2} refraction={Math.round(size)} bezel={ring} />;
+```
+
+`radius` has to be exactly half the box or the displacement map's corners stop
+matching the circle the element is drawn as, and you get a rounded square's
+corners bending inside a circle's outline. `bezel` is also the visible ring, so
+it has to shrink with the disc — the same 0.17 ratio the
+[checkbox](/docs/components/checkbox) runs (6px on a 20px box), which is where
+the library's smallest surfaces bottom out. And `refraction` is a displacement
+in pixels, so it scales for the reason the
+[contributing rules](https://github.com/leefanv/liqui-design/blob/main/CONTRIBUTING.md)
+give: bezel is a fraction of the box, and small components need smaller numbers.
+
+The checkbox can pin its optics because it is one fixed size. An avatar is not,
+so the numbers scale instead. Font size rides along too — the fallback's initials
+are `1em` against a root sized at `0.36 × size`, which is what makes one class
+work at every diameter.
+
+Passing `className="size-16"` will not work: the width and height are inline
+styles and inline wins. That is deliberate — a class that changed the box without
+changing the optics would give you a 64px disc wearing a 40px avatar's rim.
+
+### There is no AvatarGroup
+
+The overlapping stack is the most-requested avatar layout and it is the one thing
+this material cannot do honestly. Two glass discs that overlap are two lenses in a
+line: the upper one's backdrop is the lower one's tint and specular rim, so its
+bezel refracts a piece of UI instead of the page — the same failure
+[Select](/docs/components/select) had to design around when its popup opened over
+its own trigger, and the reason a
+[toggle inside a group](/docs/components/toggle-group) goes flat.
+
+Every other library solves it with a ring of the page's background colour punched
+around each disc. There is no page background colour here; that is the whole
+premise.
+
+If you want the stack anyway, the honest version is to drop the discs out of the
+refraction tier, so what overlaps is tint and rim rather than lens:
+
+```tsx
+<div className="flex">
+  {people.map((person, i) => (
+    <Avatar
+      key={person.id}
+      glass={{ material: 'clear' }}
+      style={i > 0 ? { marginLeft: -12 } : undefined}
+    >
+      <AvatarFallback>{person.initials}</AvatarFallback>
+    </Avatar>
+  ))}
+</div>
+```
+
+Ten lines in your project, where you can see what it costs, beats an export that
+quietly turns the glass off.
+
+### Images travel as text
+
+The demo above builds its portraits as SVG data URIs rather than pointing at
+files, for the reason the
+[media player](/templates/media-player) template gives at length: a registry item
+is UTF-8 text from end to end, so a demo that referenced `/portrait.jpg` would
+install a 404 into your project. Your own avatars are ordinary `src` strings —
+nothing about the component cares.

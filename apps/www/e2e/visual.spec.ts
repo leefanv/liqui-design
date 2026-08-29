@@ -26,24 +26,40 @@ import { dragSurface, preview, stage, waitForGlass } from './glass';
 const COMPONENTS = [
   'accordion',
   'alert-dialog',
+  'autocomplete',
+  'avatar',
   'button',
   'checkbox',
+  'checkbox-group',
+  'collapsible',
+  'combobox',
   'context-menu',
   'dialog',
+  'drawer',
   'field',
+  'fieldset',
+  'form',
+  'input',
   'menu',
   'menubar',
+  'meter',
+  'navigation-menu',
   'number-field',
+  'otp-field',
   'popover',
+  'preview-card',
   'progress',
   'radio-group',
+  'scroll-area',
   'select',
+  'separator',
   'slider',
   'switch',
   'tabs',
   'toast',
   'toggle',
   'toggle-group',
+  'toolbar',
   'tooltip',
 ];
 
@@ -146,6 +162,20 @@ test.describe('toast column', () => {
     await page.getByText('File 3 exported').waitFor();
     await waitForGlass(page);
     await expect(page).toHaveScreenshot('toast-column.png');
+  });
+});
+
+test.describe('scroll area thumb', () => {
+  // The looped preview above can only ever capture a scroll area at rest, and
+  // at rest there is no scrollbar — it fades in on hover, which is the whole
+  // design. The thumb is also the narrowest surface in the library, so it is
+  // the first place an over-driven bezel would meet in the middle and smear.
+  test('the thumb is a lens once the pointer is in the area', async ({ page }) => {
+    await page.goto('/docs/components/scroll-area');
+    await waitForGlass(page);
+    await preview(page).hover();
+    await waitForGlass(page);
+    await expect(preview(page)).toHaveScreenshot('scroll-area-hover.png');
   });
 });
 

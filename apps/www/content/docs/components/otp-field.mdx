@@ -1,0 +1,116 @@
+---
+title: OTP Field
+description: Six identical surfaces that cost one, because the map cache is keyed on size and optics.
+---
+
+<ComponentPreview name="otp-field-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/otp-field.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/otp-field
+```
+
+## Usage
+
+```tsx
+import { OTPField, OTPFieldSlots } from '@/components/ui/otp-field';
+```
+
+```tsx
+<OTPField id={id} length={6} className="flex items-center gap-2">
+  <OTPFieldSlots length={6} />
+</OTPField>
+```
+
+`length` is required on the root — Base UI needs it to clamp values and detect
+completion before the slots have hydrated. Label it with a native
+`<label htmlFor>`: the root's `id` lands on the first slot, and the rest derive
+theirs from it.
+
+## Grouped
+
+<ComponentPreview name="otp-field-grouped" />
+
+```tsx
+<OTPField length={6} mask>
+  <OTPFieldSlot />
+  <OTPFieldSlot className="ml-2" />
+  <OTPFieldSlot className="ml-2" />
+  <OTPFieldSeparator />
+  <OTPFieldSlot />
+  …
+</OTPField>
+```
+
+## Notes
+
+### Six surfaces, one map
+
+The displacement map cache is keyed on the surface's size and its optics, and
+every slot here is the same box at the same numbers. So a six-digit code
+generates **one** map and reuses it six times; a twelve-digit one still generates
+one.
+
+This is the cheapest row of glass in the library and it looks like the most
+expensive, which is worth knowing because the instinct — "that is a lot of
+lenses, soften them" — is exactly backwards. If you want to spend something here,
+spend it on `refraction`; you are paying for one map either way.
+
+The one way to break it is to make the slots differ. A wider last slot, a
+`glass` override on the focused one, a first slot with a different radius: each
+distinct size is a distinct map, and a 48-entry cache spent on one input is a
+cache the rest of the page has lost.
+
+### A filled slot retints
+
+```tsx
+'has-[input[data-filled]]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_22%,var(--lq-tint))]';
+```
+
+Rather than painting a background, which is one of the
+[rules that are specific to glass](https://github.com/leefanv/liqui-design/blob/main/CONTRIBUTING.md):
+a background covers the refraction, while overriding the token keeps the lens
+working *through* the colour. The result is a row of lit windows where the
+entered digits are, each one still bending the backdrop behind it.
+
+It is [Checkbox](/docs/components/checkbox)'s move at a much larger size, and the
+accent is deliberately weaker — 22% mixed into the existing tint rather than
+88% replacing it. A checkbox is either on or off and the fill *is* the state; a
+filled OTP slot already shows its state as a digit, and a full-strength accent
+would say "selected" about something that is merely typed in.
+
+### The input cannot be the surface
+
+Each slot is a wrapper around a transparent `<input>`, not an input wearing
+glass, because an `<input>` is a replaced element with nowhere to put the
+backdrop, tint and specular layers. That is
+[Input](/docs/components/input#the-input-cannot-be-the-surface)'s constraint,
+six times over — and it is why focus and filled state are read with `has-*`: the
+element with the state is a child of the element with the material.
+
+### The separator is cut short
+
+```tsx
+'mx-1 h-4 w-px self-center';
+```
+
+A full-height rule between two slots reads as a seventh slot with nothing in it.
+Shortening it to the height of a slot's middle makes it a gap marker instead —
+[Separator](/docs/components/separator)'s incision, dim wall and lit wall,
+scaled to the job.
