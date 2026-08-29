@@ -17,7 +17,8 @@ import { cn } from '@/lib/utils';
  *
  * Checking fills the glass with accent by overriding `--lq-tint` rather than
  * swapping in a flat box, so the bezel and specular arc survive the state
- * change.
+ * change. The mixed state retints identically — a `parent` checkbox inside a
+ * `CheckboxGroup` is half-selected, not half-glass.
  */
 
 const CHECKBOX_GLASS = {
@@ -69,9 +70,16 @@ export function Checkbox({ glass, className, ...props }: CheckboxProps) {
         />
       }
     >
-      <BaseCheckbox.Indicator className="inline-flex transition-[opacity,transform] duration-100 data-[ending-style]:scale-[0.6] data-[ending-style]:opacity-0 data-[starting-style]:scale-[0.6] data-[starting-style]:opacity-0">
-        {props.indeterminate ? IndeterminateIcon : CheckIcon}
-      </BaseCheckbox.Indicator>
+      {/* The mark is chosen from the indicator's *state*, not from the
+          `indeterminate` prop. Inside a `CheckboxGroup` a `parent` checkbox is
+          put into the mixed state by the group, and nothing is passed down here
+          — reading the prop would draw a tick on a half-selected parent. */}
+      <BaseCheckbox.Indicator
+        className="inline-flex transition-[opacity,transform] duration-100 data-[ending-style]:scale-[0.6] data-[ending-style]:opacity-0 data-[starting-style]:scale-[0.6] data-[starting-style]:opacity-0"
+        render={(indicatorProps, state) => (
+          <span {...indicatorProps}>{state.indeterminate ? IndeterminateIcon : CheckIcon}</span>
+        )}
+      />
     </BaseCheckbox.Root>
   );
 }
