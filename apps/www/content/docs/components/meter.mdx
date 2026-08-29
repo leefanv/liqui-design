@@ -1,0 +1,136 @@
+---
+title: Meter
+description: A reading on a refracting track, with a wash that changes colour but never slides.
+---
+
+<ComponentPreview name="meter-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/meter.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/meter
+```
+
+## Usage
+
+```tsx
+import { Meter, MeterIndicator, MeterLabel, MeterTrack, MeterValue } from '@/components/ui/meter';
+```
+
+```tsx
+<Meter value={72}>
+  <div className="flex items-baseline justify-between">
+    <MeterLabel>Storage used</MeterLabel>
+    <MeterValue />
+  </div>
+  <MeterTrack>
+    <MeterIndicator />
+  </MeterTrack>
+</Meter>
+```
+
+`value` is required and `min` / `max` default to 0 and 100. `MeterValue`
+formats through `Intl.NumberFormat` — pass `format` on the root to change the
+units, or a render function for a reading that is not a number:
+
+```tsx
+<Meter value={18} max={24}>
+  <MeterValue>{(_, value) => `${value} of 24`}</MeterValue>
+</Meter>
+```
+
+## Thresholds
+
+<ComponentPreview name="meter-thresholds" />
+
+## Notes
+
+### It is Progress, on purpose
+
+The optics are [Progress](/docs/components/progress)'s, unchanged: the fixed
+track is the lens and the fill is a translucent wash over it, because a
+refracting fill would ask the map cache for a new entry on every frame and evict
+every other surface's map on the way past. That argument is written out in full
+on the [progress page](/docs/components/progress#the-fill-is-a-wash-not-a-lens)
+and none of it is different here.
+
+The two components stay separate files because Base UI keeps them as separate
+primitives — a meter is `role="meter"` and a progress bar is `role="progressbar"`,
+which is a real difference to a screen reader — and because a registry item is
+one file. [Menu and ContextMenu](/docs/components/menu) are copies for the same
+reason. Sharing the track would mean a third item that neither component works
+without.
+
+### The width does not transition
+
+This is the one thing the two do not share.
+
+```tsx
+'transition-[background-color] duration-200';
+```
+
+A progress bar is a task advancing, so the eye should be able to follow it, and
+its fill transitions width over half a second. A meter is a measurement of
+something that already is — disk in use, a score, a battery — and there is no
+event for the animation to be *of*. A bar that slides from 40 to 72 is claiming a
+change happened between those numbers, when what happened is that you read the
+value at a different moment.
+
+There is also no indeterminate state. `value` is required; a reading you do not
+have is not a reading.
+
+### A threshold is a token, not a prop
+
+The wash is one colour expression:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-accent)_78%,transparent)]';
+```
+
+So a meter that should go amber past 70 and red past 90 overrides the token on
+the root, and the fill follows:
+
+```tsx
+<Meter value={value} style={{ '--lq-accent': toneFor(value) }}>
+```
+
+This is the same mechanism as [Checkbox](/docs/components/checkbox)'s
+`data-[checked]` retint, and the reason this component ships no `tone` prop.
+Retinting keeps the lens working *through* the colour; a prop that painted a
+background would cover the refraction, which is one of the
+[rules that are specific to glass](https://github.com/leefanv/liqui-design/blob/main/CONTRIBUTING.md).
+
+It is also the reason the colour *is* allowed to transition. A wash changing hue
+is the same reading looked at against a different rule; a wash changing width is
+a different reading.
+
+### The indicator is yours to place
+
+`ProgressTrack` renders its own indicator, because a progress bar has nothing
+else that can go inside a track. `MeterTrack` does not:
+
+```tsx
+<MeterTrack>
+  <MeterIndicator />
+</MeterTrack>
+```
+
+A meter is the one bar that sometimes has company in there — a target line, a
+threshold marker, a shaded band for the acceptable range. Those are absolutely
+positioned children of the track, and the track's content wrapper is already
+`relative` and clipped to the radius, so they have somewhere to go.

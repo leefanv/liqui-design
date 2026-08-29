@@ -1,0 +1,114 @@
+---
+title: Input
+description: A transparent input inside a glass surface, with slots that stay on the same lens.
+---
+
+<ComponentPreview name="input-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/input.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/input
+```
+
+## Usage
+
+```tsx
+import { Input } from '@/components/ui/input';
+```
+
+```tsx
+<Input placeholder="acme-design" aria-label="Workspace name" />
+```
+
+`className` lands on the glass surface, because the surface is the component's
+box — `<Input className="w-64" />` has to widen the thing you can see, not a
+transparent element inside it. Use `inputClassName` for the `<input>` itself.
+
+## Slots
+
+<ComponentPreview name="input-slots" />
+
+```tsx
+<Input start={<SearchIcon />} end={<span>px</span>} />
+```
+
+## Notes
+
+### The input cannot be the surface
+
+`LiquiGlass` renders four layers — refracting backdrop, tint, specular rim, then
+your content on top. An `<input>` is a replaced element: it has no place to put
+children, so those layers would have nowhere to go.
+
+That is the same constraint that keeps [Button](/docs/components/button) and
+[Select](/docs/components/select)'s trigger off the native `<button>`, arriving
+from the other direction. There, Base UI can be told `nativeButton={false}` and
+the glass becomes the element. Here it cannot: the thing has to stay an
+`<input>` to be one.
+
+So the surface is a wrapper, the input is transparent inside it, and the input
+is the only part of this component with no styling of its own worth speaking of.
+
+### Which means the states belong to a child
+
+The surface has to react to something happening one level down, which is what
+`has-*` is for:
+
+```tsx
+'has-[input:focus-visible]:shadow-[0_0_0_3px_…var(--lq-accent)…]';
+'has-[input[data-invalid][data-touched]]:shadow-[0_0_0_2px_…var(--lq-danger)…]';
+```
+
+A focus ring drawn on the input would be a rectangle sitting inside a rounded
+lens, a pixel or two in from the bezel, and it would look exactly like the
+mistake it is.
+
+`data-touched` is in the invalid selector on purpose. A required field is invalid
+from the moment it mounts, and a form that greets you in red is telling you off
+for something you have not done yet. Base UI sets `data-touched` once the field
+has been visited; before that, the ring stays away.
+
+### Slots share the lens
+
+```tsx
+<Input start={<SearchIcon />} />
+```
+
+`start` and `end` render inside the glass content layer, beside the input —
+*not* on surfaces of their own. A second lens inside this one would have nothing
+behind it but this one's tint, so its bezel would bend a piece of UI instead of
+the page. That is the case [ToggleGroup](/docs/components/toggle-group) flattens
+its toggles for, and the reason a [dialog](/docs/components/dialog)'s dismiss is
+a wash rather than a button.
+
+A slot that has to be pressable — a clear button, a reveal-password toggle — is
+therefore a flat button, styled with colour and not with material. The demo above
+shows one.
+
+### This and `FieldControl` wrap the same element
+
+Base UI's `Input` is a one-line re-export of `Field.Control`, so
+[Field](/docs/components/field)'s control and this component are the same
+element wearing the same surface. The difference is which one you reach for:
+inside a `Field` you get the label, description and error wiring for free, and
+`FieldControl` is already there. Outside one, this is the input, and it is the
+one with slots.
+
+They stay separate files because a registry item is one file — the same reason
+[Menu and ContextMenu](/docs/components/menu) are copies.

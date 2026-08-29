@@ -1,0 +1,135 @@
+---
+title: Collapsible
+description: A lens on the trigger, frost on the panel — the box that grows has no map to rebuild.
+---
+
+<ComponentPreview name="collapsible-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/collapsible.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/collapsible
+```
+
+## Usage
+
+```tsx
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible';
+```
+
+```tsx
+<Collapsible defaultOpen>
+  <CollapsibleTrigger>Displacement map</CollapsibleTrigger>
+  <CollapsiblePanel>
+    <p>…</p>
+  </CollapsiblePanel>
+</Collapsible>
+```
+
+`Collapsible` is Base UI's root untouched, so `open` / `onOpenChange` control it
+and `defaultOpen` does not.
+
+## Found by search
+
+<ComponentPreview name="collapsible-search" />
+
+`hiddenUntilFound` hides the panel with `hidden="until-found"` rather than
+unmounting it, so the browser's own find-in-page can match text inside a closed
+section and open it. Press ⌘F in the preview above and search for *Snell*.
+
+## Notes
+
+### Two tiers, because only one box changes size
+
+[Accordion](/docs/components/accordion) is the same Base UI machinery with the
+opposite answer, and the two look enough alike that the difference is worth
+stating.
+
+An accordion item is **one** surface wrapping its own header and panel, and that
+whole box grows. The displacement map is keyed on size, so an opening item walks
+through a distinct map at every intermediate height — the library's 48-entry LRU
+absorbs it, and it is the reason that cache is bounded at all. That cost is
+accepted there because an accordion item *is* a card: the header and the body
+are one object, and splitting them leaves a stack of loose parts.
+
+A lone disclosure is not a card. It is a control and the consequence of pressing
+it, and separating them costs nothing. So:
+
+```tsx
+const TRIGGER_GLASS = { radius: 14, blur: 1, refraction: 60, bezel: 14 };
+const PANEL_GLASS = { material: 'frost', radius: 14, blur: 1 };
+```
+
+The trigger's box never changes, so its map is generated once and reused for the
+life of the page. The panel is the same material at the `frost` tier — blur and
+tint, with no SVG filter and no canvas map behind it. **Frost has nothing to
+regenerate**, so the growing box is free however far it opens and however fast
+you click.
+
+This is the degradation tier from [Glass](/docs/handbook/glass#degradation) used
+on purpose rather than as a fallback. It is what Safari and Firefox render for
+every surface today, which is worth knowing: on those browsers the trigger and
+the panel are the same material, and this component looks *more* uniform there,
+not less.
+
+### They are not supposed to match
+
+A refracting trigger over a frosted panel is a visible difference, and it is the
+component telling you which half you can press. Every other pairing in the
+library does the same thing from the other direction — the
+[toggle inside a group](/docs/components/toggle-group) goes flat because the
+strip is the surface, the [dialog](/docs/components/dialog)'s dismiss is a wash
+because the panel is already there. Here both parts are surfaces, and the lens
+marks the one with a hit area.
+
+If you want them uniform, hand the panel the trigger's optics and take the cost
+knowingly:
+
+```tsx
+<CollapsiblePanel glass={{ material: 'auto', refraction: 60, bezel: 14 }} />
+```
+
+Watch the map cache while you do it — a panel that animates from 0 to 300px is
+around 300 map entries in a cache that holds 48, and everything else on the page
+loses its own.
+
+### The panel clips twice
+
+```tsx
+'h-[var(--collapsible-panel-height)] overflow-hidden';
+contentClassName = 'overflow-hidden rounded-[inherit]';
+```
+
+The height animation clips the panel, and the glass content wrapper has to clip
+to the same radius — otherwise the square corners of a mid-animation box punch
+through the surface's rounded ones. Accordion carries the identical pair for the
+identical reason.
+
+The third selector on the panel is a portability guard:
+
+```tsx
+"[&[hidden]:not([hidden='until-found'])]:hidden";
+```
+
+A closed panel carries the `hidden` attribute, and `hidden="until-found"` carries
+it too — so a reset that hides everything `[hidden]` also hides the panel the
+browser is supposed to be able to find. Tailwind's own preflight has scoped its
+rule around that since v4.1 and this line changes nothing there. It is in the
+file because the file is what `shadcn add` writes into *your* project, which may
+have no preflight at all, and a closed panel that stays visible is a worse
+failure than a redundant selector.
