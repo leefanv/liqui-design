@@ -1,0 +1,138 @@
+---
+title: Drawer
+description: The largest surface in the library, dragged on one cached map.
+---
+
+<ComponentPreview name="drawer-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/drawer.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/drawer
+```
+
+## Usage
+
+```tsx
+import {
+  Drawer,
+  DrawerBody,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHandle,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
+```
+
+```tsx
+<Drawer swipeDirection="down">
+  <DrawerTrigger render={<Button />}>Export project</DrawerTrigger>
+  <DrawerContent side="bottom">
+    <DrawerHandle />
+    <DrawerBody>
+      <DrawerTitle>Export project</DrawerTitle>
+      <DrawerDescription>…</DrawerDescription>
+    </DrawerBody>
+  </DrawerContent>
+</Drawer>
+```
+
+`side` and `swipeDirection` are two props because they are two decisions — a
+bottom sheet with `snapPoints` is often swiped *down to a smaller size* rather
+than away. For a plain panel they match.
+
+## From the side
+
+<ComponentPreview name="drawer-side" />
+
+## Notes
+
+### A big surface is not an expensive one
+
+The displacement map is generated per pixel on a canvas, so a full-width sheet
+sounds like the worst case. Two things make it the opposite.
+
+The kernel renders maps for large surfaces at **half resolution**. Displacement
+vectors and the specular glow are smooth fields, so stretching them back up is
+invisible, and generation plus the PNG decode get roughly four times cheaper.
+And a drawer has exactly one size per side, so after the first open every
+subsequent one is a cache hit for the rest of the session.
+
+Compare that with [Accordion](/docs/components/accordion), whose items are small
+and whose maps are legion because they animate their height. Size is not what
+costs; *change* of size is.
+
+### The swipe cannot rebuild a filter
+
+```tsx
+'transition-transform duration-[450ms]';
+'data-[swiping]:duration-0';
+```
+
+Transform only. Dragging translates the sheet, and the map is keyed on size and
+optics — neither of which a translate touches. The repo asserts exactly this in
+`checks.spec.ts` by dragging a surface and checking that no filter was recreated.
+
+Which matters more here than anywhere else: a swipe is the one interaction where
+a rebuild would be visible as lag, frame by frame, under the reader's finger. It
+is also the one interaction that structurally cannot cause one.
+
+Nothing in this component animates width or height for the same reason. A sheet
+that resized as it moved would build a new map per frame, which is the failure
+[NavigationMenu](/docs/components/navigation-menu#the-panel-moves-and-does-not-resize)
+is designed around.
+
+### The scrim changes what you are judging
+
+```tsx
+'bg-[var(--lq-scrim)] backdrop-blur-[2px]';
+'opacity-[calc(1-var(--drawer-swipe-progress))]';
+```
+
+The scrim sits between the sheet and the page, so a `frost` tuned over bare
+wallpaper reads far too heavy here — the same warning
+[Dialog](/docs/components/dialog) gives. Judge drawer optics against a dimmed
+page.
+
+The scrim also tracks the gesture: drag the sheet halfway out and the page behind
+it is already half back, because its opacity is a function of
+`--drawer-swipe-progress`. `data-[swiping]:duration-0` is what keeps it on your
+finger instead of 450ms behind it.
+
+### The handle is flat
+
+A grab bar is a small box inside a big surface, so it is a pill of colour rather
+than its own lens — one more instance of the rule that puts a wash on
+[Dialog](/docs/components/dialog)'s dismiss and flattens a
+[toggle inside a group](/docs/components/toggle-group). A lens there would be
+bending the sheet it is lying on.
+
+### Tailwind cannot see a class you built at runtime
+
+Worth stating because it is the bug this file was written around:
+
+```tsx
+// Never — Tailwind reads the source, so this class never reaches the stylesheet
+`data-[ending-style]:${layout.closed}`;
+```
+
+The four sides are written out as literal strings in a lookup table. The
+repetition is the price of Tailwind being a compiler, and it is cheaper than a
+drawer that silently refuses to animate out.

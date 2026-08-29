@@ -1,0 +1,135 @@
+---
+title: Toolbar
+description: One strip of glass with flat controls on it — ToggleGroup's rule, generalised.
+---
+
+<ComponentPreview name="toolbar-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/toolbar.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/toolbar
+```
+
+It brings [Toggle](/docs/components/toggle) with it — not to render one, but so
+that one placed on the strip knows to flatten itself.
+
+## Usage
+
+```tsx
+import {
+  Toolbar,
+  ToolbarButton,
+  ToolbarGroup,
+  ToolbarInput,
+  ToolbarLink,
+  ToolbarSeparator,
+} from '@/components/ui/toolbar';
+```
+
+```tsx
+<Toolbar aria-label="Formatting">
+  <ToolbarGroup>
+    <Toggle aria-label="Bold">B</Toggle>
+    <Toggle aria-label="Italic">I</Toggle>
+  </ToolbarGroup>
+  <ToolbarSeparator orientation="vertical" />
+  <ToolbarButton>Paragraph</ToolbarButton>
+</Toolbar>
+```
+
+Arrow keys move between items and focus wraps at the ends, which is what makes a
+toolbar a single tab stop rather than eight.
+
+Any Base UI popup trigger composes onto a toolbar item with `render`:
+
+```tsx
+<Menu>
+  <ToolbarButton render={<MenuTrigger />}>Paragraph</ToolbarButton>
+  <MenuContent>…</MenuContent>
+</Menu>
+```
+
+## Vertical
+
+<ComponentPreview name="toolbar-vertical" />
+
+## Notes
+
+### The flattest file in the library
+
+[ToggleGroup](/docs/components/toggle-group) reached this conclusion for one
+kind of control; a toolbar is the general case. Two surfaces that overlap leave
+the upper one refracting the lower one's tint instead of the page, so a surface
+with things on it cannot have surfaces on it.
+
+Everything here is therefore colour on glass that is already there — a hover
+wash, a pressed wash, a hairline for the separator — and the only `LiquiGlass`
+in the file is the strip itself. Press *B* in the demo above and watch the
+accent arrive without a second bezel arriving with it.
+
+### A `Toggle` on a toolbar flattens itself
+
+```tsx
+<ToggleOwnsSurface.Provider value={false}>
+```
+
+`Toolbar` provides the same context `ToggleGroup` does, and `Toggle` reads it.
+Nothing is passed, nothing is configured: a toggle behaves correctly by being in
+the right place, which is the whole point of the context existing rather than a
+`flat` prop.
+
+It is also why this component depends on `toggle` in the registry. The
+dependency is not "it renders one" — it is "the file imports the context that
+makes one behave".
+
+A [ToggleGroup](/docs/components/toggle-group) dropped onto a toolbar is a
+different matter: that one *is* a surface, and it would be a lens on a lens.
+Put its toggles straight into a `ToolbarGroup` instead — which is what a toolbar
+already is.
+
+### The input is a recess, not a lens
+
+[Input](/docs/components/input) is a surface with a transparent `<input>` inside
+it, and that is right on a page. On a strip the surface already exists, so
+`ToolbarInput` goes the other way:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-scrim)_30%,transparent)]';
+'shadow-[inset_0_1px_1px_…var(--lq-scrim)…,0_1px_0_…var(--lq-rim-hi)…]';
+```
+
+`--lq-scrim` because it is the one token that is dark in *both* themes — the
+tints are white in light mode, so a recess built from them comes out brighter
+than the strip it is cut into. With an inner shadow at the top and the rim's
+highlight along the bottom edge, that is the
+[separator](/docs/components/separator)'s incision closed into a box. Carved
+into the material rather than raised out of it, which is the only way to make a
+recess out of something that is already the surface.
+
+### Groups tighten, separators cut
+
+`ToolbarGroup` takes the air out from between related items (`gap-px` against
+the strip's `gap-1`), so a cluster is legible without a second surface or a pair
+of rules around it. Reach for `ToolbarSeparator` only where the change is a
+change of *kind* — the demo above puts one before a menu and one before a search
+field, and none between three formatting toggles.
+
+The separator is [Separator](/docs/components/separator)'s incision at the size a
+strip wants, and it swaps sides with the orientation for the same reason: the
+light stays where it is, so the lit wall of the cut moves.

@@ -1,0 +1,112 @@
+---
+title: Autocomplete
+description: Combobox's surfaces on a field whose value is the text you typed.
+---
+
+<ComponentPreview name="autocomplete-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/autocomplete.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/autocomplete
+```
+
+## Usage
+
+```tsx
+import {
+  Autocomplete,
+  AutocompleteClear,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteInputGroup,
+  AutocompleteItem,
+  AutocompleteList,
+} from '@/components/ui/autocomplete';
+```
+
+```tsx
+<Autocomplete items={tokens}>
+  <AutocompleteInputGroup>
+    <AutocompleteInput placeholder="Search tokens" />
+    <AutocompleteClear />
+  </AutocompleteInputGroup>
+
+  <AutocompleteContent>
+    <AutocompleteEmpty>No token matches that.</AutocompleteEmpty>
+    <AutocompleteList>
+      {(token: string) => (
+        <AutocompleteItem key={token} value={token}>
+          {token}
+        </AutocompleteItem>
+      )}
+    </AutocompleteList>
+  </AutocompleteContent>
+</Autocomplete>
+```
+
+## Notes
+
+### What it is, against Combobox
+
+They are separate Base UI primitives and separate files here, for the reason
+[Menu and ContextMenu](/docs/components/menu) are copies: a registry item is one
+file, and sharing the classes would mean a third item that neither component
+works without.
+
+The difference is what the control is *for*. A
+[combobox](/docs/components/combobox) picks an item out of a set and remembers
+which one; an autocomplete suggests completions for a string and hands you the
+string. Reach for this when the answer does not have to be on the list.
+
+That has one visible consequence:
+
+```tsx
+'flex … px-3 py-[7px]'; // no 16px indicator gutter
+```
+
+There is no `ItemIndicator` in this component's anatomy, because nothing in a
+suggestion list is ever "the current one". So the rows sit flush instead of
+reserving a check column down the left the way a
+[select](/docs/components/select)'s do. A gutter with nothing that can ever
+appear in it is a margin pretending to be a control.
+
+### The optics are Combobox's, and the argument is sharper
+
+This popup opens *while* you type, so it resizes constantly — and nothing here
+transitions height, for the reason written out in full on
+[Combobox](/docs/components/combobox#snapping-is-not-a-compromise-here): a
+filtered list lands on a small set of discrete heights that repeat, and every
+one of them after the first pass is a cache hit. A resize animation would build
+a new displacement map on every frame instead.
+
+If you only read one line of it: **discrete resizes are cheap, continuous ones
+are not.**
+
+### `useFilter` for anything but "starts with"
+
+Base UI exposes its matcher on the component:
+
+```tsx
+const filter = Autocomplete.useFilter({ sensitivity: 'base' });
+```
+
+Pass your own `items` filtered however you like, and everything on this page
+still applies — the popup's size is a consequence of how many rows survive, and
+none of the optics care why.

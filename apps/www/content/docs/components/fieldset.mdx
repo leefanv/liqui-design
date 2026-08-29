@@ -1,0 +1,103 @@
+---
+title: Fieldset
+description: A legend and a gap — the container deliberately isn't a surface.
+---
+
+<ComponentPreview name="fieldset-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/fieldset.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/fieldset
+```
+
+## Usage
+
+```tsx
+import { Fieldset, FieldsetLegend } from '@/components/ui/fieldset';
+```
+
+```tsx
+<Fieldset>
+  <FieldsetLegend>Billing address</FieldsetLegend>
+  <Field>…</Field>
+  <Field>…</Field>
+</Fieldset>
+```
+
+Disabling the fieldset disables everything in it, and `FieldsetLegend` dims with
+it:
+
+```tsx
+<Fieldset disabled>…</Fieldset>
+```
+
+## Notes
+
+### The container is not a surface
+
+The obvious thing to do with a fieldset is draw a box round it. It is the wrong
+thing here, and the reason is the same one that runs through the whole library.
+
+What goes inside a fieldset is [fields](/docs/components/field),
+[checkboxes](/docs/components/checkbox), [switches](/docs/components/switch) —
+every one of them already a lens. A glass panel behind them becomes the backdrop
+those lenses bend, so each control refracts the panel's tint and specular rim
+instead of the page. The group stops reading as a set of surfaces on a wallpaper
+and starts reading as one flat slab with dents pressed into it.
+
+You have seen this decision three times already:
+[a toggle inside a group](/docs/components/toggle-group) goes flat because the
+strip is the surface, the [dialog](/docs/components/dialog)'s dismiss is a wash
+on a panel that is already there, and there is
+[no AvatarGroup](/docs/components/avatar#there-is-no-avatargroup) at all. A
+fieldset is the strongest form of the same answer: the container simply is not a
+surface.
+
+If a section genuinely needs to sit on its own panel, put the panel *outside*
+and let it hold one group:
+
+```tsx
+<LiquiGlass radius={20} refraction={130} bezel={26} contentClassName="p-5">
+  <Fieldset>…</Fieldset>
+</LiquiGlass>
+```
+
+Then the controls inside are lenses on a lens, and that is the trade you have
+made knowingly rather than one the component made for you.
+
+### `min-width` is the reset that matters
+
+```tsx
+'flex min-w-0 flex-col gap-3.5 border-none p-0';
+```
+
+A native `<fieldset>` ships with `min-inline-size: min-content`, which is not a
+normal element default and is not overridden by Tailwind's preflight. Inside a
+flex or grid parent it stops the fieldset shrinking below its widest child, and a
+single long placeholder blows the form out of its container. `min-w-0` is the
+whole fix, and it is the reason this component exists as more than a re-export.
+
+### The legend is a `<div>`
+
+Base UI renders `Fieldset.Legend` as a `<div>` and associates it with
+`aria-labelledby` rather than using a real `<legend>`. That is what lets it be
+laid out like any other block: a `<legend>` cannot be a flex child, and where it
+sits relative to the fieldset's border is the browser's decision, not yours.
+
+The accessibility outcome is the same, and the layout is one you can predict.

@@ -1,0 +1,146 @@
+---
+title: Navigation Menu
+description: One panel that moves between triggers and snaps to size, because resizing rebuilds the map.
+---
+
+<ComponentPreview name="navigation-menu-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/navigation-menu.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/navigation-menu
+```
+
+## Usage
+
+```tsx
+import {
+  NavigationMenu,
+  NavigationMenuBarLink,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuPopup,
+  NavigationMenuTrigger,
+} from '@/components/ui/navigation-menu';
+```
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuList>
+    <NavigationMenuItem>
+      <NavigationMenuTrigger>Surface</NavigationMenuTrigger>
+      <NavigationMenuContent>
+        <ul>
+          <li>
+            <NavigationMenuLink href="/bezel" title="Bezel">
+              The refracting rim, measured inward from the edge.
+            </NavigationMenuLink>
+          </li>
+        </ul>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
+
+    <NavigationMenuItem>
+      <NavigationMenuBarLink href="/handbook">Handbook</NavigationMenuBarLink>
+    </NavigationMenuItem>
+  </NavigationMenuList>
+
+  <NavigationMenuPopup />
+</NavigationMenu>
+```
+
+`NavigationMenuPopup` goes once, after the list. It is the single panel every
+item shares — there is not one per menu.
+
+Compose your router's link onto either link part with `render`:
+
+```tsx
+<NavigationMenuLink render={<NextLink href="/bezel" />} title="Bezel">…</NavigationMenuLink>
+```
+
+## Notes
+
+### The panel moves, and does not resize
+
+This is the one component in the library where the *animation* had to be
+redesigned around the material, so it is worth reading the two transition lists
+next to each other:
+
+```tsx
+// positioner — where the panel is
+'transition-[top,left,right,bottom] duration-[var(--duration)]';
+
+// popup — the surface itself
+'transition-[opacity,transform] duration-[var(--duration)]';
+```
+
+Base UI sizes the popup to the active item's content with `--popup-width` and
+`--popup-height`, and its own example animates those. On glass, animating them is
+the most expensive thing this library can be asked to do. The displacement map is
+keyed on size, so a 350ms resize walks through a new map on **every frame** — and
+the cache holds 48 entries, so one sideways pointer movement evicts every other
+surface's map on the page. A tooltip opened afterwards pays to regenerate,
+because someone browsed the nav.
+
+Moving costs nothing. The map is keyed on size and optics, and neither changes
+when a box slides; the repo asserts exactly that in `checks.spec.ts`, by dragging
+a surface and checking no filter was rebuilt.
+
+So the panel glides between triggers and **snaps** to each one's dimensions. That
+is one cached map per menu item, built the first time you open it and reused for
+the rest of the session.
+
+### The snap is covered by the content, not hidden
+
+A box that changes size instantly is a jump, and a jump on its own reads as a
+bug. What makes it read as intentional is that the *contents* move:
+
+```tsx
+'data-[starting-style]:data-[activation-direction=left]:-translate-x-1/4';
+```
+
+Base UI reports which side the pointer came from, so the new panel's content
+slides in from that direction while the old one leaves the other way. The surface
+is one object being refilled; the size change is the panel settling around what
+is now inside it.
+
+Watch the demo's two menus: one is a two-column grid, the other a single column,
+so the width change is the largest this component will ever ask for.
+
+### The strip is Menubar's
+
+One surface with flat triggers on it. An open item is a highlighted trigger, and
+a highlight is a wash on glass that is already there — nesting a second lens
+inside the strip would only bend the strip.
+[Menubar](/docs/components/menubar) reaches this from the menu side and
+[Toolbar](/docs/components/toolbar) from the controls side; a navigation bar is
+the same shape of problem.
+
+### The bridge across the gap
+
+```tsx
+"before:absolute before:content-[''] data-[side=bottom]:before:h-2.5";
+```
+
+The panel clears the strip by the height of its tail, and that gap is page. A
+pointer travelling from the trigger down to the panel would cross it and close
+the menu on the way. The pseudo-element is an invisible bridge exactly the height
+of the offset — Base UI's own recipe, and it belongs to the positioner rather
+than the popup so it moves with the panel.

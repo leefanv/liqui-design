@@ -1,0 +1,114 @@
+---
+title: Separator
+description: A hairline groove cut into the surface, lit the way the kernel lights an edge.
+---
+
+<ComponentPreview name="separator-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/separator.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/separator
+```
+
+## Usage
+
+```tsx
+import { Separator } from '@/components/ui/separator';
+```
+
+```tsx
+<Separator />
+<Separator orientation="vertical" className="h-4" />
+```
+
+A vertical separator has no height of its own — it is `h-full`, so it takes the
+height of whatever row it is in. In a flex row of text that is the line box,
+which is usually a pixel or two taller than you want; `className="h-4"` is the
+common correction.
+
+## Vertical
+
+<ComponentPreview name="separator-vertical" />
+
+## Notes
+
+### The one component with no glass in it
+
+Everything else in the library is a `LiquiGlass` surface. A separator cannot be,
+and the reason is arithmetic rather than taste: `bezel` is a width measured
+*inward* from the edge, and a rule is one pixel across. There is no inward. The
+surface would render its tint and its specular arc with nowhere to put them, and
+the divider would arrive as a blurry smudge a pixel wide.
+
+[Progress](/docs/components/progress#sizing) meets the same wall from the other
+side and stops at a 14px track, where five px of bezel already meets in the
+middle. A separator is well past that line, so it does not try.
+
+### So it is drawn as a cut, not a line
+
+The kernel lights a raised surface from the top left: `--lq-rim-hi` along the
+top and left edges, the dimmer `--lq-rim-lo` along the bottom and right. That is
+the whole vocabulary of the material, and a divider that ignored it would be the
+one flat grey line on a page of lit edges.
+
+An incision is that lighting inverted. The near wall of the cut falls into
+shadow; the far wall — the one facing away from the key light — catches it. Two
+hairlines, in that order:
+
+```tsx
+'bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]';
+'shadow-[0_1px_0_color-mix(in_srgb,var(--lq-rim-hi)_55%,transparent)]';
+```
+
+Which is why the highlight is *below* a horizontal rule and to the *right* of a
+vertical one. Rotating a separator rotates the cut, not the light.
+
+Both colours are tokens, so the groove survives the theme switch. A fixed grey
+would read as a scratch of light on a dark backdrop, which is the same mistake
+in the opposite direction.
+
+### One pixel of layout, two pixels of edge
+
+The highlight is a `box-shadow`, so it is painted outside the element's box. The
+separator therefore occupies exactly one physical pixel of layout and a stack of
+them stays on the same grid as everything around it — which matters in a menu,
+where the rows above and below are on a 7px rhythm that a two-pixel divider
+would quietly break.
+
+It also means the highlight can be clipped. Inside a container with
+`overflow: hidden` whose edge falls on the separator, the lit wall is the half
+that disappears. Give the rule a margin — `mx-2.5 my-[5px]` is what the menus
+use — and the cut has room to be a cut.
+
+### Menu and Select ship their own
+
+[Menu](/docs/components/menu), [ContextMenu](/docs/components/context-menu) and
+[Select](/docs/components/select) each export a `…Separator` of their own, and it
+is not this one. Base UI gives those components a separator part inside their own
+namespace, and a registry item is a single file — so each of those components
+carries its own hairline rather than depending on this one and making you
+install two things to get a menu.
+
+Theirs is the dim hairline on its own, without the lit wall. A menu row lights up
+under the pointer, and a highlight cast one pixel into the row below the rule
+would be sitting inside that lit box half the time — two bright edges a pixel
+apart, neither of them reading as an edge. On a panel that nothing is sliding
+over, the groove has room to be a groove.
+
+Use the component's own inside it, and this one everywhere else.

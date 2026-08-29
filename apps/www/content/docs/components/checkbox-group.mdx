@@ -1,0 +1,119 @@
+---
+title: Checkbox Group
+description: Shared state for a stack of checkboxes, with a parent box that goes mixed rather than dim.
+---
+
+<ComponentPreview name="checkbox-group-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/checkbox-group.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/checkbox-group
+```
+
+It brings [Checkbox](/docs/components/checkbox) with it — the group is state, and
+the boxes are what you can see.
+
+## Usage
+
+```tsx
+import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
+import { CheckboxGroup } from '@/components/ui/checkbox-group';
+```
+
+```tsx
+<CheckboxGroup value={value} onValueChange={setValue} aria-label="Allowed protocols">
+  <CheckboxLabel>
+    <Checkbox value="https" />
+    HTTPS
+  </CheckboxLabel>
+  …
+</CheckboxGroup>
+```
+
+A group needs a name. `aria-label` works; a visible one is better, and
+[Fieldset](/docs/components/fieldset) is what that looks like — its legend is
+associated with everything inside it, which is what the demo above uses.
+
+## Parent checkbox
+
+<ComponentPreview name="checkbox-group-parent" />
+
+```tsx
+<CheckboxGroup allValues={['read', 'write', 'delete']} value={value} onValueChange={setValue}>
+  <CheckboxLabel>
+    <Checkbox parent />
+    Repository access
+  </CheckboxLabel>
+  …
+</CheckboxGroup>
+```
+
+`allValues` is what lets the group work out whether the parent is fully ticked,
+empty, or somewhere in between.
+
+## Notes
+
+### "Some of these" is a mark, not a material
+
+The mixed state carries the *same* accent retint as a fully checked box, and
+changes the tick to a dash:
+
+```tsx
+'data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]';
+'data-[indeterminate]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]';
+```
+
+The tempting alternative is to express "partly" by weakening the surface — a
+paler tint, a softer rim, half the opacity. It cannot be done here, because the
+library already spends dimming on something else: a disabled control is
+`opacity-50`, and a half-selected parent that looked faded would read as one you
+are not allowed to press.
+
+So the material stays at full strength and the *mark* carries the meaning. This
+is the same reason [Checkbox](/docs/components/checkbox) retints rather than
+painting a filled box in the first place — state changes are supposed to leave
+the glass being glass.
+
+### The mark comes from state, not from a prop
+
+Inside a group, a `parent` checkbox is put into the mixed state by the group.
+Nothing is passed down to it, so a component that picked its icon from an
+`indeterminate` prop would draw a tick on a half-selected parent:
+
+```tsx
+<Checkbox.Indicator
+  render={(props, state) => <span {...props}>{state.indeterminate ? Dash : Tick}</span>}
+/>
+```
+
+Reading it off the indicator's own state is what makes `<Checkbox parent />`
+work with no further wiring, and it is why the checkbox source looks the way it
+does.
+
+### The group is a stack and a gap
+
+No surface, for the reason [Fieldset](/docs/components/fieldset) gives at length:
+every box in the group is already a lens, and a panel behind them is the thing
+those lenses would bend. Four checkboxes on a wallpaper are four windows onto it;
+four checkboxes on a panel are four dents in a slab.
+
+The indentation under a parent is layout, not a component — a `ml-7` on a plain
+`<div>`, as in the demo above. It is deliberately not built in: the offset that
+lines children up under a parent depends on your checkbox size and label gap, and
+a component that guessed would be wrong at every size but one.

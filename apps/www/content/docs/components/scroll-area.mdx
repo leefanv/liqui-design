@@ -1,0 +1,154 @@
+---
+title: Scroll Area
+description: An overlay scrollbar whose thumb is the smallest lens in the library, and no track behind it.
+---
+
+<ComponentPreview name="scroll-area-demo" />
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/scroll-area.json
+```
+
+Installing more than one? Register the namespace once in `components.json` and
+drop the URLs:
+
+```json title="components.json"
+{
+  "registries": {
+    "@liqui-design": "https://liqui.design/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @liqui-design/scroll-area
+```
+
+## Usage
+
+```tsx
+import {
+  ScrollArea,
+  ScrollAreaContent,
+  ScrollAreaScrollbar,
+  ScrollAreaThumb,
+  ScrollAreaViewport,
+} from '@/components/ui/scroll-area';
+```
+
+```tsx
+<ScrollArea className="h-44 w-80">
+  <ScrollAreaViewport>
+    <ScrollAreaContent className="py-2 pr-5 pl-1">…</ScrollAreaContent>
+  </ScrollAreaViewport>
+  <ScrollAreaScrollbar>
+    <ScrollAreaThumb />
+  </ScrollAreaScrollbar>
+</ScrollArea>
+```
+
+The root needs a height, the viewport fills it. For a horizontal bar as well,
+add a second `ScrollAreaScrollbar orientation="horizontal"` and a
+`ScrollAreaCorner` so the two do not cross.
+
+## Inside a panel
+
+<ComponentPreview name="scroll-area-on-panel" />
+
+## Notes
+
+### The thumb gets the lens
+
+[Slider](/docs/components/slider) puts the glass on its thumb because the thumb
+is what moves. [Progress](/docs/components/progress) refuses to put it on the
+fill, because the fill *grows*, and a surface that changes size asks the map
+cache for a new entry on every frame.
+
+A scrollbar thumb is the slider's case rather than the progress bar's, and the
+reason is worth being precise about: its length is set by the ratio of content
+to viewport, and neither of those changes while you scroll. The thumb travels at
+one size, so an entire flick reuses a single cached displacement map. Resize the
+window and it pays for one new one.
+
+### It is the narrowest surface here
+
+```tsx
+const THUMB_GLASS = { radius: 6, blur: 1, refraction: 16, bezel: 4 };
+```
+
+Twelve pixels across — a 14px scrollbar with a pixel of padding each side —
+which is narrower than the [checkbox](/docs/components/checkbox), the component
+CONTRIBUTING nominates as the canary for over-driven optics. Four px of bezel per
+side leaves four px of flat middle between the two walls; push `bezel` up or the
+width down and they meet, and the thumb renders as a smear rather than a lens.
+`radius` is half the width for the same reason
+[Avatar](/docs/components/avatar#size-is-a-prop-not-a-class)'s is half its
+diameter: at anything else the map's corners stop matching the shape the element
+is drawn as.
+
+If you want a slimmer scrollbar, take `bezel` down with it. The ratio is what
+matters, and it is the same arithmetic behind
+[Avatar](/docs/components/avatar#size-is-a-prop-not-a-class)'s `size` prop and
+[Progress](/docs/components/progress#sizing)'s track.
+
+### There is no track
+
+The channel behind the thumb is empty. A groove drawn there would be a second
+surface, and the thumb sliding over it would refract *that* instead of the
+page — which is the failure [Select](/docs/components/select) designs around
+when its popup opens over its own trigger.
+
+So the scrollbar is a hit area with an opacity transition on it, and nothing
+else:
+
+```tsx
+'pointer-events-none opacity-0 data-[hovering]:opacity-100 data-[scrolling]:opacity-100';
+```
+
+An always-on scrollbar over glass reads as a scratch down the side of the
+surface. Base UI reports both states, so it appears when you are pointing at the
+area or scrolling it, and gets out of the way otherwise — with
+`data-[scrolling]:duration-0`, because a bar that fades *in* while you are
+already scrolling has arrived late.
+
+Which does mean the preview above shows no scrollbar until you put the pointer
+in it. That is the component working.
+
+### The content fades where it leaves the box
+
+```tsx
+'group-data-[overflow-y-start]:[--lq-fade-start:22px]';
+'group-data-[overflow-y-end]:[--lq-fade-end:22px]';
+'[mask-image:linear-gradient(to_bottom,transparent_0,black_var(--lq-fade-start),…)]';
+```
+
+A hard edge is a cut; a fade says there is more. Base UI reports each end
+separately, which is what makes this honest — at the top of a list there is no
+fade above, because there is nothing up there to suggest. Scroll down and it
+appears.
+
+The attributes land on the root and the scrollbar, never on the element that
+actually scrolls, which is why `ScrollArea` carries `group` and the viewport
+reads them from it.
+
+### Inside a panel, drop the thumb to `clear`
+
+The thumb refracts whatever is behind it, and inside a glass panel that is the
+panel:
+
+```tsx
+<ScrollAreaThumb glass={{ material: 'clear' }} />
+```
+
+`clear` is tint and rim with no `backdrop-filter` at all, so the thumb stops
+claiming a depth it does not have. This is the same escape hatch
+[Avatar](/docs/components/avatar#there-is-no-avatargroup) offers for a stack,
+and the same judgement [Toolbar](/docs/components/toolbar) makes for everything
+standing on its strip.
+
+The component cannot make this call for you: it has no way to know what is
+behind it. A [toggle](/docs/components/toggle) can, because a toggle group tells
+it — and if your scroll areas are always on panels, wrapping this one in your own
+component that passes the prop is four lines and worth it.

@@ -33,7 +33,13 @@ export function PreviewBackdrop({
       // job is to look like the surrounding surface.
       data-theme={variant === 'flat' ? undefined : 'dark'}
       className={cn(
-        'relative isolate overflow-hidden rounded-xl border border-fd-border',
+        // `not-prose`, because what is inside is a component and not an article.
+        // The docs theme styles `p`, `img` and friends at a specificity that
+        // beats a utility class, so without this an avatar's picture is pushed
+        // out of its own disc by a 28px `img` margin and every demo's paragraphs
+        // are spaced for prose. A preview has to render the way the component
+        // renders in an app that has never heard of this stylesheet.
+        'not-prose relative isolate overflow-hidden rounded-xl border border-fd-border',
         variant === 'flat' && 'bg-fd-muted',
         className,
       )}
