@@ -11,7 +11,7 @@ displacement map and an SVG filter instead of a blur with a white overlay.
 
 English · [简体中文](./README.zh-CN.md)
 
-[Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button) · [Gallery](https://liquidglassdesign.com/?ref=liqui.design)
+[Documentation](https://liqui.design) · [Glass handbook](https://liqui.design/docs/handbook/glass) · [Components](https://liqui.design/docs/components/button) · [Theme editor](https://liqui.design/theme) · [Gallery](https://liquidglassdesign.com/?ref=liqui.design)
 
 [![npm](https://img.shields.io/npm/v/@liqui-design/glass?color=%232f6bff&label=%40liqui-design%2Fglass)](https://www.npmjs.com/package/@liqui-design/glass)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
@@ -87,6 +87,22 @@ The refraction kernel is the exception. The displacement-map maths, the
 document-wide SVG filter registry and the browser fallbacks stay in the
 `@liqui-design/glass` package, since that is the part you would not want to
 maintain by hand.
+
+## Theming
+
+Colour is twelve `--lq-*` custom properties — the shadcn CLI writes them into
+your `globals.css`, and editing them there re-skins everything.
+
+The optics can't be custom properties: refraction is a canvas-generated
+displacement map and an SVG filter, so global defaults arrive through
+`LiquiThemeProvider` instead. Absolute dials (`frost`, `specular`, `dispersion`)
+fill in what a surface didn't set; geometry (`radiusScale`, `refractionScale`,
+`bezelScale`) multiplies what it did, so a scrollbar thumb and a drawer stay in
+proportion.
+
+The [theme editor](https://liqui.design/theme) tunes both halves live over the
+whole site and hands back exactly the two snippets you need.
+See the [theming handbook](https://liqui.design/docs/handbook/theming).
 
 ## Components
 

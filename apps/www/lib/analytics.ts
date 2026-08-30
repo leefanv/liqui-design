@@ -65,3 +65,34 @@ export function trackInstallCommandCopied({ component, style }: InstallCommand):
   // dimensions under Admin → Custom definitions.
   sendGAEvent('event', 'install_command_copied', { component, command_style: style });
 }
+
+/**
+ * The theme editor's two questions.
+ *
+ * Deliberately not "a dial moved". A slider fires an event per frame of a drag,
+ * and a count of those would say only that the page works — it cannot
+ * distinguish someone tuning a palette from someone flicking a control on the
+ * way past. The two moments that carry intent are the same two the rest of this
+ * file already tracks: what people reach for, and what they take away.
+ *
+ * `theme_exported` is the editor's `install_command_copied` — the last thing
+ * that happens before a theme leaves for somebody's project, and the only
+ * observable proof the feature was used for its purpose rather than played
+ * with. Which of the three forms they take is worth splitting: the CSS is the
+ * palette, the provider is the optics, and a link means they are showing it to
+ * someone rather than shipping it.
+ *
+ * `theme_preset_applied` answers the design question — of six looks, which ones
+ * people actually start from. A preset nobody ever clicks is a preset to cut.
+ */
+export type ThemeExportKind = 'css' | 'provider' | 'link';
+
+export function trackThemeExported(kind: ThemeExportKind): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  sendGAEvent('event', 'theme_exported', { export_kind: kind });
+}
+
+export function trackThemePresetApplied(preset: string): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  sendGAEvent('event', 'theme_preset_applied', { preset });
+}
