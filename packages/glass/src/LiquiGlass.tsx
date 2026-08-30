@@ -335,7 +335,22 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     const localRef = React.useRef<HTMLDivElement | null>(null);
     const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
 
-    React.useImperativeHandle(forwardedRef, () => localRef.current as HTMLDivElement);
+    // The empty dependency array is load-bearing. Without it this runs on every
+    // render, and each run detaches the previous handle before attaching the
+    // new one — which, when the forwarded ref is a *callback* ref, means calling
+    // it with `null` and then with the element again, on every render.
+    //
+    // Base UI hands exactly such a callback ref to any part that belongs to a
+    // composite list (a slider thumb, a tab, a menu item), and its cleanup
+    // unregisters the item and schedules a state update. Re-render, detach,
+    // unregister, re-render: "Maximum update depth exceeded", from a component
+    // that is only sitting there. Base UI 1.7 is where the unregister path
+    // started scheduling that update, so that is where this surfaced, but the
+    // unstable handle was always the defect.
+    //
+    // The handle is a getter over a ref that outlives every render, so there is
+    // nothing for it to depend on.
+    React.useImperativeHandle(forwardedRef, () => localRef.current as HTMLDivElement, []);
 
     React.useLayoutEffect(() => {
       if (tier !== 'refract' || !localRef.current) return;
