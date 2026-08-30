@@ -43,6 +43,13 @@ test.describe('no console errors', () => {
     // inside it — and the one place a tail is rendered inside a popup that
     // clips.
     '/docs/components/navigation-menu',
+    // The page that catches an unstable ref forwarded into a composite list. A
+    // slider thumb is a composite item, so a `LiquiGlass` that re-attaches its
+    // handle every render unregisters the thumb every render, and Base UI
+    // schedules a state update each time — an infinite loop on a page nobody
+    // touched. The templates below caught it first, but they catch it three
+    // components deep; this localises it.
+    '/docs/components/slider',
     '/docs/handbook/glass',
     // The templates. A whole page of glass at once is where a surface that
     // misbehaves at density shows up, and the index renders a template inside a
@@ -179,5 +186,64 @@ test.describe('the filter registry', () => {
     // can land in that window and see nothing. Retrying distinguishes "not yet"
     // from "never", which is the thing this test is actually about.
     await expect.poll(() => page.locator('.liqui-glass--refract').count()).toBeGreaterThan(0);
+  });
+});
+
+test.describe('install command tracking', () => {
+  test('copying an install command reports the component, and nothing else does', async ({
+    page,
+    context,
+  }) => {
+    // The event is read out of gtag's dataLayer, which the inline init script
+    // creates. Blocking the tag itself keeps a CI run from filing hits against
+    // the real property while leaving the queue this asserts on intact.
+    await page.route('**://*.googletagmanager.com/**', (route) => route.abort());
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+    const events = () =>
+      page.evaluate(() =>
+        ((window as { dataLayer?: ArrayLike<unknown>[] }).dataLayer ?? [])
+          .map((entry) => Array.from(entry))
+          .filter((args) => args[0] === 'event'),
+      );
+
+    await page.goto('/docs/components/button');
+
+    const copy = async (command: string) => {
+      const block = page.locator('figure', { hasText: command }).first();
+      await block.hover();
+      await block.locator('button').first().click();
+    };
+
+    // Retried as a pair: a click that lands before hydration reaches the
+    // listener does nothing, and there is no event to wait for instead. Copying
+    // the same block twice would only push the same event twice, so retrying is
+    // safe — which is why the assertions below are containment rather than
+    // equality.
+    await expect(async () => {
+      await copy('npx shadcn@latest add https://liqui.design/r/button.json');
+      expect(await events()).toContainEqual([
+        'event',
+        'install_command_copied',
+        { component: 'button', command_style: 'url' },
+      ]);
+    }).toPass();
+
+    // The second form the docs publish. Same item, different signal: it means
+    // the visitor registered the namespace and expects to come back.
+    await copy('npx shadcn@latest add @liqui-design/button');
+    expect(await events()).toContainEqual([
+      'event',
+      'install_command_copied',
+      { component: 'button', command_style: 'namespace' },
+    ]);
+
+    // Every code block on the page shares the same listener, so the parser is
+    // what keeps this from becoming a meaningless count of copies. The
+    // components.json snippet contains a registry URL and must still report
+    // nothing.
+    const before = (await events()).length;
+    await copy('"registries"');
+    expect(await events()).toHaveLength(before);
   });
 });
