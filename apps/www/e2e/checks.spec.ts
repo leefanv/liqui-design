@@ -43,6 +43,13 @@ test.describe('no console errors', () => {
     // inside it — and the one place a tail is rendered inside a popup that
     // clips.
     '/docs/components/navigation-menu',
+    // The page that catches an unstable ref forwarded into a composite list. A
+    // slider thumb is a composite item, so a `LiquiGlass` that re-attaches its
+    // handle every render unregisters the thumb every render, and Base UI
+    // schedules a state update each time — an infinite loop on a page nobody
+    // touched. The templates below caught it first, but they catch it three
+    // components deep; this localises it.
+    '/docs/components/slider',
     '/docs/handbook/glass',
     // The templates. A whole page of glass at once is where a surface that
     // misbehaves at density shows up, and the index renders a template inside a
