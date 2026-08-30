@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { ensureFilter, prewarmImage } from './filterRegistry';
+import { useGlassTheme } from './theme';
 import './glass.css';
 
 /**
@@ -243,7 +244,13 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
   material?: GlassMaterial;
   /** Lens shape of the refracting rim. 'squircle' is the most glass-like. */
   profile?: GlassProfile;
-  /** Corner radius of the glass surface in px. */
+  /**
+   * Corner radius of the glass surface in px.
+   *
+   * This and the three below are the *geometric* dials: they scale with the
+   * surface, so a theme multiplies them (`radiusScale` and friends) rather than
+   * replacing them. See `LiquiThemeProvider`.
+   */
   radius?: number;
   /** Backdrop blur in px (refraction tier; frost uses 4×). */
   blur?: number;
@@ -292,17 +299,21 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
   function LiquiGlass(props, forwardedRef) {
+    // Theme defaults fill in only where the surface said nothing. A component
+    // that hardcodes `frost: 0.6` because its design needs it keeps that value
+    // under every theme; the theme owns the dials nobody claimed.
+    const theme = useGlassTheme();
     const {
-      material = 'auto',
-      profile = 'squircle',
-      radius = 16,
-      blur = 1,
-      refraction = 140,
-      bezel = 26,
-      dispersion = 0,
-      specular = 0.7,
-      frost = 0.35,
-      saturation = 1.7,
+      material = theme.material,
+      profile = theme.profile,
+      radius: ownRadius = 16,
+      blur: ownBlur = 1,
+      refraction: ownRefraction = 140,
+      bezel: ownBezel = 26,
+      dispersion = theme.dispersion,
+      specular = theme.specular,
+      frost = theme.frost,
+      saturation = theme.saturation,
       elevated = false,
       className,
       contentClassName,
@@ -310,6 +321,19 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       children,
       ...rest
     } = props;
+
+    // Geometry is scaled, not replaced — see theme.tsx. Rounding is not
+    // cosmetic: radius and bezel key the displacement-map cache and refraction
+    // keys the filter registry, so a multiplier dragged through 0.9137× would
+    // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
+    // Blur only reaches a CSS string, but is rounded for the same reason in
+    // reverse — an unrounded one churns the style attribute every frame.
+    const radius = Math.round(ownRadius * theme.radiusScale);
+    const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
+    const refraction = Math.round(ownRefraction * theme.refractionScale);
+    // A zero-width bezel divides through in the map generator (`depth / bezel`),
+    // turning the whole surface into NaN displacement — a fully smeared box.
+    const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
 
     // `supportsRefraction` sniffs the UA, so it is false during SSR and true in
     // Chromium — reading it directly at render time would make the server emit

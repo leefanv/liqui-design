@@ -18,6 +18,11 @@
       "dependsOn": ["^build", "registry:build"]
     },
     "dev": {
+      // Both apps consume the kernel's generated `dist/tokens.css`, so on a
+      // fresh checkout `dev` has nothing to import until the package has been
+      // built once. Declared here rather than in each app's script so every
+      // entry point gets it.
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     }
