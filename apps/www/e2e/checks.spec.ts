@@ -51,6 +51,11 @@ test.describe('no console errors', () => {
     // components deep; this localises it.
     '/docs/components/slider',
     '/docs/handbook/glass',
+    // The theme editor drives every surface on the page from one provider, and
+    // it is the only place a `radiusScale` or `bezelScale` other than 1 is ever
+    // in play — which is where a scaled value that reaches the map generator
+    // wrong would surface.
+    '/theme',
     // The templates. A whole page of glass at once is where a surface that
     // misbehaves at density shows up, and the index renders a template inside a
     // scaled container — the one place a map could be built at the wrong size.

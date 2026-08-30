@@ -1,0 +1,188 @@
+---
+title: Theming
+description: Twelve custom properties, four global optics defaults, and four multipliers — plus the editor that writes them for you.
+---
+
+liqui is themed along two axes, and they work nothing alike.
+
+**Colour is CSS.** Every colour a surface paints comes from a `--lq-*` custom
+property. Change twelve variables and the whole library changes with them —
+including the parts React never sees, like a popup portalled to `document.body`.
+
+**Optics are JavaScript.** `refraction`, `bezel`, `radius` and `profile` feed a
+canvas-generated displacement map and an SVG filter, so they cannot be custom
+properties. They are props, and they arrive globally through a provider.
+
+## The editor
+
+[The theme editor](/theme) turns both halves as dials and hands back exactly the
+snippets on this page. Three things about it are worth knowing before you open
+it:
+
+- **It themes the whole site, not the panel next to it.** Walk back into the
+  docs and every component page is wearing what you made. That is the only
+  honest way to judge a theme — a swatch grid will not tell you whether your
+  tint survives on a menu.
+- **It stays in your browser.** The theme is kept in `localStorage` and nothing
+  is sent anywhere. **Copy link** encodes it into the URL if you want to hand it
+  to someone.
+- **It only ever emits what you changed.** Both snippets, and the stored value,
+  are a diff against the shipped theme — so a later liqui release retuning a
+  default you never touched still reaches you.
+
+## The tokens
+
+| Token | What it paints |
+| --- | --- |
+| `--lq-text` | Content on glass. |
+| `--lq-text-dim` | Labels, placeholders, secondary text. |
+| `--lq-tint` | The glass itself — the light end of the tint gradient. |
+| `--lq-tint-deep` | The dark end of that gradient. |
+| `--lq-rim-hi` | The bright catch-light along the top edge. |
+| `--lq-rim-lo` | The dimmer counter-light along the bottom. |
+| `--lq-shadow` | Depth under an `elevated` surface. Two layers. |
+| `--lq-highlight` | The hover wash on interactive surfaces. |
+| `--lq-accent` | Buttons, focus rings, checked state, selection. |
+| `--lq-danger` | Destructive fills. |
+| `--lq-danger-text` | The same red, dark enough to read as *text* on light glass. |
+| `--lq-scrim` | The wash behind a modal surface. |
+
+Everything else in the `--lq-` namespace is per-component plumbing —
+`--lq-tail-rim` on a popup's arrow, `--lq-radius` written per surface from the
+`radius` prop. Setting those globally does nothing useful.
+
+If you installed through the shadcn CLI, all twelve are already in your
+`globals.css` under `:root` and `.dark`, and editing them there is the whole
+job. If you imported the stylesheet instead, override after the import:
+
+```css
+@import '@liqui-design/glass/tokens.css';
+
+:root {
+  --lq-accent: #8b5cf6;
+  --lq-tint: rgba(250, 246, 255, 0.4);
+}
+
+[data-theme='dark'],
+.dark {
+  --lq-accent: #b794ff;
+  --lq-tint: rgba(32, 22, 56, 0.58);
+}
+```
+
+Dark mode is keyed on **both** `[data-theme='dark']` and `.dark`: the first is
+liqui's own convention, the second is what next-themes writes. Write your
+overrides under both, or they will apply in only one of the two setups.
+
+The two selectors have the same specificity as `:root`, so an override block
+written after the import wins — but a `:root` override written after it also
+beats the stylesheet's *dark* block. Always write the pair.
+
+## The optics provider
+
+```tsx
+import { LiquiThemeProvider } from '@liqui-design/glass';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <LiquiThemeProvider
+      theme={{
+        glass: {
+          frost: 0.2,
+          dispersion: 0.35,
+          refractionScale: 1.25,
+        },
+      }}
+    >
+      {children}
+    </LiquiThemeProvider>
+  );
+}
+```
+
+The provider takes colour too — `theme.light` and `theme.dark` accept the same
+twelve tokens and are written into a `<style>` at `:root`. That is for a theme
+that changes at *runtime*, like a user-facing appearance setting. A theme that
+is fixed at build time belongs in your stylesheet, where it costs nothing.
+
+### Absolute defaults vs multipliers
+
+The glass theme has two halves, and the difference is the whole design.
+
+**Absolute** — `material`, `profile`, `frost`, `specular`, `dispersion`,
+`saturation`. These are the dials components mostly leave alone, so the theme
+supplies the default. A component that sets one for itself keeps it: the
+`preview-card` asks for `frost: 0.6` because its design needs it, and a theme
+that says `0.2` does not take it away.
+
+**Multipliers** — `radiusScale`, `refractionScale`, `bezelScale`, `blurScale`.
+These are the dials every component sets for itself, and it sets them to
+different numbers on purpose:
+
+| | radius | refraction | bezel |
+| --- | --- | --- | --- |
+| Scroll-area thumb | 6 | 16 | 4 |
+| Button | 12 | 45 | 11 |
+| Popover | 18 | 120 | 24 |
+| Drawer | 26 | 150 | 34 |
+
+The numbers scale with the surface. A global "set refraction to 150" would turn
+that scrollbar thumb into a smear. A multiplier moves all four rows together and
+keeps them in proportion, which is what "make the glass thicker" actually means.
+
+```tsx
+// Every surface's bezel, 30% wider than the component asked for.
+<LiquiThemeProvider theme={{ glass: { bezelScale: 1.3 } }}>
+```
+
+### Precedence
+
+An explicit prop beats the theme, and the theme beats liqui's default:
+
+```tsx
+// frost: 0.9 — the prop wins over any theme.
+<LiquiGlass frost={0.9} />
+
+// frost: whatever the theme says, else 0.35.
+<LiquiGlass />
+```
+
+Multipliers are not overridable this way, because they are not values — they
+apply to whatever value ends up in play, prop or default.
+
+An untouched theme is a no-op by construction: every multiplier is 1, every
+absolute equals liqui's own default, and the provider emits no `<style>` at all
+until a token actually differs. Mounting it changes nothing.
+
+## Making a theme
+
+Start from the accent and the tint, in that order. The accent is the one colour
+a visitor will read as *yours*; the tint is what decides whether the material
+reads as glass or as a panel.
+
+Then check three things the dials will not tell you:
+
+**Look at it in Safari.** Refraction only renders in Chromium today, and a theme
+tuned at `frost: 0.06` can be unreadable once the lens is gone and the tint is
+carrying legibility alone. The [glass handbook](/docs/handbook/glass) has the
+full degradation table.
+
+**Look at both modes.** The editor edits one token set at a time, and it is easy
+to leave the other on a palette that no longer matches.
+
+**Look at the danger text.** `--lq-danger-text` is the only token that has to
+pass as body text rather than as a fill, and it is the first one to fail
+contrast when a red is picked for how the button looks.
+
+<Cards>
+  <Card
+    title="Theme editor"
+    href="/theme"
+    description="Every dial on this page, live, over glass — and both snippets at the end."
+  />
+  <Card
+    title="Glass"
+    href="/docs/handbook/glass"
+    description="What the material is, what it needs from your layout, and where it degrades."
+  />
+</Cards>

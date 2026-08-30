@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+import { defaultTokens, LIQUI_TOKENS } from '../../../packages/glass/src/tokens.ts';
+
 type RegistryFile = { path: string; type: string; target?: string };
 type RegistryItem = {
   name: string;
@@ -24,11 +26,47 @@ type RegistryItem = {
   description?: string;
   meta?: { entry?: string; added?: string };
   files?: RegistryFile[];
+  cssVars?: { theme?: Record<string, string>; light?: Record<string, string>; dark?: Record<string, string> };
 };
 
 const registry: { items: RegistryItem[] } = JSON.parse(
   await import('node:fs/promises').then((fs) => fs.readFile(join(appRoot, 'registry.json'), 'utf8')),
 );
+
+// --- 0. Token parity --------------------------------------------------------
+
+// The `liqui` style item carries the design tokens as `cssVars`, because that is
+// the only way the shadcn CLI can write them into someone's globals.css. That
+// makes it a second copy of src/tokens.ts, which the stylesheet and the theme
+// editor both read — and a second copy of twelve colours is a drift bug with a
+// schedule. Checked here rather than generated into registry.json, so the
+// mismatch is reported as a mismatch instead of being silently papered over on
+// the next build.
+const style = registry.items.find((item) => item.name === 'liqui');
+if (!style?.cssVars) {
+  throw new Error('registry.json: the "liqui" style item is missing its cssVars block.');
+}
+for (const mode of ['light', 'dark'] as const) {
+  const declared = style.cssVars[mode] ?? {};
+  for (const name of LIQUI_TOKENS) {
+    const expected = defaultTokens[mode][name];
+    if (declared[`lq-${name}`] !== expected) {
+      throw new Error(
+        `registry.json: cssVars.${mode}["lq-${name}"] is ${JSON.stringify(declared[`lq-${name}`])}, ` +
+          `but packages/glass/src/tokens.ts says ${JSON.stringify(expected)}. ` +
+          'Tokens live in tokens.ts; update registry.json to match.',
+      );
+    }
+  }
+  const extra = Object.keys(declared).filter(
+    (key) => !LIQUI_TOKENS.includes(key.replace(/^lq-/, '') as (typeof LIQUI_TOKENS)[number]),
+  );
+  if (extra.length) {
+    throw new Error(
+      `registry.json: cssVars.${mode} declares ${extra.join(', ')}, which tokens.ts does not know about.`,
+    );
+  }
+}
 
 // --- 1. CLI payload ---------------------------------------------------------
 

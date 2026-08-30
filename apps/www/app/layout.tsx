@@ -4,6 +4,7 @@ import './global.css';
 import { Inter } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
+import { SiteThemeProvider } from '@/components/theme-provider';
 import { brandName, googleAnalyticsId, siteUrl } from '@/lib/shared';
 
 const inter = Inter({
@@ -30,7 +31,12 @@ export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider>
+          {/* Inside RootProvider so the docs' own light/dark switch is above it:
+              this one themes the glass, that one decides which of its two token
+              sets the page is wearing. */}
+          <SiteThemeProvider>{children}</SiteThemeProvider>
+        </RootProvider>
       </body>
       {/*
         Only in a production build: `next dev` would otherwise report every

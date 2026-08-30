@@ -1,4 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // For tsdown.config.ts alone, which imports `./src/tokens.ts` to generate
+    // dist/tokens.css from it. The config is loaded by tsdown's own resolver,
+    // which needs the literal path — extensionless and `.js` both fail there —
+    // and `noEmit` in the base config makes the flag safe to turn on.
+    "allowImportingTsExtensions": true
+  },
   "include": ["src", "tsdown.config.ts"]
 }

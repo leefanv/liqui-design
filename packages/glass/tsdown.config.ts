@@ -1,6 +1,8 @@
 import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
+import { tokensStylesheet } from './src/tokens.ts';
+
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm'],
@@ -14,9 +16,13 @@ export default defineConfig({
   external: ['react', 'react-dom', /\.css$/],
   hooks: {
     'build:done': () => {
-      for (const file of ['glass.css', 'tokens.css']) {
-        copyFileSync(`src/${file}`, `dist/${file}`);
-      }
+      // glass.css is the surface anatomy — hand-written, and nothing generates
+      // it. tokens.css is the design tokens, which exist as data in
+      // src/tokens.ts because the theme editor has to diff against them; the
+      // stylesheet is one rendering of that data, so it is emitted rather than
+      // maintained beside it.
+      copyFileSync('src/glass.css', 'dist/glass.css');
+      writeFileSync('dist/tokens.css', tokensStylesheet());
 
       // The same externalization also copies the CSS import into index.d.ts,
       // where TypeScript can't resolve a `.css` specifier under node16/bundler

@@ -18,6 +18,14 @@ export default defineConfig({
         find: /^@liqui-design\/glass$/,
         replacement: resolve('../../packages/glass/src/index.ts'),
       },
+      // tokens.css is the exception to the source alias: it is generated into
+      // dist from src/tokens.ts, so there is nothing in src to point at. It is
+      // also the one file source-aliasing buys nothing for — a custom property
+      // block has no HMR story worth preserving.
+      {
+        find: /^@liqui-design\/glass\/tokens\.css$/,
+        replacement: resolve('../../packages/glass/dist/tokens.css'),
+      },
       {
         find: /^@liqui-design\/glass\//,
         replacement: resolve('../../packages/glass/src/'),

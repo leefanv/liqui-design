@@ -11,7 +11,7 @@
 
 [English](./README.md) · 简体中文
 
-[文档](https://liqui.design) · [玻璃手册](https://liqui.design/docs/handbook/glass) · [组件](https://liqui.design/docs/components/button) · [图库](https://liquidglassdesign.com/?ref=liqui.design)
+[文档](https://liqui.design) · [玻璃手册](https://liqui.design/docs/handbook/glass) · [组件](https://liqui.design/docs/components/button) · [主题编辑器](https://liqui.design/theme) · [图库](https://liquidglassdesign.com/?ref=liqui.design)
 
 [![npm](https://img.shields.io/npm/v/@liqui-design/glass?color=%232f6bff&label=%40liqui-design%2Fglass)](https://www.npmjs.com/package/@liqui-design/glass)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
@@ -81,6 +81,19 @@ export default function Page() {
 
 例外是折射内核。置换贴图的计算、全文档范围的 SVG 滤镜注册表和浏览器兜底方案都留在
 `@liqui-design/glass` 包里，这部分不适合手工维护。
+
+## 主题
+
+颜色就是十二个 `--lq-*` 自定义属性 —— shadcn CLI 会把它们写进你的
+`globals.css`，改那里就等于换掉整套皮肤。
+
+光学部分做不成自定义属性：折射是 canvas 生成的置换贴图加一个 SVG 滤镜，所以全局
+默认值走 `LiquiThemeProvider`。绝对量（`frost`、`specular`、`dispersion`）用来补上
+组件没设的值；几何量（`radiusScale`、`refractionScale`、`bezelScale`）则是乘在组件
+自己设的值上，这样滚动条滑块和抽屉之间的比例不会被拉垮。
+
+[主题编辑器](https://liqui.design/theme) 可以对整站实时调这两半，并直接给出你需要的
+两段代码。详见[主题手册](https://liqui.design/docs/handbook/theming)。
 
 ## 组件
 
