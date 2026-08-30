@@ -49,6 +49,10 @@ you want `material="clear"` and a tint, not refraction.
 | `radius` | px | Corner radius. Also drives the displacement map's shape. |
 | `material` | `auto` \| `frost` \| `clear` | Rendering tier. `auto` refracts where supported and frosts elsewhere. |
 
+Each of these is a per-surface prop, and the components set the geometric ones
+(`radius`, `refraction`, `bezel`) to values scaled to their own size. To move
+them all at once — or to change the colours — see [Theming](/docs/handbook/theming).
+
 ## Performance budget
 
 The expensive parts are the canvas-generated displacement map and the
