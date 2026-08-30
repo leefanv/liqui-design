@@ -15,7 +15,7 @@
     "test:visual:update": "playwright test visual.spec.ts --update-snapshots"
   },
   "dependencies": {
-    "@base-ui/react": "^1.6.0",
+    "@base-ui/react": "^1.7.0",
     "@liqui-design/glass": "workspace:*",
     "@next/third-parties": "^16.3.0",
     "class-variance-authority": "^0.7.1",
