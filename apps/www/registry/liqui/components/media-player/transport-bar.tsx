@@ -36,7 +36,6 @@ import { Toggle, ToggleOwnsSurface } from '@/registry/liqui/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/registry/liqui/ui/tooltip';
 import {
   ON_PANEL,
-  ON_PANEL_KNOB,
   ON_PANEL_TINT,
 } from '@/registry/liqui/components/media-player/on-panel';
 import { formatTime, type Track } from '@/registry/liqui/lib/media-player-data';
@@ -166,7 +165,7 @@ export function TransportBar({
           >
             <SliderControl className="py-1.5">
               <SliderTrack className="h-2">
-                <SliderThumb glass={ON_PANEL} className={cn('size-[18px]', ON_PANEL_KNOB)} />
+                <SliderThumb lens={false} className="size-[18px]" />
               </SliderTrack>
             </SliderControl>
           </Slider>
@@ -205,7 +204,7 @@ export function TransportBar({
           >
             <SliderControl className="py-1.5">
               <SliderTrack className="h-2">
-                <SliderThumb glass={ON_PANEL} className={cn('size-[18px]', ON_PANEL_KNOB)} />
+                <SliderThumb lens={false} className="size-[18px]" />
               </SliderTrack>
             </SliderControl>
           </Slider>
@@ -347,7 +346,7 @@ function SoundPopover({
                 </span>
                 <SliderControl className="py-1">
                   <SliderTrack className="h-2">
-                    <SliderThumb glass={ON_PANEL} className={cn('size-[18px]', ON_PANEL_KNOB)} />
+                    <SliderThumb lens={false} className="size-[18px]" />
                   </SliderTrack>
                 </SliderControl>
                 <span className="w-10 shrink-0 text-right text-[11.5px] tabular-nums text-[var(--lq-text-dim)]">
@@ -383,11 +382,11 @@ function SoundPopover({
         <div className="mt-3 flex flex-col gap-2.5">
           <SwitchLabel>
             Lossless
-            <Switch glass={ON_PANEL} checked={lossless} onCheckedChange={onLosslessChange} />
+            <Switch lens={false} checked={lossless} onCheckedChange={onLosslessChange} />
           </SwitchLabel>
           <SwitchLabel>
             Crossfade
-            <Switch glass={ON_PANEL} checked={crossfade} onCheckedChange={onCrossfadeChange} />
+            <Switch lens={false} checked={crossfade} onCheckedChange={onCrossfadeChange} />
           </SwitchLabel>
         </div>
       </PopoverContent>

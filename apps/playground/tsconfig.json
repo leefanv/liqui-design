@@ -9,6 +9,7 @@
       "@registry/*": ["../www/registry/liqui/*"],
       "@shared/*": ["../www/components/*"],
       "@/lib/utils": ["../www/registry/liqui/lib/utils.ts"],
+      "@/lib/lens": ["../www/registry/liqui/lib/lens.tsx"],
       "@/registry/*": ["../www/registry/*"]
     }
   },

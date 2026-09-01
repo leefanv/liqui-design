@@ -1,29 +1,18 @@
 ---
 title: Slider
-description: A slider whose thumb is the refracting surface, sliding along a flat rail.
+description: A convex-lens thumb that magnifies the rail it rides, swelling out of it when grabbed.
 ---
 
 <ComponentPreview name="slider-demo" />
+
+<Callout>Grab the thumb and hold. It swells to nearly twice its size, its white
+fill drops to a tenth, and the rail visibly fattens as it passes behind the
+glass.</Callout>
 
 ## Installation
 
 ```bash
 npx shadcn@latest add https://liqui.design/r/slider.json
-```
-
-Installing more than one? Register the namespace once in `components.json` and
-drop the URLs:
-
-```json title="components.json"
-{
-  "registries": {
-    "@liqui-design": "https://liqui.design/r/{name}.json"
-  }
-}
-```
-
-```bash
-npx shadcn@latest add @liqui-design/slider
 ```
 
 ## Usage
@@ -53,63 +42,113 @@ import {
 </Slider>
 ```
 
-`SliderTrack` renders `Slider.Indicator` for you — the accent fill is part of
-the rail, not something you compose in.
+Two thumbs make it a range — see [the range example](#range).
+
+## Notes
+
+### Convex, where Switch is lipped
+
+This and [Switch](/docs/components/switch) are the same construction: a
+purpose-built lens rather than a [`LiquiGlass`](/docs/handbook/glass) surface,
+sharing only the kernel in `lib/lens.tsx`. What differs between them is the
+interesting part, and it is not cosmetic.
+
+A switch thumb has nothing worth magnifying under it, so it takes a **lip**
+bezel — a raised rim around a flat window, which reads *zoomed out*. A slider
+thumb is sitting on the one thing in the control you actually want to look at:
+the rail, and the fill that says where the value is. So it takes a plain
+**convex** dome instead, and magnifies it. Grab one and the rail fattens as it
+crosses the glass.
+
+### The exponent is the tail
+
+The dome is a superellipse, `(1 − (1 − t)ᵖ)^(1/p)`, and `p` is not a
+free-hand choice. It sets how fast the surface flattens as it leaves the rim,
+which is to say how far inward the bend still reaches.
+
+A squircle (`p = 4`) — the obvious pick, and what Switch's crest uses —
+flattens too abruptly here: its slope collapses, the bend dies within a few
+pixels of the edge, and the long reach this lens needs is not available at any
+thickness. A circle (`p = 2`) misses the other end, at the rim. `p = 3.25`
+holds both.
+
+| Profile | Error against the reference's own map |
+| --- | --- |
+| Squircle, best thickness | 1.84px RMS |
+| Circle, best thickness | 4.54px RMS |
+| **Superellipse p = 3.25** | **0.49px RMS** |
+
+Against a 70px peak — so 0.7%.
+
+### How hard the edge bends
+
+The band is 42% of the lens's radius, and inside it the outermost pixels sample
+from **more than a lens-height away** — 118% of it. That is what turns the
+rail's straight edge into the curled lip of a real piece of thick glass rather
+than a soft smear, and it is far more than the switch asks for, because a
+slider has something behind it worth dragging into view.
+
+The filter declares no region for the same reason Switch's does not: the SVG
+default is the bounding box plus 10%, and pinning it to the element would have
+Chromium clamp those long samples at the boundary.
+
+### Grabbed-ness comes from Base UI
+
+The press state is read off Base UI's own `data-dragging`, watched with a
+MutationObserver, rather than from pointer events on the thumb.
+
+That is not a shortcut, it is the correct source. Base UI already starts a drag
+when you press the *rail* — the thumb jumps to your finger and follows it — and
+a thumb listening only to its own pointer events would sit there un-grabbed
+through the whole gesture.
+
+### The rail is flat
+
+No inset groove, no glass. It is the thumb's backdrop, and a lens stacked on a
+lens samples its parent's output instead of the page. Whatever depth this
+control has comes from the thumb; a rail with its own shadow only competes with
+the lens passing over it.
+
+The neutral grey is fixed rather than mixed from `--lq-text`, so it reads the
+same on a white sheet and a dark wallpaper. Override `--lq-slider-rail` for the
+rail and `--lq-accent` for the fill.
+
+### Turning the lens off
+
+```tsx
+<SliderThumb lens={false} className="size-[18px]" />
+```
+
+Refraction is not worth its cost for a slider sitting *on* another glass
+surface — inside a popover, a drawer, a media-player panel — because
+`backdrop-filter` samples what is painted behind the element, and behind a
+thumb on a frosted panel is the panel's own tint: a flat wash with nothing in
+it to bend. Without the lens the thumb takes its size from `className`, so a
+panel can ask for a small knob.
+
+Safari and Firefox take this path on their own — `backdrop-filter: url(#…)` is
+Chromium-only.
+
+### Sizing
+
+```tsx
+const RAIL_H = 14;
+```
+
+The only number to change. The lens box, its radius, the resting size, the
+band and the peak displacement are all ratios off it — and the root publishes
+the layout ones as custom properties (`--lq-rail-h`, `--lq-knob-w`,
+`--lq-knob-h`, `--lq-knob-pad`) rather than inline styles, so the rail and the
+hit area still follow `RAIL_H` while a caller's `className="h-2"` still wins.
+
+The lens itself is the exception: its box is inline and not overridable,
+because the maps are baked for exactly that size. If you want a smaller knob on
+a panel, that is what `lens={false}` is for.
+
+The thumb is deliberately enormous next to the rail — four times its height
+even at rest, seven times when grabbed. A lens the size of the thing it sits on
+has nothing to show.
 
 ## Range
 
 <ComponentPreview name="slider-range" />
-
-Two thumbs, two `index` props. They are the same size, so they resolve to the
-same cached displacement map and the same registered filter — a range slider
-costs one map, not two.
-
-## Notes
-
-### The thumb is the glass, the rail is not
-
-[Switch](/docs/components/switch#only-one-of-the-two-can-be-a-lens) explains the
-constraint: a `backdrop-filter` nested inside another one samples its parent's
-output rather than the page, so a thumb inside a glass track would refract the
-track.
-
-A slider resolves it the other way. The moving part is the one worth looking at,
-so `SliderThumb` is a `LiquiGlass` surface and `SliderTrack` is drawn the cheap
-way — a tinted groove with an inset shadow:
-
-```tsx
-'bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]',
-'shadow-[inset_0_1px_2px_...,inset_0_0_0_0.5px_var(--lq-rim-lo)]',
-```
-
-Because the rail has no backdrop filter of its own, everything under the thumb —
-rail, accent fill and the page behind both — reaches the lens as ordinary
-backdrop and bends together. Drag the thumb past the end of the fill and watch
-the bezel pick up the background instead.
-
-<Callout type="info">
-  If you want the rail to be glass too, make it the `LiquiGlass` and drop the
-  thumb to an opaque puck — the switch anatomy. What does not work is both.
-</Callout>
-
-### Dragging is free
-
-The map is keyed on size and optics. Neither changes while a thumb moves, so an
-entire drag reuses one cached map and one filter; nothing is regenerated per
-frame. This is the same invariant the home page's drag test asserts — a fade
-class reappearing mid-drag would mean a filter had been rebuilt on a plain
-translate.
-
-### Positioning comes from Base UI
-
-`Slider.Thumb` writes `position`, `inset` and `translate` as inline styles to
-place itself along the track. `SliderThumb` hands the glass over through
-`render`, and `LiquiGlass` spreads the `style` it receives, so those survive the
-substitution. Anything you set in a `style` prop of your own merges the same
-way — but do not set `position`, or the thumb stops tracking its value.
-
-### Hit area
-
-`SliderControl` carries `py-2.5`. The rail is 12px tall and the thumb 26px, so
-without that padding the control's box would be shorter than the thing you are
-trying to grab and the top and bottom of the thumb would not be draggable.
