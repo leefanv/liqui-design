@@ -132,22 +132,32 @@ Chromium-only.
 ### Sizing
 
 ```tsx
-const RAIL_H = 14;
+const RAIL_H = 14;   // matches Meter and Progress
+const LENS_H = 45;   // the lens; everything optical is a ratio off it
 ```
 
-The only number to change. The lens box, its radius, the resting size, the
-band and the peak displacement are all ratios off it — and the root publishes
-the layout ones as custom properties (`--lq-rail-h`, `--lq-knob-w`,
-`--lq-knob-h`, `--lq-knob-pad`) rather than inline styles, so the rail and the
-hit area still follow `RAIL_H` while a caller's `className="h-2"` still wins.
+Two knobs, because they are two decisions. The rail belongs to the
+Meter/Progress family and is sized by them — it is the same `h-3.5` they use, so
+a slider read next to a meter looks like its sibling. The lens belongs to the
+optics and is sized by how much glass the effect needs. Tying one to the other
+means a slider that matches its siblings can only do so by carrying a knob half
+again as tall as anything else on the page.
 
-The lens itself is the exception: its box is inline and not overridable,
-because the maps are baked for exactly that size. If you want a smaller knob on
-a panel, that is what `lens={false}` is for.
+Everything else follows: the lens box is `LENS_H` at the reference's 3:2, its
+radius is half of it, the resting knob is 60% of it, and the band and peak
+displacement are ratios of the radius and the height.
 
-The thumb is deliberately enormous next to the rail — four times its height
-even at rest, seven times when grabbed. A lens the size of the thing it sits on
-has nothing to show.
+The root publishes the layout sizes as custom properties (`--lq-rail-h`,
+`--lq-knob-w`, `--lq-knob-h`, `--lq-knob-pad`) rather than inline styles, so the
+rail and the hit area follow the constants while a caller's `className="h-2"`
+still wins. The lens is the exception — its box is inline and not overridable,
+because the maps are baked for exactly that size. For a smaller knob on a panel,
+that is what `lens={false}` is for.
+
+At rest the knob is 41×27, the same size as [Switch](/docs/components/switch)'s.
+Held, it is a 68×45 lens over a 14px rail — still more than three times the
+thing it sits on, which is the point. A lens the size of what it covers has
+nothing to show.
 
 ## Range
 
