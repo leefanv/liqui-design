@@ -185,6 +185,12 @@ export default function App() {
   const [lastAction, setLastAction] = React.useState<string | null>(null);
   const [glass, setGlass] = React.useState<GlassOptics>(initialSettings);
 
+  // Switch and Slider are not LiquiGlass surfaces — they carry their own lens
+  // (see registry/liqui/lib/lens.tsx), so the geometric dials on the panel mean
+  // nothing to them. Material still does: it is the one control that says
+  // whether a surface refracts at all, so it drives their `lens` instead.
+  const lensOn = glass.material === 'auto';
+
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
@@ -320,15 +326,15 @@ export default function App() {
             <div className="stage__checks">
               <SwitchLabel>
                 Snap to grid
-                <Switch glass={glass} checked={snapToGrid} onCheckedChange={setSnapToGrid} />
+                <Switch lens={lensOn} checked={snapToGrid} onCheckedChange={setSnapToGrid} />
               </SwitchLabel>
               <SwitchLabel>
                 Show hidden files
-                <Switch glass={glass} checked={showHidden} onCheckedChange={setShowHidden} />
+                <Switch lens={lensOn} checked={showHidden} onCheckedChange={setShowHidden} />
               </SwitchLabel>
               <SwitchLabel>
                 Unavailable
-                <Switch glass={glass} disabled />
+                <Switch lens={lensOn} disabled />
               </SwitchLabel>
             </div>
 
@@ -341,7 +347,7 @@ export default function App() {
                 </div>
                 <SliderControl>
                   <SliderTrack>
-                    <SliderThumb glass={glass} />
+                    <SliderThumb lens={lensOn} />
                   </SliderTrack>
                 </SliderControl>
               </Slider>
@@ -353,8 +359,8 @@ export default function App() {
                 </div>
                 <SliderControl>
                   <SliderTrack>
-                    <SliderThumb glass={glass} index={0} getAriaLabel={() => 'Minimum'} />
-                    <SliderThumb glass={glass} index={1} getAriaLabel={() => 'Maximum'} />
+                    <SliderThumb lens={lensOn} index={0} getAriaLabel={() => 'Minimum'} />
+                    <SliderThumb lens={lensOn} index={1} getAriaLabel={() => 'Maximum'} />
                   </SliderTrack>
                 </SliderControl>
               </Slider>
@@ -471,19 +477,11 @@ export default function App() {
                   <div className="stage__checks" style={{ marginTop: 14 }}>
                     <SwitchLabel>
                       Mentions
-                      <Switch
-                        glass={{ ...glass, material: 'clear' }}
-                        checked={showHidden}
-                        onCheckedChange={setShowHidden}
-                      />
+                      <Switch lens={false} checked={showHidden} onCheckedChange={setShowHidden} />
                     </SwitchLabel>
                     <SwitchLabel>
                       Replies
-                      <Switch
-                        glass={{ ...glass, material: 'clear' }}
-                        checked={snapToGrid}
-                        onCheckedChange={setSnapToGrid}
-                      />
+                      <Switch lens={false} checked={snapToGrid} onCheckedChange={setSnapToGrid} />
                     </SwitchLabel>
                   </div>
                 </PopoverContent>
