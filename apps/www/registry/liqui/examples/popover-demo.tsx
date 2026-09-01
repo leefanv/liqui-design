@@ -35,14 +35,14 @@ export default function PopoverDemo() {
           <SwitchLabel>
             Mentions
             <Switch
-              glass={{ material: 'clear' }}
+              lens={false}
               checked={mentions}
               onCheckedChange={setMentions}
             />
           </SwitchLabel>
           <SwitchLabel>
             Replies
-            <Switch glass={{ material: 'clear' }} checked={replies} onCheckedChange={setReplies} />
+            <Switch lens={false} checked={replies} onCheckedChange={setReplies} />
           </SwitchLabel>
         </div>
         <div className="mt-4 flex justify-end">

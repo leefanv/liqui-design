@@ -40,6 +40,8 @@ export default defineConfig({
       // Registry components import `cn` from where the CLI puts it in a consumer
       // project, so that specifier has to resolve here too.
       { find: /^@\/lib\/utils$/, replacement: resolve('../www/registry/liqui/lib/utils.ts') },
+      // Same again for the lens kernel that Switch and Slider share.
+      { find: /^@\/lib\/lens$/, replacement: resolve('../www/registry/liqui/lib/lens.tsx') },
       // Same reason, for the components that import each other: toggle-group
       // reaches for toggle by the specifier the CLI rewrites into
       // `@/components/ui/toggle`, so it has to resolve here too.

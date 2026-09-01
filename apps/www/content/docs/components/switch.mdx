@@ -1,9 +1,13 @@
 ---
 title: Switch
-description: A switch whose glass track retints with accent, carrying an opaque thumb.
+description: An opaque white pill at rest that swells out of its track and turns to glass under your finger.
 ---
 
 <ComponentPreview name="switch-demo" />
+
+<Callout>Press and hold a switch, or drag the thumb across. It swells past the
+track, its white fill drops to a tenth, and the refraction more than doubles —
+so the lens deepens as it is uncovered.</Callout>
 
 ## Installation
 
@@ -46,43 +50,148 @@ being told about the switch's state.
 
 ## Notes
 
-### Only one of the two can be a lens
+### This one is not a glass surface
 
-A switch is a thumb inside a track, and `backdrop-filter` samples whatever is
-painted *behind* an element. For a thumb sitting inside a glass track, that
-backdrop is the track's own tint — not the page. Make both glass and the thumb
-refracts the colour it is lying on: a smudge, not a lens.
+Every other component here is a [`LiquiGlass`](/docs/handbook/glass) box: one
+shared displacement map, one shared filter, one set of dials that has to suit a
+drawer and a scrollbar thumb at the same time. This is not built out of that
+and does not import it. Only the `--lq-*` tokens are shared, through CSS, so it
+still themes with everything else.
 
-So the track is the surface and the thumb is opaque white, with its own cast
-shadow because the glass layers underneath give a child no depth of their own.
+It needs three things the shared surface does not have and should not grow:
 
-[Slider](/docs/components/slider) has exactly the same conflict and resolves it
-the other way round: there the moving part is the interesting one, so the thumb
-is the glass and the rail is flattened. The rule to carry away is that **one
-surface per control gets to refract** — pick the one that matters.
+| | Shared surface | Switch |
+| --- | --- | --- |
+| Bezel | Convex — magnifies its middle | **Lip** — a band at the rim, flat middle |
+| Refraction | A fixed prop | **Animated** every frame, 0.4× → 0.9× |
+| Specular | A white rim, composited in the DOM | **The backdrop at 6× saturation**, masked to a hairline |
 
-### On/off is a retint
+### Only the band refracts
 
-Switching on doesn't swap the track for a filled pill. It overrides `--lq-tint`
-on the root, so the accent arrives *as glass* and the bezel and specular arc
-survive the transition:
+The thumb's surface is convex at the very rim, eases into a shallow concave
+bowl, and then goes flat. The band is 41% of the thumb's radius; the middle
+59% is a genuinely neutral window that moves nothing at all.
+
+That flat middle is the point. The two halves of the band refract in opposite
+directions — the crest pulls the backdrop inward the way any lens edge does,
+the bowl pushes it back out — and what makes that read as *glass* rather than
+as *smear* is having an undistorted window to see it against. A lens that
+distorts everywhere just looks broken.
+
+The outermost ring of pixels samples from nearly a third of the way across the
+thumb, which is why the track's edge appears to wrap around the glass instead
+of merely blurring past it.
+
+### The filter declares no region
 
 ```tsx
-data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]
+<filter id={filterId} colorInterpolationFilters="sRGB">
 ```
 
-Same mechanism as [Checkbox](/docs/components/checkbox#checked-state). Retint
-through the token if you want a different on-colour; a `background` would paint
-over the refraction instead of joining it.
+No `x`, no `width`, no `filterUnits`. The SVG default is the bounding box plus
+10%, and the bowl needs that margin: it samples *outward*, past the thumb's own
+edge. Pin the region to the element and Chromium clamps those samples at the
+boundary, turning the bowl into a smeared ring.
+
+### A hairline, not an arc
+
+The specular is one axis of light falling off as `cos²` around the outward
+normal, laid on a rim about a pixel wide just inside the edge.
+
+It is tempting to model it as a lit surface instead, and it is wrong. A flat
+patch of glass faces the viewer, and a viewer-facing normal still scores well
+against a light tilted toward the camera — so the whole middle of the thumb
+picks up a fifth of full highlight, the shallow bowl adds a broad lobe on top,
+and once that becomes the mask for the saturation pass below, the lens is
+delivered wearing a vivid film.
+
+### The rim is coloured, and that is the point
+
+The specular is composited inside the filter, not stacked as a DOM layer, so it
+can be masked over something other than white:
+
+```
+bend → saturate 6× → keep only what the rim mask covers → blend over the bend
+                                                        → white light on top
+```
+
+A white rim reads as plastic. A rim that is the backdrop's own colour pushed
+until it sings reads as a wet edge.
+
+### The thumb is drawn at 0.65
+
+Its layout box is half again as big as it ever looks. That is not a trick to
+avoid a re-layout — it is why the map has resolution left when the thumb swells
+to 0.9, and why the refraction grows with it: `backdrop-filter` is applied in
+the element's own coordinates and scales with everything else.
+
+At 0.9 the thumb is *taller than its track*, and breaks out of it top and
+bottom. Nothing clips it — the root sets no `overflow` and no `isolation`,
+because the thumb's backdrop has to reach the page rather than stop at the
+track.
+
+The white fill is the element's own background, which paints *above* the
+backdrop. That one value is the whole reveal: opaque and the thumb is a white
+pill, a tenth and it is a lens.
+
+### Drag
+
+The thumb follows your finger with no spring in between — a spring there reads
+as lag rather than life — and runs past either end on a rubber band, so the
+track has a floor and a ceiling you can feel.
+
+A drag and a tap both end in a `click`, and Base UI toggles on click. A drag
+that lands on the far side wants exactly that toggle, so it is let through; a
+drag that returns to the side it started on wants nothing to happen, so the
+click is swallowed on the way up. The state is never written twice, and a
+controlled switch still gets to refuse the change.
+
+### Motion
+
+Three springs, integrated per frame and written straight to the DOM:
+
+| | Spring (mass 1) | ζ | Drives |
+| --- | --- | --- | --- |
+| Travel | k 1000, c 80 | 1.27 | Thumb position |
+| Press | k 2000, c 80 | 0.89 | Refraction, scale, fill, shadow |
+| Tint | k 1000, c 80 | 1.27 | Track colour |
+
+The track colour gets its own spring because it is not the thumb's position: it
+flips the moment a drag crosses the middle and then travels on its own, rather
+than fading through a half-tinted track on the way across.
+
+CSS could not do any of it. Travel has to be interruptible mid-flight by a
+drag, and press drives an SVG attribute — `feDisplacementMap scale` — that CSS
+cannot animate at all. `prefers-reduced-motion` snaps all three.
+
+### Turning the lens off
+
+```tsx
+<Switch lens={false} />
+```
+
+There is one place refraction is not worth its cost: a switch sitting *on*
+another glass surface — inside a popover, a drawer, a media-player panel.
+`backdrop-filter` samples what is painted behind the element, and behind a
+switch on a frosted panel is the panel's own tint: a flat wash with nothing in
+it to bend.
+
+Safari and Firefox take this path on their own — `backdrop-filter: url(#…)` is
+Chromium-only. Either way the thumb stays a white pill with a cast shadow, and
+the press keeps its swell but gives up the reveal.
 
 ### Sizing
 
-The travel distance is hard-coded to the default box:
-
-```
-52px track − 2×2px padding − 26px thumb = 22px
+```tsx
+const TRACK_H = 34;
 ```
 
-If you resize the switch, `data-[checked]:translate-x-[22px]` and the glass
-`radius` both need to move with it. They are in one file — that is the point of
-the component landing in your repo.
+That is the only number to change. Everything else — track width, thumb box,
+radius, travel, band width, peak displacement — is a ratio off it, and the maps
+regenerate to match.
+
+The ratios are not invented, and they are not iOS's. The track is 2.39× as long
+as it is tall and the thumb is a capsule far wider than the track is tall,
+because that is what gives the lens enough glass to be worth looking through.
+Two colours are exposed: `--lq-switch-off` for the track, `--lq-accent` for the
+checked fill.
