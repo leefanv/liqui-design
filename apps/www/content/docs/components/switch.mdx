@@ -183,7 +183,7 @@ the press keeps its swell but gives up the reveal.
 ### Sizing
 
 ```tsx
-const TRACK_H = 34;
+const TRACK_H = 30;
 ```
 
 That is the only number to change. Everything else — track width, thumb box,
@@ -192,6 +192,12 @@ regenerate to match.
 
 The ratios are not invented, and they are not iOS's. The track is 2.39× as long
 as it is tall and the thumb is a capsule far wider than the track is tall,
-because that is what gives the lens enough glass to be worth looking through.
+because that is what gives the lens enough glass to be worth looking through —
+which is why 30 buys a 72px track where the old flat switch was 52px wide.
+
+30 puts the resting thumb at 27px: what [Slider](/docs/components/slider)'s knob
+comes out at, and what this component was before it had a lens. The two should
+read as the same size object. Their tracks differ because a switch contains its
+thumb and a rail does not.
 Two colours are exposed: `--lq-switch-off` for the track, `--lq-accent` for the
 checked fill.

@@ -41,19 +41,29 @@ import { cn } from '@/lib/utils';
 /* -------------------------------------------------------------------------- */
 
 /**
- * Rail height. **The only number here you should change** — everything below
- * is a ratio off it, measured from the reference this component reproduces,
- * where a 330×14 rail carries a 90×60 capsule drawn at 0.6.
- *
- * The thumb is deliberately enormous next to the rail: four times its height
- * even at rest. A lens the size of the thing it sits on has nothing to show.
+ * Rail height — deliberately the same `h-3.5` that Meter and Progress use.
+ * A slider read next to a meter should look like its sibling, and the rail is
+ * the part that says so.
  */
 const RAIL_H = 14;
-const K = RAIL_H / 14;
 
-/** The lens's own box. It is drawn at `REST_SCALE`, and only reaches 1 held. */
-const LENS_W = Math.round(90 * K);
-const LENS_H = Math.round(60 * K);
+/**
+ * The lens's own box. **This is the size knob**, and it is separate from the
+ * rail on purpose.
+ *
+ * These are two decisions, not one. The rail belongs to the Meter/Progress
+ * family and is sized by them; the lens belongs to the optics and is sized by
+ * how much glass the effect needs. Tying the lens to the rail — which is what
+ * this did first — meant a slider that matched its siblings could only do so by
+ * carrying a knob half again as tall as anything else on the page.
+ *
+ * The 3:2 aspect is the reference's. The lens is drawn at `REST_SCALE` and only
+ * reaches 1 while held, so at rest this is a 41×27 knob and under a finger it
+ * is a 68×45 lens — still three times the rail it sits on, which is the whole
+ * point. A lens the size of the thing it covers has nothing to show.
+ */
+const LENS_H = 45;
+const LENS_W = Math.round(LENS_H * (90 / 60));
 const LENS_R = LENS_H / 2;
 
 const REST_SCALE = 0.6;
