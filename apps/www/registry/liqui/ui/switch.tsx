@@ -49,9 +49,15 @@ import { cn } from '@/lib/utils';
  * component reproduces, where the track is 160×67 and the thumb is a 146×92
  * capsule drawn at 0.65. That proportion — a thumb far wider than the track is
  * tall, riding a track far longer than an iOS switch — is what gives the lens
- * enough glass to be worth looking through.
+ * enough glass to be worth looking through, and it is why 30 here buys a 72px
+ * track rather than the 52px the old flat switch had.
+ *
+ * 30 puts the resting thumb at 27px, which is what Slider's knob comes out at
+ * and what this component was before it had a lens. The two controls should
+ * read as the same size object; the tracks around them differ because a switch
+ * contains its thumb and a rail does not.
  */
-const TRACK_H = 34;
+const TRACK_H = 30;
 const K = TRACK_H / 67;
 
 const TRACK_W = Math.round(160 * K);
