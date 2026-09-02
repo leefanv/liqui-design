@@ -172,6 +172,10 @@ export default function MediaPlayer() {
                 on ? [...current, track.id] : current.filter((id) => id !== track.id),
               )
             }
+            volume={volume}
+            onVolumeChange={setVolume}
+            lossless={lossless}
+            onLosslessChange={setLossless}
             className="mx-auto w-full max-w-[300px] sm:max-w-[380px] lg:mx-0"
           />
 
@@ -195,15 +199,11 @@ export default function MediaPlayer() {
             onShuffleChange={setShuffle}
             repeat={repeat}
             onRepeatChange={setRepeat}
-            volume={volume}
-            onVolumeChange={setVolume}
             sound={{
               bands,
               onBandChange: (id, value) => setBands((current) => ({ ...current, [id]: value })),
               output,
               onOutputChange: setOutput,
-              lossless,
-              onLosslessChange: setLossless,
               crossfade,
               onCrossfadeChange: setCrossfade,
             }}
