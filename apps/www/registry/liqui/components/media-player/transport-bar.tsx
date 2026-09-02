@@ -11,8 +11,6 @@ import {
   SkipBack,
   SkipForward,
   SlidersHorizontal,
-  Volume2,
-  VolumeX,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -89,8 +87,6 @@ export function TransportBar({
   onShuffleChange,
   repeat,
   onRepeatChange,
-  volume,
-  onVolumeChange,
   sound,
   className,
 }: {
@@ -105,12 +101,9 @@ export function TransportBar({
   onShuffleChange: (shuffle: boolean) => void;
   repeat: RepeatMode;
   onRepeatChange: (repeat: RepeatMode) => void;
-  volume: number;
-  onVolumeChange: (volume: number) => void;
   sound: SoundSettings;
   className?: string;
 }) {
-  const muted = volume === 0;
 
   return (
     // `ToggleOwnsSurface` is how ToggleGroup flattens its children, and it
@@ -122,7 +115,7 @@ export function TransportBar({
         {...BAR_GLASS}
         className={className}
         // Wraps into three centred rows on a narrow screen — transport, then
-        // modes and volume, then the scrubber — and collapses to one at `sm`.
+        // modes, then the scrubber — and collapses to one at `sm`.
         contentClassName="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-[inherit] px-4 py-3 sm:flex-nowrap"
       >
         <div className="flex w-full shrink-0 items-center justify-center gap-1 sm:w-auto sm:justify-start">
@@ -190,25 +183,6 @@ export function TransportBar({
 
           <span className="mx-1.5 h-5 w-px bg-[var(--lq-rim-lo)]" />
 
-          <IconButton
-            label={muted ? 'Unmute' : 'Mute'}
-            onClick={() => onVolumeChange(muted ? 60 : 0)}
-          >
-            {muted ? <VolumeX className="size-[17px]" /> : <Volume2 className="size-[17px]" />}
-          </IconButton>
-          <Slider
-            value={volume}
-            onValueChange={(value) => onVolumeChange(Array.isArray(value) ? value[0] : value)}
-            aria-label="Volume"
-            className="w-[76px] shrink-0"
-          >
-            <SliderControl className="py-1.5">
-              <SliderTrack className="h-2">
-                <SliderThumb lens={false} className="size-[18px]" />
-              </SliderTrack>
-            </SliderControl>
-          </Slider>
-
           <SoundPopover {...sound} />
         </div>
       </LiquiGlass>
@@ -261,8 +235,6 @@ export interface SoundSettings {
   onBandChange: (id: keyof Bands, value: number) => void;
   output: string;
   onOutputChange: (output: string) => void;
-  lossless: boolean;
-  onLosslessChange: (lossless: boolean) => void;
   crossfade: boolean;
   onCrossfadeChange: (crossfade: boolean) => void;
 }
@@ -300,8 +272,6 @@ function SoundPopover({
   onBandChange,
   output,
   onOutputChange,
-  lossless,
-  onLosslessChange,
   crossfade,
   onCrossfadeChange,
 }: SoundSettings) {
@@ -379,11 +349,7 @@ function SoundPopover({
           </SelectContent>
         </Select>
 
-        <div className="mt-3 flex flex-col gap-2.5">
-          <SwitchLabel>
-            Lossless
-            <Switch lens={false} checked={lossless} onCheckedChange={onLosslessChange} />
-          </SwitchLabel>
+        <div className="mt-3">
           <SwitchLabel>
             Crossfade
             <Switch lens={false} checked={crossfade} onCheckedChange={onCrossfadeChange} />

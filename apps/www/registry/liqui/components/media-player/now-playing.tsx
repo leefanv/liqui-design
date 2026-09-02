@@ -1,9 +1,11 @@
 'use client';
 
 import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
-import { Heart } from 'lucide-react';
+import { Heart, Volume1, Volume2, VolumeX } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { Slider, SliderControl, SliderThumb, SliderTrack } from '@/registry/liqui/ui/slider';
+import { Switch } from '@/registry/liqui/ui/switch';
 import { coverArt, type Track } from '@/registry/liqui/lib/media-player-data';
 
 /**
@@ -15,6 +17,15 @@ import { coverArt, type Track } from '@/registry/liqui/lib/media-player-data';
  * seams in it, and the plate lying across its lower edge is the lens. Watch the
  * two diagonal bands where they cross the plate: they arrive displaced, and
  * they are the only reason you can tell this is a lens and not a blur.
+ *
+ * The volume slider lives here rather than in the transport bar, and that is
+ * the same argument from the other side. Slider's thumb is a lens, and a lens
+ * needs something with edges behind it: on the transport strip its backdrop is
+ * that strip's own frosted tint — a flat wash — and it has to be installed with
+ * `lens={false}`, which is a white knob. Over the artwork it has the two
+ * diagonal bands to bend, and it is the only control on this page that gets to
+ * be what it is. Drag it across a band and the band arrives displaced, and the
+ * rail visibly fattens where it passes behind the glass.
  *
  * The plate is inset rather than overhanging. An earlier version had it hang
  * off the bottom edge, which put half of it over the page — a better seam, and
@@ -36,13 +47,22 @@ export function NowPlaying({
   track,
   favourite,
   onFavouriteChange,
+  volume,
+  onVolumeChange,
+  lossless,
+  onLosslessChange,
   className,
 }: {
   track: Track;
   favourite: boolean;
   onFavouriteChange: (favourite: boolean) => void;
+  volume: number;
+  onVolumeChange: (volume: number) => void;
+  lossless: boolean;
+  onLosslessChange: (lossless: boolean) => void;
   className?: string;
 }) {
+  const VolumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
   return (
     <div
       className={cn(
@@ -53,6 +73,47 @@ export function NowPlaying({
       )}
       style={coverArt(track.palette)}
     >
+      {/* Up here because this is where the bands are. The quality toggle is the
+          one control on the page with no reason to sit near the transport, and
+          the top of the cover is both empty and the busiest part of the
+          painting — press it and both diagonals bend at once. */}
+      <label className="absolute top-4 right-4 flex cursor-default items-center gap-2 select-none">
+        <span className="text-[11px] tracking-[0.1em] uppercase text-white/75 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+          Lossless
+        </span>
+        <Switch checked={lossless} onCheckedChange={onLosslessChange} />
+      </label>
+
+      {/* Laid straight on the artwork, with no surface under it. The mute
+          button is flat — it is a button, not a lens, and two lenses side by
+          side would each only be bending the other. */}
+      <div className="absolute inset-x-4 bottom-[86px] flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onVolumeChange(volume === 0 ? 60 : 0)}
+          aria-label={volume === 0 ? 'Unmute' : 'Mute'}
+          className={cn(
+            'inline-flex shrink-0 cursor-default items-center justify-center rounded-full p-1.5',
+            'border-none bg-transparent text-white/80 outline-none transition-colors duration-150',
+            'hover:bg-white/15 focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]',
+          )}
+        >
+          <VolumeIcon className="size-[15px]" />
+        </button>
+        <Slider
+          value={volume}
+          onValueChange={(value) => onVolumeChange(Array.isArray(value) ? value[0] : value)}
+          aria-label="Volume"
+          className="min-w-0 flex-1"
+        >
+          <SliderControl>
+            <SliderTrack className="h-2.5">
+              <SliderThumb />
+            </SliderTrack>
+          </SliderControl>
+        </Slider>
+      </div>
+
       <LiquiGlass
         {...PLATE_GLASS}
         className="absolute inset-x-3 bottom-3"

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 import { GlassStage } from '@/components/home/glass-stage';
+import { LensControls } from '@/components/home/lens-controls';
 import { gallery } from '@/lib/shared';
 
 export default function HomePage() {
@@ -43,6 +44,21 @@ export default function HomePage() {
         <code className="rounded bg-fd-muted px-1 py-0.5 text-xs">shadcn add</code> installs. Drag
         the panel across a line and watch the line bend.
       </p>
+
+      <section className="mt-16 sm:mt-20">
+        <h2 className="text-xl font-semibold tracking-tight">
+          Two of them aren&apos;t surfaces
+        </h2>
+        <p className="mt-2 max-w-2xl text-fd-muted-foreground">
+          Switch and Slider don&apos;t sit on glass — they carry a lens of their own, and it is
+          hidden until you touch them. At rest each is an opaque white pill. Press and hold: it
+          swells past its track, thins to a tenth, and the backdrop bends through it. Drag the
+          slider and watch the rail fatten where it crosses the knob.
+        </p>
+        <div className="mt-5">
+          <LensControls />
+        </div>
+      </section>
 
       <section className="mt-14 grid gap-6 sm:grid-cols-3">
         <Feature title="You own the code">
