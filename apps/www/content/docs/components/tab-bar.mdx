@@ -1,0 +1,116 @@
+---
+title: Tab Bar
+description: The iOS floating tab bar — the bar is the lens, and the selection pill stretches as it travels.
+---
+
+<ComponentPreview name="tab-bar-demo" />
+
+<Callout>Scroll the list under the bar, then press a tab and hold. The pill
+squashes under your finger on the tab you are already on, blooms under one you
+are not, and stretches along its direction of travel on the way over.</Callout>
+
+## Installation
+
+```bash
+npx shadcn@latest add https://liqui.design/r/tab-bar.json
+```
+
+## Usage
+
+```tsx
+import { TabBar, TabBarItem } from '@/components/ui/tab-bar';
+```
+
+```tsx
+<TabBar value={tab} onValueChange={setTab}>
+  <TabBarItem value="home" icon={<House fill="currentColor" strokeWidth={0} />}>
+    Home
+  </TabBarItem>
+  <TabBarItem value="saved" icon={<Heart fill="currentColor" strokeWidth={0} />} badge={3}>
+    Saved
+  </TabBarItem>
+</TabBar>
+```
+
+The bar is `position: static` and sizes to its items — put it wherever it
+floats, usually pinned to the bottom of a scroll container with the content
+padded to clear it.
+
+## Notes
+
+### The bar is the lens, not the pill
+
+Apple's guidance is literal about this: a tab bar *floats above content at the
+bottom of the screen*, and its items *rest on a Liquid Glass background that
+allows content beneath to peek through*. So the bar refracts the page scrolling
+underneath it, and the selection pill inside is paint.
+
+It has to be. A `backdrop-filter` on the pill would sample what is painted
+behind it, which inside the bar is the bar's own blurred and tinted output — a
+lens on a lens, which arrives as a smudge. [Switch](/docs/components/switch)
+documents the same trap from the other side.
+
+[Tabs](/docs/components/tabs) resolves the question the opposite way, and the
+contrast is the point:
+
+| | Tabs | Tab Bar |
+| --- | --- | --- |
+| Sits | *in* a page | *over* a page |
+| Subject | the thing travelling between segments | the page showing through |
+| Lens | the indicator | the bar |
+| Indicator | glass | paint |
+
+### Which buys the pill its stretch
+
+Tabs has to force every segment to equal width. Its indicator *is* a lens, the
+kernel keys a displacement map on size, and a pill that resizes mid-slide asks
+for a new map on every frame of the transition — so it only interpolates
+`translate`.
+
+This pill is paint, so it can resize freely, and it does: it morphs between
+labels of different lengths, and it stretches along its direction of travel in
+proportion to how fast it is going. That stretch is tied to the spring's own
+velocity rather than to a keyframe, so a hop between neighbours barely deforms
+and a jump across the whole bar deforms a lot — which is what the eye expects of
+something with mass.
+
+### Press
+
+Three things happen, and which ones depend on where your finger lands:
+
+- The pressed item's **contents sink** to 0.9. The contents, not the button —
+  scaling the button would move the box the pill measures itself against.
+- On the tab you are **already on**, the pill squashes under the finger.
+- On a tab you are **not** on, a highlight blooms under it instead. Stacking a
+  second highlight on a box that already has the pill just looks like a bug.
+
+### State comes from the DOM
+
+The selected tab is read out of `data-active`, which Base UI writes, rather than
+mirrored into React. The attribute is the truth, watching it costs one
+`MutationObserver` instead of a context and a ref per item, and it keeps
+`TabBarItem` a styled `Tabs.Tab` with nothing threaded through it.
+
+A `ResizeObserver` runs the same measurement, because the bar is a row of
+flexible items: a font swap or a container resize moves every box under the pill
+without touching a single attribute.
+
+### Following the guidance
+
+- **Labels on every tab**, single words where possible. They are not optional
+  here; a bar of bare icons is a guessing game.
+- **Prefer filled symbols.** The demo passes `fill="currentColor"
+  strokeWidth={0}` to Lucide icons to get there.
+- **Don't disable or hide tabs.** A section with nothing in it should say so on
+  its own screen; a bar whose items come and go reads as broken.
+- **Badges are for information that warrants attention.** `badge={3}` draws a
+  count, `badge` on its own draws a bare dot. A badge on everything is a badge
+  on nothing.
+
+  The drawn badge is `aria-hidden` and restated after the label, so the tab
+  announces as "Saved 3 new items" rather than "3 Saved". There is no
+  punctuation in that phrase on purpose — name computation joins the parts with
+  a space of its own, and a leading comma arrives as "Saved , 3 new". Pass
+  `badgeLabel` for wording of your own.
+- **Keep the count low.** Five is comfortable; past that the labels start
+  truncating and iOS would be collapsing the tail into a More tab.
