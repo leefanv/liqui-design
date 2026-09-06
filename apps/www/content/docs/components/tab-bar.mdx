@@ -1,13 +1,13 @@
 ---
 title: Tab Bar
-description: The iOS floating tab bar — the bar is the lens, and the selection pill stretches as it travels.
+description: The iOS floating tab bar — glass over the page, with a lens under your finger.
 ---
 
 <ComponentPreview name="tab-bar-demo" />
 
 <Callout>Scroll the list under the bar, then press a tab and hold. The pill
-squashes under your finger on the tab you are already on, blooms under one you
-are not, and stretches along its direction of travel on the way over.</Callout>
+swells, its fill thins, and the refraction opens up — the page bends through the
+tab you are holding. Press the search button for the same thing in a circle.</Callout>
 
 ## Installation
 
@@ -18,7 +18,7 @@ npx shadcn@latest add https://liqui.design/r/tab-bar.json
 ## Usage
 
 ```tsx
-import { TabBar, TabBarItem } from '@/components/ui/tab-bar';
+import { TabBar, TabBarItem, TabBarSearch } from '@/components/ui/tab-bar';
 ```
 
 ```tsx
@@ -29,60 +29,131 @@ import { TabBar, TabBarItem } from '@/components/ui/tab-bar';
   <TabBarItem value="saved" icon={<Heart fill="currentColor" strokeWidth={0} />} badge={3}>
     Saved
   </TabBarItem>
+  <TabBarSearch
+    icon={<Search strokeWidth={2.5} />}
+    placeholder="Search music"
+    query={query}
+    onQueryChange={setQuery}
+  >
+    Search
+  </TabBarSearch>
 </TabBar>
 ```
 
-The bar is `position: static` and sizes to its items — put it wherever it
-floats, usually pinned to the bottom of a scroll container with the content
-padded to clear it.
+The bar sizes to its items — put it wherever it floats, usually pinned to the
+bottom of a scroll container with the content padded to clear it.
 
 ## Notes
 
-### The bar is the lens, not the pill
+### Both the bar and the pill are lenses
 
-Apple's guidance is literal about this: a tab bar *floats above content at the
-bottom of the screen*, and its items *rest on a Liquid Glass background that
-allows content beneath to peek through*. So the bar refracts the page scrolling
-underneath it, and the selection pill inside is paint.
+Apple's guidance is literal about the material: a tab bar *floats above content
+at the bottom of the screen*, and its items *rest on a Liquid Glass background
+that allows content beneath to peek through*. So the bar is glass and it
+refracts the page scrolling underneath it.
 
-It has to be. A `backdrop-filter` on the pill would sample what is painted
-behind it, which inside the bar is the bar's own blurred and tinted output — a
-lens on a lens, which arrives as a smudge. [Switch](/docs/components/switch)
-documents the same trap from the other side.
+The selection pill inside it is glass too, and that is the part worth
+explaining, because the library's other nested surfaces say you cannot do that.
+A lens inside a lens samples its parent's output rather than the page, and a
+*frosted* parent leaves it nothing but a wash to bend — which is why
+[Switch](/docs/components/switch) on a popover ships with `lens={false}`.
 
-[Tabs](/docs/components/tabs) resolves the question the opposite way, and the
-contrast is the point:
+### Frost is the dial that decides it
 
-| | Tabs | Tab Bar |
+Frost is not a property of glass, it is a number, and it buys tint and blur
+together — 14px of blur at full strength. **Blur is what closes a nested lens**:
+it takes the edges out of the backdrop before the pill ever gets to bend them.
+Tint costs nothing, because a uniform darkening leaves every edge where it was.
+
+So the bar sits at the bottom of the range rather than at zero:
+
+| `frost` | Blur | Result |
 | --- | --- | --- |
-| Sits | *in* a page | *over* a page |
-| Subject | the thing travelling between segments | the page showing through |
-| Lens | the indicator | the bar |
-| Indicator | glass | paint |
+| 0.35 (default) | 4.9px | Labels seated, pill dead — a smudge |
+| 0 | 0px | Pill alive, but the page runs straight through the labels |
+| **0.16** | **2.2px** | Enough to seat the labels, not enough to close the pill |
 
-### Which buys the pill its stretch
+That is also what iOS's own tab bar looks like: a clear pane with its refraction
+at the rim, not a frosted slab.
 
-Tabs has to force every segment to equal width. Its indicator *is* a lens, the
-kernel keys a displacement map on size, and a pill that resizes mid-slide asks
-for a new map on every frame of the transition — so it only interpolates
-`translate`.
+### Press is the same move Switch makes
 
-This pill is paint, so it can resize freely, and it does: it morphs between
-labels of different lengths, and it stretches along its direction of travel in
-proportion to how fast it is going. That stretch is tied to the spring's own
-velocity rather than to a keyframe, so a hop between neighbours barely deforms
-and a jump across the whole bar deforms a lot — which is what the eye expects of
-something with mass.
+At rest the pill is a soft highlight and its lens is nearly closed. Press, and
+three things happen at once:
 
-### Press
+- it **swells** to 1.16 — capped by the bar, not by taste: a 46px pill reaches
+  53px inside a 58px bar, so it grows visibly and never breaks its capsule
+- its **fill thins** from 0.72 to 0.08, uncovering the lens
+- the **refraction opens** 7× so the page bends through it
 
-Three things happen, and which ones depend on where your finger lands:
+The press also moves the pill *to the tab under your finger* before the tab
+activates, so every tap shows the lens and not just a tap on the tab you are
+already on. Release somewhere else and the tab never activates and the pill goes
+back, so the anticipation costs nothing when it guesses wrong.
 
-- The pressed item's **contents sink** to 0.9. The contents, not the button —
-  scaling the button would move the box the pill measures itself against.
-- On the tab you are **already on**, the pill squashes under the finger.
-- On a tab you are **not** on, a highlight blooms under it instead. Stacking a
-  second highlight on a box that already has the pill just looks like a bug.
+The pressed item's contents sink to 0.9 underneath all of that — the contents,
+not the button, because scaling the button would move the box the pill measures
+itself against.
+
+### The pill stretches at speed
+
+It also deforms along its direction of travel in proportion to how fast it is
+going. The stretch is tied to the spring's own velocity rather than to a
+keyframe, so a hop between neighbours barely deforms and a jump across the bar
+deforms a lot — which is what the eye expects of something with mass.
+
+[Tabs](/docs/components/tabs) cannot do that: its indicator is a lens whose map
+is keyed on size, so a pill that resizes mid-slide would ask for a new map every
+frame, and it has to force equal-width segments and interpolate only
+`translate`. Here every item is already the same width, so one map serves every
+slide and the box only ever changes on a layout change.
+
+### Search is a trigger, not a tab
+
+Apple describes two styles of search tab, and the round button off the end is
+the second one:
+
+> **Standard tab.** This style displays the search tab uniformly with the rest
+> of the tab bar. Tapping the search tab navigates people to a search landing
+> page with a search field at the top.
+>
+> **Button appearance.** This style displays the search tab as a separate button
+> and allows people to start searching immediately. Tapping the search tab
+> brings focus to the search field and displays the keyboard.
+
+…and of the second: *"a more transient experience that brings people directly
+back to their previous tab after they exit search."*
+
+So this is not a destination. It is a mode you open and close, and coming out of
+it leaves you on whatever tab you were already on. Which means:
+
+- It is a **`<button>`, outside the tablist**. `role="tab"` promises a selected
+  state, and a control that never has one should not claim it — a screen reader
+  would otherwise announce a tab that is permanently unselected.
+- Its pill exists **only while your finger is down**. The bar's pill marks a
+  selection and is always somewhere; this one marks nothing.
+- It carries no visible text, because the separation is the label. What you pass
+  as children becomes its accessible name.
+
+Tapping it **expands the field leftward out of the button** and focuses it, so
+the keyboard is up and you can type immediately. `Escape` or Cancel collapses it
+and hands focus back to the trigger.
+
+### The expansion is a clip, not a width
+
+There are exactly three glass surfaces here — the bar, the button, and a field
+as wide as both — and each is a **fixed size**. The transition reveals the field
+with `clip-path` rather than growing it.
+
+That is not a stylistic choice. The kernel keys a displacement map on size, so
+animating the width of a glass surface asks for a new map on every frame of the
+transition and walks the module cache clean on the way past. A clip changes
+nothing the kernel measures.
+
+The field also gets a **much heavier frost than the bar** — 0.42 against 0.16 —
+and it can, because nothing is nested inside it. The bar is held at 0.16 by the
+pill it has to keep alive; the field has no pill, and it holds text you need to
+read against whatever is scrolling behind it.
 
 ### State comes from the DOM
 
@@ -91,21 +162,20 @@ mirrored into React. The attribute is the truth, watching it costs one
 `MutationObserver` instead of a context and a ref per item, and it keeps
 `TabBarItem` a styled `Tabs.Tab` with nothing threaded through it.
 
-A `ResizeObserver` runs the same measurement, because the bar is a row of
-flexible items: a font swap or a container resize moves every box under the pill
-without touching a single attribute.
+A `ResizeObserver` runs the same measurement, because a font swap or a container
+resize moves every box under the pill without touching a single attribute.
 
 ### Following the guidance
 
-- **Labels on every tab**, single words where possible. They are not optional
-  here; a bar of bare icons is a guessing game.
+- **Labels on every tab**, single words where possible. A bar of bare icons is a
+  guessing game — the search trigger is the exception, and it earns it by being
+  detached and by not being a tab at all.
 - **Prefer filled symbols.** The demo passes `fill="currentColor"
   strokeWidth={0}` to Lucide icons to get there.
 - **Don't disable or hide tabs.** A section with nothing in it should say so on
   its own screen; a bar whose items come and go reads as broken.
 - **Badges are for information that warrants attention.** `badge={3}` draws a
-  count, `badge` on its own draws a bare dot. A badge on everything is a badge
-  on nothing.
+  count, `badge` on its own draws a bare dot.
 
   The drawn badge is `aria-hidden` and restated after the label, so the tab
   announces as "Saved 3 new items" rather than "3 Saved". There is no
