@@ -397,6 +397,31 @@
       ]
     },
     {
+      "name": "tab-bar",
+      "type": "registry:ui",
+      "title": "Glass Tab Bar",
+      "description": "The iOS floating tab bar: the bar is the lens, and the selection pill stretches as it travels.",
+      "meta": {
+        "added": "2026-09-05"
+      },
+      "dependencies": [
+        "@base-ui/react",
+        "@liqui-design/glass"
+      ],
+      "registryDependencies": [
+        "https://liqui.design/r/liqui.json",
+        "utils",
+        "lens"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/ui/tab-bar.tsx",
+          "type": "registry:ui",
+          "target": "@ui/tab-bar.tsx"
+        }
+      ]
+    },
+    {
       "name": "toggle",
       "type": "registry:ui",
       "title": "Glass Toggle",
@@ -1260,6 +1285,22 @@
         {
           "path": "registry/liqui/examples/tabs-demo.tsx",
           "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "tab-bar-demo",
+      "type": "registry:example",
+      "title": "Tab Bar",
+      "description": "A floating tab bar over a scrolling list.",
+      "registryDependencies": [
+        "https://liqui.design/r/tab-bar.json"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/examples/tab-bar-demo.tsx",
+          "type": "registry:example",
+          "target": "@example/tab-bar-demo.tsx"
         }
       ]
     },
