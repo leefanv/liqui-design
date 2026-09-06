@@ -55,6 +55,7 @@ const COMPONENTS = [
   'separator',
   'slider',
   'switch',
+  'tab-bar',
   'tabs',
   'toast',
   'toggle',
