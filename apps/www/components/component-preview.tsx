@@ -27,13 +27,13 @@ export function ComponentPreview({
   className,
   align = 'center',
   hideCode = false,
-  backdrop = 'gradient',
+  backdrop = 'wallpaper',
 }: {
   name: string;
   className?: string;
   align?: 'center' | 'start';
   hideCode?: boolean;
-  backdrop?: 'gradient' | 'photo' | 'flat';
+  backdrop?: 'wallpaper' | 'gradient' | 'flat';
 }) {
   const entry = Index[name];
 

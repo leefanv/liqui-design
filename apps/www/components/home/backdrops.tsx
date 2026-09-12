@@ -1,20 +1,25 @@
 import * as React from 'react';
 
+import { Wallpaper } from '@/components/wallpaper';
+
 /**
  * Backdrops for the home stage.
  *
- * All generated in CSS rather than shipped as images — partly for weight, but
- * mostly because refraction needs *hard edges* to be visible and a photograph
- * mostly gives you soft ones. The hairlines and grids below are there to be
- * bent; without something crossing the bezel, a lens looks like a tint.
+ * `wallpaper` is the default and the honest one: a desktop photograph is where
+ * these surfaces actually get used, and its ridge line is a real edge for the
+ * lens to bend. The rest are generated in CSS — partly for weight, but mostly
+ * because each isolates one property. Refraction needs *hard edges* to be
+ * visible, and the hairlines and grids below are there to be bent; without
+ * something crossing the bezel, a lens looks like a tint.
  *
  * `flat` is deliberately unimpressive. It is the one that teaches what the
  * material actually needs.
  */
 
-export type BackdropId = 'aurora' | 'grid' | 'spectrum' | 'flat';
+export type BackdropId = 'wallpaper' | 'aurora' | 'grid' | 'spectrum' | 'flat';
 
 export const BACKDROPS: { id: BackdropId; label: string; hint: string }[] = [
+  { id: 'wallpaper', label: 'Wallpaper', hint: 'A desktop photograph — where glass actually lives' },
   { id: 'aurora', label: 'Aurora', hint: 'Soft colour with a few hard lines to bend' },
   { id: 'grid', label: 'Grid', hint: 'Nothing but edges — refraction at its most obvious' },
   { id: 'spectrum', label: 'Spectrum', hint: 'High chroma, where dispersion shows' },
@@ -22,6 +27,10 @@ export const BACKDROPS: { id: BackdropId; label: string; hint: string }[] = [
 ];
 
 export function Backdrop({ id }: { id: BackdropId }) {
+  if (id === 'wallpaper') {
+    return <Wallpaper />;
+  }
+
   if (id === 'flat') {
     return <div aria-hidden className="absolute inset-0 -z-10 bg-[#3b3f52]" />;
   }
