@@ -21,7 +21,7 @@ import { Field, FieldControl, FieldLabel } from '@/registry/liqui/ui/field';
  */
 
 export function GlassStage() {
-  const [backdrop, setBackdrop] = React.useState<BackdropId>('aurora');
+  const [backdrop, setBackdrop] = React.useState<BackdropId>('wallpaper');
   const [optics, setOptics] = React.useState<GlassOptics>(DEFAULT_OPTICS);
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
@@ -64,7 +64,12 @@ export function GlassStage() {
       ref={stageRef}
       data-glass-stage={backdrop}
       className="relative isolate flex min-h-[34rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-fd-border sm:min-h-[38rem]"
-      data-theme="dark"
+      // Every generated backdrop is dark whatever the page is wearing, so the
+      // glass on top of them has to be the dark token set. The wallpaper is the
+      // exception: it ships as a day/night pair and follows the page, so the
+      // stage lets the theme through and the surface is lit to match the
+      // photograph behind it.
+      data-theme={backdrop === 'wallpaper' ? undefined : 'dark'}
     >
       <Backdrop id={backdrop} />
 

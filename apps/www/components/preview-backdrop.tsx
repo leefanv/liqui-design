@@ -1,22 +1,25 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { Wallpaper } from '@/components/wallpaper';
 
 /**
  * Glass has nothing to show on a flat fill — the lens refracts whatever is
  * behind it, so a preview on the page background reads as a slightly grey box
  * and makes the library look broken. Every preview therefore sits on a backdrop
- * with real structure: overlapping colour blobs whose edges bend visibly
- * through the bezel.
+ * with real structure: by default a wallpaper whose ridge line bends visibly
+ * through the bezel, which is also the setting the material is designed for.
  *
- * `flat` exists so the docs can demonstrate that failure mode deliberately.
+ * `gradient` is the generated alternative, kept for pages that want colour
+ * under the glass rather than a photograph. `flat` exists so the docs can
+ * demonstrate the failure mode deliberately.
  */
 export function PreviewBackdrop({
-  variant = 'gradient',
+  variant = 'wallpaper',
   className,
   children,
 }: {
-  variant?: 'gradient' | 'photo' | 'flat';
+  variant?: 'wallpaper' | 'gradient' | 'flat';
   className?: string;
   children: React.ReactNode;
 }) {
@@ -26,12 +29,14 @@ export function PreviewBackdrop({
       // would break on any restyle, which is exactly when the screenshots need
       // to still be pointing at the right element.
       data-preview={variant}
-      // The gradient and photo backdrops are dark regardless of the page theme,
-      // so the glass tokens inside them have to be the dark set — otherwise a
-      // reader on the light docs theme gets near-black body text sitting on a
-      // near-black backdrop. `flat` follows the page instead, because its whole
+      // The gradient backdrop is dark regardless of the page theme, so the
+      // glass tokens inside it have to be the dark set — otherwise a reader on
+      // the light docs theme gets near-black body text sitting on a near-black
+      // backdrop. `wallpaper` and `flat` follow the page instead: the wallpaper
+      // ships as a matched day/night pair and swaps with the theme, so pinning
+      // it would put dark glass on bright sand half the time, and `flat`'s whole
       // job is to look like the surrounding surface.
-      data-theme={variant === 'flat' ? undefined : 'dark'}
+      data-theme={variant === 'gradient' ? 'dark' : undefined}
       className={cn(
         // `not-prose`, because what is inside is a component and not an article.
         // The docs theme styles `p`, `img` and friends at a specificity that
@@ -44,14 +49,8 @@ export function PreviewBackdrop({
         className,
       )}
     >
+      {variant === 'wallpaper' && <Wallpaper />}
       {variant === 'gradient' && <GradientField />}
-      {variant === 'photo' && (
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/backdrops/desk.jpg)' }}
-        />
-      )}
       {children}
     </div>
   );
