@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import type { ColorMode } from '@/lib/theme';
+import { Wallpaper } from '@/components/wallpaper';
 import { Button } from '@/registry/liqui/ui/button';
 import { Checkbox, CheckboxLabel } from '@/registry/liqui/ui/checkbox';
 import {
@@ -46,6 +47,11 @@ import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@/registry/li
  * The backdrop follows the mode being edited rather than the page's own theme —
  * you are editing the dark token set, so you should be looking at dark glass,
  * whichever way the docs around it are set.
+ *
+ * It is the same photograph the docs previews use, and that is the point: the
+ * tokens are being tuned for the surface people will actually ship, not for a
+ * gradient picked to flatter them. The ridge line supplies the hard edge the
+ * generated backdrops had to draw hairlines for.
  */
 export function ThemePreview({ mode }: { mode: ColorMode }) {
   const [notify, setNotify] = React.useState(true);
@@ -62,7 +68,11 @@ export function ThemePreview({ mode }: { mode: ColorMode }) {
       // and clipping the thing being previewed is worse than a little scroll.
       className="not-prose relative isolate flex flex-col justify-center overflow-hidden rounded-2xl border border-fd-border lg:min-h-[calc(100dvh-6.5rem)]"
     >
-      {mode === 'light' ? <DaylightBackdrop /> : <NightBackdrop />}
+      {/* Pinned to `mode`, not to the page. You are judging the dark token set
+          against the night photograph even while the docs around you are in
+          daylight — pairing it with the day one would be judging the material's
+          worst case and calling it the material. */}
+      <Wallpaper mode={mode} />
 
       <div className="grid gap-6 p-6 sm:grid-cols-2 sm:p-8">
         <div className="flex flex-col gap-5">
@@ -166,38 +176,6 @@ export function ThemePreview({ mode }: { mode: ColorMode }) {
           </Tabs>
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * Both backdrops carry hairlines on purpose: refraction is only visible where an
- * edge crosses the bezel, so a preview on soft gradient alone would make every
- * geometry change look like it did nothing.
- */
-function DaylightBackdrop() {
-  return (
-    <div aria-hidden className="absolute inset-0 -z-10 bg-[#e7ecf5]">
-      <div className="absolute -top-[25%] -left-[8%] size-[62%] rounded-full bg-[#ffd08a] opacity-80 blur-3xl" />
-      <div className="absolute top-[8%] left-[34%] size-[58%] rounded-full bg-[#8fc4ff] opacity-80 blur-3xl" />
-      <div className="absolute right-[-10%] bottom-[-22%] size-[58%] rounded-full bg-[#b9f2d8] opacity-80 blur-3xl" />
-      <div className="absolute inset-x-0 top-1/2 h-px bg-white" />
-      <div className="absolute inset-y-0 left-[27%] w-px bg-black/25" />
-      <div className="absolute inset-y-0 left-[68%] w-px bg-black/15" />
-    </div>
-  );
-}
-
-function NightBackdrop() {
-  return (
-    <div aria-hidden className="absolute inset-0 -z-10 bg-[#080b16]">
-      <div className="absolute -top-[25%] -left-[5%] size-[65%] rounded-full bg-[#ff5f6d] opacity-70 blur-3xl" />
-      <div className="absolute top-[5%] left-[30%] size-[60%] rounded-full bg-[#2f6bff] opacity-70 blur-3xl" />
-      <div className="absolute right-[-8%] bottom-[-25%] size-[60%] rounded-full bg-[#00d2a8] opacity-60 blur-3xl" />
-      <div className="absolute right-[18%] bottom-[8%] size-[32%] rounded-full bg-[#ffc94d] opacity-55 blur-3xl" />
-      <div className="absolute inset-x-0 top-1/2 h-px bg-white/70" />
-      <div className="absolute inset-y-0 left-[26%] w-px bg-white/45" />
-      <div className="absolute inset-y-0 left-[70%] w-px bg-white/35" />
     </div>
   );
 }
