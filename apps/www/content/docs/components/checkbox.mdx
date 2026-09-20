@@ -1,6 +1,6 @@
 ---
 title: Checkbox
-description: A checkbox whose glass fills with accent when checked, keeping the bezel and rim light.
+description: A flat control — a hairline box at rest, a solid accent fill when checked.
 ---
 
 <ComponentPreview name="checkbox-demo" />
@@ -45,30 +45,53 @@ area and so the text dims when the box inside is disabled — that last part is 
 
 ## Notes
 
-### The smallest surface in the library
+### It is not glass
 
-At 20px the box is barely wider than its own bezel, so this is where the lens is
-under the most pressure. The optics are scaled down hard from the popup
-defaults:
+A checkbox is two solid fills and nothing else: `--lq-control` with a hairline
+at rest, `--lq-accent` when it is on. No backdrop filter, no displacement map,
+no specular arc.
 
-| | Checkbox | Context menu popup |
-| --- | --- | --- |
-| `radius` | 7 | 18 |
-| `bezel` | 6 | 28 |
-| `refraction` | 20 | 150 |
+That is [the library's rule](/docs/handbook/glass#not-everything-is-glass) and
+it is Apple's: **glass is for a surface you act *through*; a solid fill is for a
+control that carries a *value*.** Checked is not a mood the material is in, it
+is a fact about your form, and a fact should not be refracting the wallpaper
+behind it. A checked box used to be a lens tinted with accent, which meant it
+was a slightly different blue on every backdrop it landed on.
 
-If you raise `refraction` globally, this component smears first. It is a useful
-canary — tune here, then check the big surfaces.
-
-### Checked state
-
-Checking doesn't swap in a flat filled box. It overrides `--lq-tint` on the
-root, so the accent arrives *as glass* and the bezel and specular arc survive
-the transition:
+[Radio](/docs/components/radio-group), [Toggle](/docs/components/toggle) and
+[Switch](/docs/components/switch) are flat for the same reason, and
+[Button](/docs/components/button)'s `accent` and `danger` variants are too.
 
 ```tsx
-data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)]
+'bg-[var(--lq-control)] shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
+'data-[checked]:bg-[var(--lq-accent)] data-[checked]:shadow-none',
 ```
 
-Retint through the token if you want a different checked colour, rather than
-adding a background — a background would paint over the refraction.
+The hairline is an inset ring rather than a border, so the box stays exactly
+20px and nothing reflows when it is checked. It goes away with the fill: a rim
+around a filled control is the bezel of a material that is no longer there.
+
+Retune through `--lq-control`, `--lq-control-rim` and `--lq-accent`. They are
+ordinary [theme tokens](/docs/handbook/theming#the-tokens), and since nothing is
+composited over them, a plain `background` override works as well.
+
+### What used to be here
+
+At 20px this was the smallest surface the lens was ever asked to render — the
+box was barely wider than its own bezel — and the docs used it as the canary for
+a global `refraction` that had been pushed too far. That fragility is gone with
+the lens, and so is a canvas-rendered displacement map and an SVG filter per box
+on screen. A form with forty checkboxes in it is now forty background colours.
+
+If you want the canary back, [Switch](/docs/components/switch) is the smallest
+lens left in the library.
+
+### Mixed is a different mark, not a different material
+
+Inside a [CheckboxGroup](/docs/components/checkbox-group), a `parent` box goes
+into the mixed state when some but not all of its children are ticked. It takes
+the *same* accent fill with a dash instead of a tick — half-selected is a
+statement about the children, not a half-hearted version of being on.
+
+The mark is read off the indicator's state rather than from an `indeterminate`
+prop, because nothing is passed down to a parent box: the group sets it.

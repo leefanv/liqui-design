@@ -2,31 +2,32 @@
 
 import * as React from 'react';
 import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox';
-import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 
 import { cn } from '@/lib/utils';
 
 /**
- * liqui Checkbox — Base UI checkbox as a LiquiGlass surface.
+ * liqui Checkbox — a flat control, not a glass surface.
  *
- * At 20px the box is barely wider than its own bezel, which makes this the
- * smallest surface the lens is ever asked to render and the first place an
- * over-driven `refraction` smears. The optics below are scaled down hard from
- * the popup defaults for that reason — raise them and you will see it here
- * before anywhere else.
+ * This is the line the library draws, and it is the one Apple draws: **glass is
+ * for the surfaces you act *through* — popups, toolbars, sheets, buttons —
+ * and a solid fill is for a control that carries a *value*.** A checkbox is
+ * the second kind. Checked is not a mood the material takes on; it is a fact,
+ * and a fact should not be refracting the wallpaper behind it.
  *
- * Checking fills the glass with accent by overriding `--lq-tint` rather than
- * swapping in a flat box, so the bezel and specular arc survive the state
- * change. The mixed state retints identically — a `parent` checkbox inside a
- * `CheckboxGroup` is half-selected, not half-glass.
+ * So there are two fills and nothing else: `--lq-control` with a hairline at
+ * rest, `--lq-accent` when it is on. No backdrop-filter, no displacement map,
+ * no specular arc. At 20px it was the smallest surface the lens was ever asked
+ * to render and the first place an over-driven `refraction` smeared — that
+ * fragility is gone with the lens, and so is a canvas render and an SVG filter
+ * per box on screen.
+ *
+ * The mixed state takes the same accent fill with a dash instead of a tick:
+ * inside a `CheckboxGroup`, a `parent` box is half-*selected*, which is a
+ * different mark, not a different material.
+ *
+ * [Radio](/docs/components/radio-group), [Toggle](/docs/components/toggle) and
+ * [Switch](/docs/components/switch) are flat for the same reason.
  */
-
-const CHECKBOX_GLASS = {
-  radius: 7,
-  blur: 1,
-  refraction: 20,
-  bezel: 6,
-} satisfies Partial<LiquiGlassProps>;
 
 const CheckIcon = (
   <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden>
@@ -46,29 +47,36 @@ const IndeterminateIcon = (
   </svg>
 );
 
-export interface CheckboxProps extends BaseCheckbox.Root.Props {
-  glass?: Partial<LiquiGlassProps>;
-}
+export type CheckboxProps = BaseCheckbox.Root.Props;
 
-export function Checkbox({ glass, className, ...props }: CheckboxProps) {
+export function Checkbox({ className, ...props }: CheckboxProps) {
   return (
     <BaseCheckbox.Root
       {...props}
       className={cn(
-        'size-5 flex-none cursor-default outline-none transition-transform duration-100 active:scale-[0.92]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
-        'data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)] data-[checked]:[--lq-tint-deep:color-mix(in_srgb,var(--lq-accent)_66%,transparent)]',
-        'data-[indeterminate]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)] data-[indeterminate]:[--lq-tint-deep:color-mix(in_srgb,var(--lq-accent)_66%,transparent)]',
+        'inline-flex size-5 flex-none cursor-default items-center justify-center rounded-[7px]',
+        'border-none p-0 outline-none',
+        'transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.92]',
+        // Off: the flat control surface. The hairline is an inset ring rather
+        // than a border so it costs no layout — the box stays exactly 20px.
+        //
+        // The mark is white in *both* states rather than being revealed by a
+        // colour change: Base UI keeps the indicator mounted through its exit
+        // animation, and a tick that turned transparent the instant the box was
+        // unchecked would pop out instead of fading.
+        'bg-[var(--lq-control)] text-white shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
+        // On: a solid accent fill, and the hairline goes with it. A rim around
+        // a filled control is the bezel of a material that is no longer there.
+        'data-[checked]:bg-[var(--lq-accent)] data-[checked]:shadow-none',
+        'data-[indeterminate]:bg-[var(--lq-accent)] data-[indeterminate]:shadow-none',
+        // An outline rather than a box-shadow ring: `outline-offset` leaves the
+        // gap Apple leaves, and unlike a shadow it does not have to know what
+        // colour the control is filled with. Same focus treatment as Switch.
+        'focus-visible:outline-2 focus-visible:outline-offset-[3px]',
+        'focus-visible:outline-[color-mix(in_srgb,var(--lq-accent)_70%,transparent)]',
         'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
         className,
       )}
-      render={
-        <LiquiGlass
-          {...CHECKBOX_GLASS}
-          {...glass}
-          contentClassName="flex size-full items-center justify-center text-white"
-        />
-      }
     >
       {/* The mark is chosen from the indicator's *state*, not from the
           `indeterminate` prop. Inside a `CheckboxGroup` a `parent` checkbox is

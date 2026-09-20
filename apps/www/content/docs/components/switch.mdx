@@ -52,11 +52,19 @@ being told about the switch's state.
 
 ### This one is not a glass surface
 
-Every other component here is a [`LiquiGlass`](/docs/handbook/glass) box: one
-shared displacement map, one shared filter, one set of dials that has to suit a
-drawer and a scrollbar thumb at the same time. This is not built out of that
-and does not import it. Only the `--lq-*` tokens are shared, through CSS, so it
-still themes with everything else.
+Not in the ordinary way, at least. Most components here are a
+[`LiquiGlass`](/docs/handbook/glass) box: one shared displacement map, one
+shared filter, one set of dials that has to suit a drawer and a scrollbar thumb
+at the same time. This is not built out of that and does not import it. Only the
+`--lq-*` tokens are shared, through CSS, so it still themes with everything else.
+
+It is also not flat, which is the *other* way a component here can decline the
+shared surface. [Checkbox](/docs/components/checkbox),
+[Radio](/docs/components/radio-group) and [Toggle](/docs/components/toggle) are
+two solid fills and nothing else, because
+[a value gets a solid fill](/docs/handbook/glass#not-everything-is-glass) — and
+so is this switch's track, and its accent. The lens here is the *thumb*, and
+what it refracts is the page, not the state.
 
 It needs three things the shared surface does not have and should not grow:
 

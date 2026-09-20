@@ -4,7 +4,7 @@
  * They used to live in `tokens.css`, which meant they lived in three places —
  * that stylesheet, the `cssVars` block the shadcn registry hands the CLI, and
  * anything in JavaScript that needed to know a default in order to diff against
- * it. Three hand-maintained copies of twelve colours is a drift bug with a
+ * it. Three hand-maintained copies of one palette are a drift bug with a
  * schedule. `tokens.css` is now generated from this file at build time
  * (tsdown.config.ts) and the registry's copy is checked against it
  * (apps/www/scripts/build-registry.mts).
@@ -29,6 +29,8 @@ export const LIQUI_TOKENS = [
   'rim-lo',
   'shadow',
   'highlight',
+  'control',
+  'control-rim',
   'accent',
   'danger',
   'danger-text',
@@ -49,6 +51,12 @@ export const defaultTokens: { light: LiquiTokens; dark: LiquiTokens } = {
     'rim-lo': 'rgba(255, 255, 255, 0.28)',
     shadow: '0 24px 60px rgba(10, 15, 40, 0.35), 0 4px 14px rgba(10, 15, 40, 0.18)',
     highlight: 'rgba(255, 255, 255, 0.5)',
+    // The two below are the *flat* control surface: the resting fill and
+    // hairline of a checkbox, radio or toggle. They are not a glass tint —
+    // nothing blurs or refracts behind them — which is the whole point. See
+    // `control` in the token list above.
+    control: 'rgba(255, 255, 255, 0.72)',
+    'control-rim': 'rgba(28, 28, 40, 0.16)',
     accent: '#2f6bff',
     danger: '#e5484d',
     // The darker variant, used where the red has to survive as *text* on a
@@ -66,6 +74,8 @@ export const defaultTokens: { light: LiquiTokens; dark: LiquiTokens } = {
     'rim-lo': 'rgba(255, 255, 255, 0.12)',
     shadow: '0 24px 60px rgba(0, 0, 5, 0.55), 0 4px 14px rgba(0, 0, 5, 0.35)',
     highlight: 'rgba(255, 255, 255, 0.18)',
+    control: 'rgba(126, 128, 146, 0.3)',
+    'control-rim': 'rgba(255, 255, 255, 0.22)',
     accent: '#6f9dff',
     danger: '#ff7076',
     'danger-text': '#ff7076',

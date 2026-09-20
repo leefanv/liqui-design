@@ -9,11 +9,15 @@ import { cn } from '@/lib/utils';
  *
  * The obvious thing to do with a fieldset is draw a box around it, and it is
  * the wrong thing here. What goes inside a fieldset is
- * [fields](/docs/components/field), [checkboxes](/docs/components/checkbox),
- * [switches](/docs/components/switch) — every one of them already a lens. Put a
- * glass panel around them and each of those lenses is refracting the panel's
- * tint instead of the page: the backdrop they bend is UI, and the group reads
- * as one flat slab with dents in it.
+ * [fields](/docs/components/field) and [switches](/docs/components/switch) —
+ * lenses, both of them. Put a glass panel around them and each of those lenses
+ * is refracting the panel's tint instead of the page: the backdrop they bend is
+ * UI, and the group reads as one flat slab with dents in it.
+ *
+ * The flat controls in there — [checkbox](/docs/components/checkbox),
+ * [radio](/docs/components/radio-group) — would survive the panel; they have no
+ * lens to spoil. They would just stop looking like they belong to the same
+ * form as the ones that do.
  *
  * This is the same rule that flattens a
  * [toggle inside a group](/docs/components/toggle-group), keeps the

@@ -21,8 +21,9 @@ import {
  * Which is the point: the swipe is the one moment where a rebuild would show up
  * as lag, and it is the one moment that cannot cause one.
  *
- * `nativeButton={false}` on the trigger and closes: a liqui Button is not a
- * native <button>, and Base UI warns when it is handed one that says it is.
+ * `nativeButton={false}` on the glass trigger and close: a glass Button is not
+ * a native <button>, and Base UI warns when it is handed one that says it is.
+ * The solid `accent` close below is a real button, so it needs no such note.
  */
 export default function DrawerDemo() {
   return (
@@ -40,7 +41,7 @@ export default function DrawerDemo() {
 
           <div className="mt-5 flex justify-end gap-2.5">
             <DrawerClose nativeButton={false} render={<Button />}>Not now</DrawerClose>
-            <DrawerClose nativeButton={false} render={<Button variant="accent" />}>Export</DrawerClose>
+            <DrawerClose render={<Button variant="accent" />}>Export</DrawerClose>
           </div>
         </DrawerBody>
       </DrawerContent>

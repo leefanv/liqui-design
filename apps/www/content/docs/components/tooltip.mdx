@@ -68,14 +68,17 @@ job is to be read is the wrong trade. `TooltipContent` runs `frost: 0.7` —
 roughly Apple's *regular* material. Still glass, still refracting, but carrying
 its own contrast.
 
-The optics are scaled down to match the box, for the same reason
-[Checkbox](/docs/components/checkbox#the-smallest-surface-in-the-library) is:
+The optics are scaled down to match the box:
 
 ```ts
 { radius: 11, blur: 1, refraction: 35, bezel: 9, frost: 0.7 }
 ```
 
 A 28px-tall chip driven at a menu's `refraction: 150` is all bezel and no glass.
+With [Checkbox](/docs/components/checkbox) and
+[Radio](/docs/components/radio-group) now flat, this is one of the smallest
+surfaces the lens is still asked to render, and it is a good place to check a
+global `refractionScale` you have pushed up.
 
 ### No tail, on purpose
 

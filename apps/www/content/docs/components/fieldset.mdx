@@ -54,12 +54,17 @@ it:
 The obvious thing to do with a fieldset is draw a box round it. It is the wrong
 thing here, and the reason is the same one that runs through the whole library.
 
-What goes inside a fieldset is [fields](/docs/components/field),
-[checkboxes](/docs/components/checkbox), [switches](/docs/components/switch) —
-every one of them already a lens. A glass panel behind them becomes the backdrop
-those lenses bend, so each control refracts the panel's tint and specular rim
-instead of the page. The group stops reading as a set of surfaces on a wallpaper
-and starts reading as one flat slab with dents pressed into it.
+What goes inside a fieldset is [fields](/docs/components/field) and
+[switches](/docs/components/switch) — lenses, both of them. A glass panel behind
+them becomes the backdrop those lenses bend, so each control refracts the
+panel's tint and specular rim instead of the page. The group stops reading as a
+set of surfaces on a wallpaper and starts reading as one flat slab with dents
+pressed into it.
+
+The flat controls in there — [checkbox](/docs/components/checkbox),
+[radio](/docs/components/radio-group) — have no lens to spoil and would survive
+the panel intact. They would simply stop looking like they belong to the same
+form as the controls that do.
 
 You have seen this decision three times already:
 [a toggle inside a group](/docs/components/toggle-group) goes flat because the

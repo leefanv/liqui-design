@@ -510,8 +510,7 @@ export default function App() {
                     Cancel
                   </DialogClose>
                   <DialogClose
-                    nativeButton={false}
-                    render={<Button variant="accent" glass={glass} />}
+                    render={<Button variant="accent" />}
                     onClick={() => setLastAction('Copied the share link')}
                   >
                     Copy link
@@ -548,15 +547,13 @@ export default function App() {
             </div>
 
             <h2 className="stage__label stage__label--spaced">Toggle</h2>
-            {/* Standalone toggles are each their own lens; the group below is
-                one lens with flat toggles on it. Same rule, opposite answers,
-                because a `multiple` group has nothing that moves. */}
+            {/* Flat in both states, and unaffected by the dials on the left: a
+                toggle carries a value, and a value does not refract. The strip
+                below is still glass — that is the surface you act through. */}
             <div className="stage__buttons">
-              <Toggle glass={glass} defaultPressed>
-                Focus
-              </Toggle>
-              <Toggle glass={glass}>Stage Manager</Toggle>
-              <Toggle glass={glass} defaultPressed disabled>
+              <Toggle defaultPressed>Focus</Toggle>
+              <Toggle>Stage Manager</Toggle>
+              <Toggle defaultPressed disabled>
                 Managed
               </Toggle>
             </div>
@@ -639,28 +636,26 @@ export default function App() {
                     render={
                       <Button
                         variant="accent"
-                        glass={glass}
                         onClick={() => setLastAction('Accent button')}
                       />
                     }
                   >
                     Accent
                   </TooltipTrigger>
-                  <TooltipContent glass={glass}>Retinted, not painted over</TooltipContent>
+                  <TooltipContent glass={glass}>Solid — a value, not a surface</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
                     render={
                       <Button
                         variant="danger"
-                        glass={glass}
                         onClick={() => setLastAction('Danger button')}
                       />
                     }
                   >
                     Danger
                   </TooltipTrigger>
-                  <TooltipContent glass={glass}>Same trick, different token</TooltipContent>
+                  <TooltipContent glass={glass}>Same rule, different token</TooltipContent>
                 </Tooltip>
                 <Button glass={glass} disabled>
                   Disabled
@@ -671,35 +666,27 @@ export default function App() {
             <h2 className="stage__label stage__label--spaced">Checkbox</h2>
             <div className="stage__checks">
               <CheckboxLabel>
-                <Checkbox
-                  glass={glass}
-                  checked={snapToGrid}
-                  onCheckedChange={setSnapToGrid}
-                />
+                <Checkbox checked={snapToGrid} onCheckedChange={setSnapToGrid} />
                 Snap to grid
               </CheckboxLabel>
               <CheckboxLabel>
-                <Checkbox
-                  glass={glass}
-                  checked={showHidden}
-                  onCheckedChange={setShowHidden}
-                />
+                <Checkbox checked={showHidden} onCheckedChange={setShowHidden} />
                 Show hidden files
               </CheckboxLabel>
               <CheckboxLabel>
-                <Checkbox glass={glass} indeterminate />
+                <Checkbox indeterminate />
                 Indeterminate
               </CheckboxLabel>
               <CheckboxLabel>
-                <Checkbox glass={glass} defaultChecked disabled />
+                <Checkbox defaultChecked disabled />
                 Disabled
               </CheckboxLabel>
             </div>
 
             <h2 className="stage__label stage__label--spaced">Radio group</h2>
-            {/* A list, not a strip: the options do not share a box, so there is
-                nothing to nest and each one is its own lens — the opposite
-                conclusion from the toggle group two columns over. */}
+            {/* Flat, like the checkboxes above and for the same reason: the
+                selected option is a fact about the form, not a mood the
+                material is in. The dials on the left do not reach these. */}
             <div className="stage__checks">
               <RadioGroup
                 value={quality}
@@ -707,19 +694,19 @@ export default function App() {
                 aria-label="Export quality"
               >
                 <RadioLabel>
-                  <Radio glass={glass} value="fast" />
+                  <Radio value="fast" />
                   Fast
                 </RadioLabel>
                 <RadioLabel>
-                  <Radio glass={glass} value="balanced" />
+                  <Radio value="balanced" />
                   Balanced
                 </RadioLabel>
                 <RadioLabel>
-                  <Radio glass={glass} value="best" />
+                  <Radio value="best" />
                   Best quality
                 </RadioLabel>
                 <RadioLabel>
-                  <Radio glass={glass} value="lossless" disabled />
+                  <Radio value="lossless" disabled />
                   Lossless
                 </RadioLabel>
               </RadioGroup>
@@ -815,10 +802,7 @@ export default function App() {
               {/* inline-flex buttons stretch as direct children of the column,
                   so the trigger sits in the same wrapper the button row uses. */}
               <div className="stage__buttons">
-                <AlertDialogTrigger
-                  nativeButton={false}
-                  render={<Button variant="danger" glass={glass} />}
-                >
+                <AlertDialogTrigger render={<Button variant="danger" />}>
                   Move to Trash…
                 </AlertDialogTrigger>
               </div>
@@ -837,8 +821,7 @@ export default function App() {
                     Cancel
                   </AlertDialogClose>
                   <AlertDialogClose
-                    nativeButton={false}
-                    render={<Button variant="danger" glass={glass} />}
+                    render={<Button variant="danger" />}
                     onClick={() => setLastAction('Moved 3 items to Trash')}
                   >
                     Move to Trash
@@ -998,7 +981,6 @@ function ToastButtons({ glass }: { glass: GlassOptics }) {
         Notify
       </Button>
       <Button
-        glass={glass}
         variant="accent"
         onClick={() =>
           toast.add({

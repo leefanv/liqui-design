@@ -30,6 +30,8 @@
           "lq-rim-lo": "rgba(255, 255, 255, 0.28)",
           "lq-shadow": "0 24px 60px rgba(10, 15, 40, 0.35), 0 4px 14px rgba(10, 15, 40, 0.18)",
           "lq-highlight": "rgba(255, 255, 255, 0.5)",
+          "lq-control": "rgba(255, 255, 255, 0.72)",
+          "lq-control-rim": "rgba(28, 28, 40, 0.16)",
           "lq-accent": "#2f6bff",
           "lq-danger": "#e5484d",
           "lq-danger-text": "#c1272c",
@@ -44,6 +46,8 @@
           "lq-rim-lo": "rgba(255, 255, 255, 0.12)",
           "lq-shadow": "0 24px 60px rgba(0, 0, 5, 0.55), 0 4px 14px rgba(0, 0, 5, 0.35)",
           "lq-highlight": "rgba(255, 255, 255, 0.18)",
+          "lq-control": "rgba(126, 128, 146, 0.3)",
+          "lq-control-rim": "rgba(255, 255, 255, 0.22)",
           "lq-accent": "#6f9dff",
           "lq-danger": "#ff7076",
           "lq-danger-text": "#ff7076",
@@ -87,7 +91,7 @@
       "name": "button",
       "type": "registry:ui",
       "title": "Glass Button",
-      "description": "A button rendered as a refracting glass surface, with accent and danger tints.",
+      "description": "A refracting glass surface by default, and a solid fill when it carries a brand colour.",
       "meta": {
         "added": "2026-08-06"
       },
@@ -111,14 +115,13 @@
     {
       "name": "checkbox",
       "type": "registry:ui",
-      "title": "Glass Checkbox",
-      "description": "A checkbox whose glass fills with accent when checked, keeping the bezel and rim light.",
+      "title": "Checkbox",
+      "description": "A flat control — a hairline box at rest, a solid accent fill when checked.",
       "meta": {
         "added": "2026-08-06"
       },
       "dependencies": [
-        "@base-ui/react",
-        "@liqui-design/glass"
+        "@base-ui/react"
       ],
       "registryDependencies": [
         "https://liqui.design/r/liqui.json",
@@ -424,14 +427,13 @@
     {
       "name": "toggle",
       "type": "registry:ui",
-      "title": "Glass Toggle",
-      "description": "A two-state button whose glass fills with accent while it is on.",
+      "title": "Toggle",
+      "description": "A two-state button, flat in both of them, filling with accent while it is on.",
       "meta": {
         "added": "2026-08-14"
       },
       "dependencies": [
-        "@base-ui/react",
-        "@liqui-design/glass"
+        "@base-ui/react"
       ],
       "registryDependencies": [
         "https://liqui.design/r/liqui.json",
@@ -497,14 +499,13 @@
     {
       "name": "radio-group",
       "type": "registry:ui",
-      "title": "Glass Radio Group",
-      "description": "A list of options, each its own glass surface, carrying an opaque dot.",
+      "title": "Radio Group",
+      "description": "A list of flat controls, each filling with accent when it is the one selected.",
       "meta": {
         "added": "2026-08-20"
       },
       "dependencies": [
-        "@base-ui/react",
-        "@liqui-design/glass"
+        "@base-ui/react"
       ],
       "registryDependencies": [
         "https://liqui.design/r/liqui.json",
@@ -783,7 +784,7 @@
     {
       "name": "checkbox-group",
       "type": "registry:ui",
-      "title": "Glass Checkbox Group",
+      "title": "Checkbox Group",
       "description": "Shared state for a stack of checkboxes, with a parent box that goes mixed rather than dim.",
       "meta": {
         "added": "2026-08-29"
