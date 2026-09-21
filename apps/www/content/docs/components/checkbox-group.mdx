@@ -108,10 +108,13 @@ does.
 
 ### The group is a stack and a gap
 
-No surface, for the reason [Fieldset](/docs/components/fieldset) gives at length:
-every box in the group is already a lens, and a panel behind them is the thing
-those lenses would bend. Four checkboxes on a wallpaper are four windows onto it;
-four checkboxes on a panel are four dents in a slab.
+No surface, for the reason
+[Radio Group](/docs/components/radio-group#the-group-is-still-not-a-surface)
+gives: this is a list, not a strip. The boxes do not share a box — each is a
+small control with text beside it and a gap under it — so there is nothing here
+that could hold a surface, and a panel drawn around them would be a card they
+happen to be lying on. That card is [Fieldset](/docs/components/fieldset), and
+it is not a surface either.
 
 The indentation under a parent is layout, not a component — a `ml-7` on a plain
 `<div>`, as in the demo above. It is deliberately not built in: the offset that

@@ -3,76 +3,60 @@
 import * as React from 'react';
 import { Radio as BaseRadio } from '@base-ui/react/radio';
 import { RadioGroup as BaseRadioGroup } from '@base-ui/react/radio-group';
-import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 
 import { cn } from '@/lib/utils';
 
 /**
- * liqui Radio Group — one small glass surface per option.
+ * liqui Radio Group — a list of flat controls.
  *
- * The group is not a surface. That is the difference from ToggleGroup, and it
- * is not a stylistic one: a toggle group is a single strip whose children share
- * one box, so the strip can hold the lens and the toggles inside it flatten. A
- * radio group is a *list* — the options are separate boxes with label text and
- * gaps between them, and there is no shared box to refract with. So each radio
- * is its own lens, exactly as each Checkbox is, and `RadioGroup` renders as a
- * plain flex column.
+ * Same rule as [Checkbox](/docs/components/checkbox): **glass is for the
+ * surfaces you act *through*; a control that carries a value gets a solid
+ * fill.** A radio is as literal a value as the library has — it is one bit of
+ * a choice — so selecting it fills it with `--lq-accent` rather than retinting
+ * a lens, and at rest it is `--lq-control` with a hairline.
  *
- * Inside the ring, the dot is opaque rather than glass. It is the Switch thumb
- * again: `backdrop-filter` samples what is painted behind an element, and for a
- * dot sitting inside a glass ring that backdrop is the ring's own accent tint,
- * so a glass dot would bend the colour it is lying on and read as a smudge. It
- * gets a cast shadow instead, because the glass layers underneath give a child
- * no depth of its own.
+ * The group is not a surface either, and that part is unchanged. A toggle group
+ * is a single strip whose children share one box, so the strip can hold a lens.
+ * A radio group is a *list* — separate boxes with label text and gaps between
+ * them, and no shared box to refract with. `RadioGroup` is a plain flex column.
  *
- * Selecting retints through `--lq-tint` rather than painting a filled circle,
- * so the bezel and specular arc survive the state change — same mechanism as
- * Checkbox and Switch.
+ * The dot is flat white with no cast shadow. It used to have one because the
+ * glass layers underneath gave a child no depth of its own; there is nothing
+ * left for it to lift off of, and a shadow inside a 20px solid circle is just
+ * a smudge.
  */
-
-const RADIO_GLASS = {
-  radius: 10,
-  blur: 1,
-  refraction: 20,
-  bezel: 6,
-} satisfies Partial<LiquiGlassProps>;
 
 export function RadioGroup({ className, ...props }: BaseRadioGroup.Props) {
   return <BaseRadioGroup {...props} className={cn('flex flex-col gap-3', className)} />;
 }
 
-export interface RadioProps extends BaseRadio.Root.Props {
-  /** Overrides for the underlying glass surface (radius, refraction, bezel…). */
-  glass?: Partial<LiquiGlassProps>;
-}
+export type RadioProps = BaseRadio.Root.Props;
 
-export function Radio({ glass, className, ...props }: RadioProps) {
+export function Radio({ className, ...props }: RadioProps) {
   return (
     <BaseRadio.Root
       {...props}
       className={cn(
-        // 20px, the same box as Checkbox — the smallest surface the lens is
-        // asked to render, and the first place an over-driven `refraction`
-        // smears. `rounded-full` is the DOM shape; `radius: 10` is the shape
-        // the displacement map is generated for, and both have to say circle.
-        'size-5 flex-none cursor-default rounded-full outline-none transition-transform duration-100 active:scale-[0.92]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
-        'data-[checked]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_88%,transparent)] data-[checked]:[--lq-tint-deep:color-mix(in_srgb,var(--lq-accent)_66%,transparent)]',
+        // 20px, the same box as Checkbox, and now genuinely the same control:
+        // one shape declaration instead of two. `rounded-full` used to have to
+        // agree with a `radius` the displacement map was generated for, and
+        // disagreeing gave you a circle lit like a square.
+        'inline-flex size-5 flex-none cursor-default items-center justify-center rounded-full',
+        'border-none p-0 outline-none',
+        'transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.92]',
+        'bg-[var(--lq-control)] shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
+        'data-[checked]:bg-[var(--lq-accent)] data-[checked]:shadow-none',
+        // Same focus treatment as Checkbox and Switch: an outline, so the ring
+        // does not have to know what colour the control is filled with.
+        'focus-visible:outline-2 focus-visible:outline-offset-[3px]',
+        'focus-visible:outline-[color-mix(in_srgb,var(--lq-accent)_70%,transparent)]',
         'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
         className,
       )}
-      render={
-        <LiquiGlass
-          {...RADIO_GLASS}
-          {...glass}
-          contentClassName="flex size-full items-center justify-center rounded-full"
-        />
-      }
     >
       <BaseRadio.Indicator
         className={cn(
           'block size-[7px] rounded-full bg-white',
-          'shadow-[0_1px_2px_rgba(10,15,40,0.35)]',
           'transition-[opacity,transform] duration-100',
           'data-[ending-style]:scale-[0.4] data-[ending-style]:opacity-0',
           'data-[starting-style]:scale-[0.4] data-[starting-style]:opacity-0',

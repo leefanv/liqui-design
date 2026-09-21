@@ -3,8 +3,10 @@ title: Glass
 description: What the material is, what it needs from your layout, and where it degrades.
 ---
 
-Every liqui component is a `LiquiGlass` surface with a component-shaped content
-layer on top. Understanding the material is most of understanding the library.
+Most liqui components are a `LiquiGlass` surface with a component-shaped
+content layer on top. Understanding the material is most of understanding the
+library — and knowing [which components are deliberately not made of
+it](#not-everything-is-glass) is the rest.
 
 ## The anatomy
 
@@ -28,13 +30,41 @@ and refraction fades in over it.
 
 <ComponentPreview name="button-variants" backdrop="flat" hideCode />
 
-That is the same component as at the top of the Button page, on a flat fill.
-It is not broken — there is simply nothing behind it to bend. Glass is a lens;
-a lens over a solid colour shows you the solid colour.
+Those are the three Button variants on a flat fill. The two solid ones look
+exactly as they do anywhere else. The glass one has gone slack — it is not
+broken, there is simply nothing behind it to bend. Glass is a lens; a lens over
+a solid colour shows you the solid colour.
 
 Put surfaces over photography, video, a gradient with real edges, or content
 that scrolls underneath. If your design calls for glass on a flat background,
 you want `material="clear"` and a tint, not refraction.
+
+## Not everything is glass
+
+The line the library draws is the one Apple draws, and it is not about which
+components are important enough to get the nice material:
+
+> **Glass is for a surface you act *through*. A solid fill is for a control
+> that carries a *value*.**
+
+Buttons, popups, menus, toolbars, sheets and dialogs are the first kind — they
+are the layer floating over your content, and letting that content through is
+what the material is for. Checkbox, [Radio](/docs/components/radio-group),
+[Toggle](/docs/components/toggle) and [Switch](/docs/components/switch) are the
+second, and they are flat: `--lq-control` with a hairline at rest, `--lq-accent`
+when they are on.
+
+[Button](/docs/components/button) sits on both sides of the line, which is why
+it is the clearest illustration of it. Its default variant is glass, because
+pressing a button *does* something. Its `accent` and `danger` variants are
+solid, because those say *this is the one* — and a tinted lens contradicts
+itself: the colour is the whole message, and the lens exists to let the
+wallpaper through it. Accent over a night photograph and accent over a bright
+one were two different colours.
+
+This is also why a brand colour never needs `frost` tuning in liqui. Nothing
+carrying `--lq-accent` is a backdrop-filtered surface, so there is no
+transparency for a backdrop to leak through in the first place.
 
 ## The dials
 

@@ -50,16 +50,17 @@ import {
     <DialogDescription>Anyone with the link can open it.</DialogDescription>
     <DialogActions>
       <DialogClose nativeButton={false} render={<Button>Cancel</Button>} />
-      <DialogClose nativeButton={false} render={<Button variant="accent">Copy link</Button>} />
+      <DialogClose render={<Button variant="accent">Copy link</Button>} />
     </DialogActions>
   </DialogContent>
 </Dialog>
 ```
 
-`nativeButton={false}` on the trigger and the closes: a liqui `Button` is not a
-native `<button>` — it cannot be, the glass anatomy is invalid inside one — and
-Base UI warns unless the composing component is told so. See
-[Button](/docs/components/button#why-it-isnt-a-native-button).
+`nativeButton={false}` follows the *material*. A glass `Button` is four stacked
+layers, which is invalid inside a native `<button>`, so it is not one — and Base
+UI warns unless the composing component is told so. The solid `accent` close is
+a real button again and says nothing. See
+[Button](/docs/components/button#only-the-glass-variant-opts-out-of-button).
 
 ## Notes
 

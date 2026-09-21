@@ -110,8 +110,8 @@ See the [theming handbook](https://liqui.design/docs/handbook/theming).
 | --- | --- |
 | [Accordion](https://liqui.design/docs/components/accordion) | Each item is its own surface, resizing with its panel |
 | [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | Modal and un-dismissible, refracting a dimmed scrim |
-| [Button](https://liqui.design/docs/components/button) | Glass, accent and danger tints |
-| [Checkbox](https://liqui.design/docs/components/checkbox) | Fills with accent while keeping the bezel and rim light |
+| [Button](https://liqui.design/docs/components/button) | Glass by default; accent and danger are solid fills |
+| [Checkbox](https://liqui.design/docs/components/checkbox) | A flat control: hairline box at rest, solid accent when checked |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | Submenus, checkbox and radio items, keep-mounted popup |
 | [Dialog](https://liqui.design/docs/components/dialog) | The dismissible one; its corner close stays flat |
 | [Field](https://liqui.design/docs/components/field) | Focus and invalid rings on the surface, not the input |
@@ -120,13 +120,13 @@ See the [theming handbook](https://liqui.design/docs/handbook/theming).
 | [Number Field](https://liqui.design/docs/components/number-field) | One group, one lens, and two steppers drawn as divisions of it |
 | [Popover](https://liqui.design/docs/components/popover) | A glass panel with a drawn tail, holding flattened controls |
 | [Progress](https://liqui.design/docs/components/progress) | The track is the lens; the fill is a wash laid over it |
-| [Radio Group](https://liqui.design/docs/components/radio-group) | A list, not a strip, so every option is its own lens |
+| [Radio Group](https://liqui.design/docs/components/radio-group) | A list, not a strip, and every option is a flat control |
 | [Select](https://liqui.design/docs/components/select) | Glass trigger and glass popup, kept from overlapping |
 | [Slider](https://liqui.design/docs/components/slider) | The thumb is the lens; the rail is deliberately flat |
 | [Switch](https://liqui.design/docs/components/switch) | The track is the lens; the thumb is deliberately opaque |
 | [Tabs](https://liqui.design/docs/components/tabs) | The indicator is the lens, sliding along a flat groove |
 | [Toast](https://liqui.design/docs/components/toast) | A column rather than a stack, so each one keeps the page behind it |
-| [Toggle](https://liqui.design/docs/components/toggle) | A latching button whose glass fills while it is on |
+| [Toggle](https://liqui.design/docs/components/toggle) | A latching button, flat in both states, accent while it is on |
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | One strip, one lens, and toggles that flatten inside it |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | The smallest surface, frosted harder so it stays readable |
 

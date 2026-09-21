@@ -13,9 +13,10 @@ import {
 } from '@/registry/liqui/ui/dialog';
 
 /**
- * `nativeButton={false}` on the trigger and closes: a liqui Button is not a
- * native <button> — it cannot be, the glass anatomy is invalid inside one — and
- * Base UI warns unless the composing component is told so.
+ * `nativeButton={false}` follows the *material*, not the component. A glass
+ * Button is four stacked layers, which is invalid inside a native <button>, so
+ * it opts out and the composing trigger has to be told. A solid one — `accent`
+ * here — is a real <button> again, so the close that renders it says nothing.
  */
 export default function DialogDemo() {
   return (
@@ -33,7 +34,7 @@ export default function DialogDemo() {
         </div>
         <DialogActions>
           <DialogClose nativeButton={false} render={<Button>Cancel</Button>} />
-          <DialogClose nativeButton={false} render={<Button variant="accent">Copy link</Button>} />
+          <DialogClose render={<Button variant="accent">Copy link</Button>} />
         </DialogActions>
       </DialogContent>
     </Dialog>

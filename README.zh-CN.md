@@ -101,8 +101,8 @@ export default function Page() {
 | --- | --- |
 | [Accordion](https://liqui.design/docs/components/accordion) | 每一项都是独立的表面，随面板一起改变尺寸 |
 | [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | 模态且不可随手关闭，折射一层压暗的遮罩 |
-| [Button](https://liqui.design/docs/components/button) | 提供玻璃、强调色和危险色三种着色 |
-| [Checkbox](https://liqui.design/docs/components/checkbox) | 以强调色填充，同时保留斜面和高光边缘 |
+| [Button](https://liqui.design/docs/components/button) | 默认是玻璃；强调色与危险色是实心填充 |
+| [Checkbox](https://liqui.design/docs/components/checkbox) | 扁平控件：静息是细描边方框，选中是实心强调色 |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | 支持子菜单、复选与单选项，弹层可保持挂载 |
 | [Dialog](https://liqui.design/docs/components/dialog) | 可关闭的那一个，角上的关闭按钮保持扁平 |
 | [Field](https://liqui.design/docs/components/field) | 聚焦环和错误环画在表面上，而不是 input 上 |
@@ -111,12 +111,12 @@ export default function Page() {
 | [Number Field](https://liqui.design/docs/components/number-field) | 一块玻璃一个镜面，加减按钮只是它的分区 |
 | [Popover](https://liqui.design/docs/components/popover) | 带指示尾巴的玻璃面板，内部承载扁平化的控件 |
 | [Progress](https://liqui.design/docs/components/progress) | 轨道是透镜，填充只是覆在其上的一层色晕 |
-| [Radio Group](https://liqui.design/docs/components/radio-group) | 它是一份列表而非一条整块，所以每个选项各自成镜 |
+| [Radio Group](https://liqui.design/docs/components/radio-group) | 它是一份列表而非一条整块，每个选项都是扁平控件 |
 | [Select](https://liqui.design/docs/components/select) | 玻璃触发器配玻璃弹层，并避免两者重叠 |
 | [Slider](https://liqui.design/docs/components/slider) | 滑块是那枚透镜，轨道刻意保持扁平 |
 | [Switch](https://liqui.design/docs/components/switch) | 轨道是透镜，滑块刻意保持不透明 |
 | [Tabs](https://liqui.design/docs/components/tabs) | 指示器才是透镜，在扁平的凹槽里滑动 |
-| [Toggle](https://liqui.design/docs/components/toggle) | 会保持按下状态的按钮，打开时玻璃被染成强调色 |
+| [Toggle](https://liqui.design/docs/components/toggle) | 会保持按下状态的按钮，两种状态都扁平，打开时填充强调色 |
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | 一条玻璃，一枚透镜，里面的按钮全部扁平化 |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | 最小的表面，磨砂更重以保证可读性 |
 

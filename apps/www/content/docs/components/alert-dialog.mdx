@@ -42,19 +42,13 @@ import {
 
 ```tsx
 <AlertDialog>
-  <AlertDialogTrigger
-    nativeButton={false}
-    render={<Button variant="danger">Delete</Button>}
-  />
+  <AlertDialogTrigger render={<Button variant="danger">Delete</Button>} />
   <AlertDialogContent>
     <AlertDialogTitle>Delete this workspace?</AlertDialogTitle>
     <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
     <AlertDialogActions>
       <AlertDialogClose nativeButton={false} render={<Button>Cancel</Button>} />
-      <AlertDialogClose
-        nativeButton={false}
-        render={<Button variant="danger">Delete</Button>}
-      />
+      <AlertDialogClose render={<Button variant="danger">Delete</Button>} />
     </AlertDialogActions>
   </AlertDialogContent>
 </AlertDialog>
@@ -65,12 +59,16 @@ button rather than wrapping it, so you don't end up with a button inside a
 button.
 
 <Callout type="warn">
-  `nativeButton={false}` is required whenever you compose a trigger or close
-  with a liqui `Button`. The glass anatomy is invalid inside a native
-  `<button>`, so liqui's button is not one — and Base UI logs an error unless
-  the composing component is told that. Omit it and everything still works, but
-  the console fills up. See
-  [Button](/docs/components/button#why-it-isnt-a-native-button).
+  `nativeButton={false}` is required when you compose a trigger or close with a
+  **glass** `Button`. The glass anatomy is invalid inside a native `<button>`,
+  so that variant is not one — and Base UI logs an error unless the composing
+  component is told that. Omit it and everything still works, but the console
+  fills up.
+
+  Do *not* pass it with a solid `accent` or `danger` button: those are real
+  `<button>` elements, and it would put `role="button"` and a second set of key
+  handlers on one. See
+  [Button](/docs/components/button#only-the-glass-variant-opts-out-of-button).
 </Callout>
 
 ## Notes

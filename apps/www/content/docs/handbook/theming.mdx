@@ -1,12 +1,12 @@
 ---
 title: Theming
-description: Twelve custom properties, four global optics defaults, and four multipliers — plus the editor that writes them for you.
+description: Fourteen custom properties, four global optics defaults, and four multipliers — plus the editor that writes them for you.
 ---
 
 liqui is themed along two axes, and they work nothing alike.
 
 **Colour is CSS.** Every colour a surface paints comes from a `--lq-*` custom
-property. Change twelve variables and the whole library changes with them —
+property. Change fourteen variables and the whole library changes with them —
 including the parts React never sees, like a popup portalled to `document.body`.
 
 **Optics are JavaScript.** `refraction`, `bezel`, `radius` and `profile` feed a
@@ -42,7 +42,9 @@ it:
 | `--lq-rim-lo` | The dimmer counter-light along the bottom. |
 | `--lq-shadow` | Depth under an `elevated` surface. Two layers. |
 | `--lq-highlight` | The hover wash on interactive surfaces. |
-| `--lq-accent` | Buttons, focus rings, checked state, selection. |
+| `--lq-control` | The resting fill of a *flat* control — checkbox, radio, toggle. Not glass: nothing blurs behind it. |
+| `--lq-control-rim` | That control's hairline edge. Reads dark on a light theme and light on a dark one. |
+| `--lq-accent` | Prominent buttons, focus rings, checked state, selection. |
 | `--lq-danger` | Destructive fills. |
 | `--lq-danger-text` | The same red, dark enough to read as *text* on light glass. |
 | `--lq-scrim` | The wash behind a modal surface. |
@@ -51,7 +53,7 @@ Everything else in the `--lq-` namespace is per-component plumbing —
 `--lq-tail-rim` on a popup's arrow, `--lq-radius` written per surface from the
 `radius` prop. Setting those globally does nothing useful.
 
-If you installed through the shadcn CLI, all twelve are already in your
+If you installed through the shadcn CLI, all fourteen are already in your
 `globals.css` under `:root` and `.dark`, and editing them there is the whole
 job. If you imported the stylesheet instead, override after the import:
 
@@ -101,7 +103,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 ```
 
 The provider takes colour too — `theme.light` and `theme.dark` accept the same
-twelve tokens and are written into a `<style>` at `:root`. That is for a theme
+fourteen tokens and are written into a `<style>` at `:root`. That is for a theme
 that changes at *runtime*, like a user-facing appearance setting. A theme that
 is fixed at build time belongs in your stylesheet, where it costs nothing.
 

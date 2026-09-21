@@ -1,6 +1,6 @@
 ---
 title: Button
-description: A button rendered as a refracting glass surface, with accent and danger tints.
+description: A refracting glass surface by default, and a solid fill when it carries a brand colour.
 ---
 
 <ComponentPreview name="button-demo" />
@@ -45,10 +45,22 @@ import { Button } from '@/components/ui/button';
 
 ### Variants
 
-Variants don't paint over the glass — they override `--lq-tint`, so the lens
-keeps refracting the background *through* the accent color instead of hiding it.
+Three variants, **two materials**. `glass` is the lens. `accent` and `danger`
+are solid fills with no backdrop filter behind them at all.
 
 <ComponentPreview name="button-variants" />
+
+That split is [the library's rule](/docs/handbook/glass#not-everything-is-glass)
+and it is Apple's: glass is for a surface you act *through*, a solid fill is for
+something that carries meaning. A tinted lens contradicts itself — the point of
+the colour is that it says *this is the one*, and the point of the lens is that
+it lets the wallpaper through. The accent variant used to be a retint of
+`--lq-tint`, which meant it was one blue over a bright photograph and a
+noticeably different one over a dark backdrop. It is now `--lq-accent`, and it
+is that colour everywhere.
+
+Retune the solid fills through `--lq-accent` and `--lq-danger`; there is no
+glass underneath to compose with, so a plain `background` override works too.
 
 ### Tuning the glass
 
@@ -58,28 +70,49 @@ bezel control how wide and how strong the lens at the rim is.
 
 <ComponentPreview name="button-glass-dial" />
 
+A solid variant has no surface to reach, so the optical dials are ignored there.
+`radius` is the exception — it is geometry rather than optics, and a round
+accent button still has to be able to say so:
+
+```tsx
+<Button variant="accent" glass={{ radius: 21 }} aria-label="Play">
+  <PlayIcon />
+</Button>
+```
+
 ### Disabled
 
 <ComponentPreview name="button-disabled" />
 
 ## Notes
 
-### Why it isn't a native `<button>`
+### Only the glass variant opts out of `<button>`
 
 The glass anatomy is four stacked layers plus a content wrapper. A native
 `<button>` only accepts phrasing content, so those wrapper `<div>`s would be
-invalid HTML inside one. liqui passes `nativeButton={false}`, which is Base UI's
-supported escape — `useButton` then supplies `role="button"`, `tabIndex` and the
-Enter/Space handlers itself.
+invalid HTML inside one. The glass variant passes `nativeButton={false}`, which
+is Base UI's supported escape — `useButton` then supplies `role="button"`,
+`tabIndex` and the Enter/Space handlers itself.
 
-The one thing it cannot give back is **implicit form submission**. For a real
-submit button, pass `nativeButton` explicitly and accept a plain surface:
+`accent` and `danger` have no anatomy to put anywhere, so they are real
+`<button>` elements, and the thing `nativeButton={false}` cannot give back comes
+back with them: **implicit form submission**.
 
 ```tsx
-<Button nativeButton type="submit" glass={{ material: 'clear' }}>
-  Submit
-</Button>
+// Submits the form. No `nativeButton`, no workaround.
+<Button type="submit" variant="accent">Claim handle</Button>
 ```
+
+It follows that a composing trigger only needs telling about the glass variant:
+
+```tsx
+<DialogClose nativeButton={false} render={<Button>Cancel</Button>} />
+<DialogClose render={<Button variant="accent">Copy link</Button>} />
+```
+
+Passing `nativeButton={false}` alongside a solid Button is not harmless — Base
+UI would put `role="button"` and its own key handling on an element that already
+has both.
 
 ### Backdrop
 
@@ -87,8 +120,15 @@ A glass button on a flat fill is just a grey box. Put it over imagery, a
 gradient, or anything with edges for the bezel to bend. See
 [Glass](/docs/handbook/glass) for the full material guide.
 
+The solid variants have no such requirement, which is a second reason to reach
+for one: an accent button is the button that has to work on every backdrop your
+app will ever have.
+
 ### Browser support
 
 Refraction renders in Chromium only. Safari and Firefox drop `backdrop-filter`
 entirely when it references an SVG filter, so liqui detects this and falls back
 to frosted blur — no configuration needed, but do check both.
+
+The solid variants render identically everywhere: there is no filter to fall
+back from.
