@@ -8,17 +8,21 @@ import { cn } from '@/lib/utils';
  * liqui CheckboxGroup — shared state for a stack of
  * [checkboxes](/docs/components/checkbox), and no surface of its own.
  *
- * Every box in the group is already a lens. A glass panel around them would be
- * the backdrop each of those lenses bends, so the group would refract itself
- * and read as one slab with dents in it — the argument written out on
- * [Fieldset](/docs/components/fieldset), which is what usually wraps this.
+ * A checkbox group is a list, not a strip. The boxes do not share a box of
+ * their own — each is a small control with text beside it and a gap under it —
+ * so there is nothing here that could hold a surface, and a panel drawn around
+ * them would be a card they happen to be lying on. That is a different
+ * component: [Fieldset](/docs/components/fieldset), which is what usually wraps
+ * this, and which is not a surface either, for its own reasons.
  *
- * The part that is specific to glass is the *parent* checkbox. Give the group
+ * [RadioGroup](/docs/components/radio-group) is the same shape and answers the
+ * same way.
+ *
+ * The part worth reading the source for is the *parent* checkbox. Give the group
  * `allValues` and one box the `parent` prop, and Base UI puts that box into the
  * mixed state whenever some but not all of its children are ticked. In liqui
- * the mixed state carries the same accent retint as the checked one, with a
- * dash instead of a tick — see the component page for why "partly" is a change
- * of mark rather than a change of material.
+ * the mixed state carries the same accent fill as the checked one, with a dash
+ * instead of a tick — "partly" is a change of mark, not a change of fill.
  *
  * That only works because `Checkbox` picks its mark from the indicator's state
  * rather than from an `indeterminate` prop: nothing is passed down to a parent

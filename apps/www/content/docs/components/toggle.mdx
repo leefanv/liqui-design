@@ -1,6 +1,6 @@
 ---
 title: Toggle
-description: A two-state button whose glass fills with accent while it is on.
+description: A two-state button, flat in both of them, filling with accent while it is on.
 ---
 
 <ComponentPreview name="toggle-demo" />
@@ -45,24 +45,40 @@ const [focus, setFocus] = React.useState(true);
 ```
 
 Put several in a [Toggle Group](/docs/components/toggle-group) to share one
-strip, one lens and one arrow-key roving focus.
+glass strip and one arrow-key roving focus.
 
 ## Notes
 
-### On is a retint
+### On is a fill
 
-Pressing overrides `--lq-tint` rather than painting a fill over the surface, so
-the bezel and the specular arc survive the state change and the accent arrives
-*as glass*:
+A toggle is a checkbox that happens to be shaped like a button, so it is flat
+like one: `--lq-control` with a hairline at rest, `--lq-accent` when it is on.
 
 ```tsx
-data-[pressed]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_84%,transparent)]
+'bg-[var(--lq-control)] shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
+'data-[pressed]:bg-[var(--lq-accent)] data-[pressed]:text-white',
 ```
 
-Same mechanism as [Checkbox](/docs/components/checkbox#checked-state) and
-[Switch](/docs/components/switch#onoff-is-a-retint). Retint through the token to
-change the on-colour; a `background` would paint over the refraction instead of
-joining it.
+This is the one place the component parts company with
+[Button](/docs/components/button), which it otherwise matches in size, shape and
+press animation. A button's default variant is glass because pressing it *does*
+something; a toggle's whole job is to hold a state you can read back off it, and
+[a value gets a solid fill](/docs/handbook/glass#not-everything-is-glass).
+
+### Two surfaces, chosen by context
+
+Standalone, a toggle draws that flat control surface itself, so it reads as a
+control against a wallpaper. Inside a [Toggle Group](/docs/components/toggle-group)
+it draws no fill at all: the strip is the surface there, the strip is still
+glass, and a toggle on it is a wash.
+
+`data-[pressed]` means `--lq-accent` in both, so a toggle means the same thing
+wherever it is standing. What changes is the resting state and the focus ring —
+inside the strip the ring is inset, because an offset outline would sit on top
+of the neighbouring toggle.
+
+Which surface it is on is read from context, not passed as a prop; see
+[Flattening is context, not a prop](/docs/components/toggle-group#flattening-is-context-not-a-prop).
 
 ### Don't render it as a Button
 
@@ -79,16 +95,14 @@ momentary state, which is why [Button](/docs/components/button) shrinks to 0.97
 on it. On a `Toggle` the same attribute is the latched on-state, so a button
 composed this way stays permanently scaled down while it is on.
 
-`Toggle` is therefore built on `LiquiGlass` directly rather than on `Button`,
-and shares its optics by matching them, not by wrapping it. It presses the same
-way — `active:scale-[0.97]`, which only lasts as long as the pointer is down.
+`Toggle` is therefore its own component rather than a wrapper around `Button`,
+and matches it rather than composing with it. It presses the same way —
+`active:scale-[0.97]`, which only lasts as long as the pointer is down.
 
-### The native button
+### It is a native `<button>`
 
-Like `Button`, the glass variant passes `nativeButton={false}`: the glass
-anatomy is a stack of divs and a native `<button>` only accepts phrasing
-content, so Base UI supplies `role`, `tabIndex` and the key handling instead.
-
-Inside a `ToggleGroup` the toggle renders flat, and there the native `<button>`
-comes back — there is no wrapper to put inside it, so none of the reasons to opt
-out apply.
+Both surfaces are, in both states. `Toggle` has no glass anatomy to put
+anywhere, so none of the reasons [Button's glass variant opts out of the native
+element](/docs/components/button#only-the-glass-variant-opts-out-of-button)
+apply here, and a composing trigger never needs `nativeButton={false}` with a
+`Toggle` inside it.

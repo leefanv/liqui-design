@@ -38,7 +38,7 @@ const registry: { items: RegistryItem[] } = JSON.parse(
 // The `liqui` style item carries the design tokens as `cssVars`, because that is
 // the only way the shadcn CLI can write them into someone's globals.css. That
 // makes it a second copy of src/tokens.ts, which the stylesheet and the theme
-// editor both read — and a second copy of twelve colours is a drift bug with a
+// editor both read — and a second copy of the palette is a drift bug with a
 // schedule. Checked here rather than generated into registry.json, so the
 // mismatch is reported as a mismatch instead of being silently papered over on
 // the next build.

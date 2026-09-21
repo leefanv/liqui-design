@@ -17,9 +17,9 @@ export {
  * split below is the whole design:
  *
  * **Colour is CSS.** Every colour a surface paints comes from a `--lq-*`
- * custom property, so a theme can change all of it by writing twelve variables
- * — no React involved, and it keeps working inside portals, `::backdrop`, and
- * markup this library never sees.
+ * custom property, so a theme can change all of it by writing a handful of
+ * variables — no React involved, and it keeps working inside portals,
+ * `::backdrop`, and markup this library never sees.
  *
  * **Optics are JavaScript.** `refraction`, `bezel`, `radius` and `profile` feed
  * a canvas-generated displacement map and an SVG filter, so they can only be

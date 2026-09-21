@@ -9,6 +9,14 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/registry/liqui/ui/button';
 import { Checkbox, CheckboxLabel } from '@/registry/liqui/ui/checkbox';
 import { Field, FieldControl, FieldLabel } from '@/registry/liqui/ui/field';
+import {
+  ScrollArea,
+  ScrollAreaContent,
+  ScrollAreaScrollbar,
+  ScrollAreaThumb,
+  ScrollAreaViewport,
+} from '@/registry/liqui/ui/scroll-area';
+import { Toggle } from '@/registry/liqui/ui/toggle';
 
 /**
  * The home page's argument, made by letting you move the glass rather than by
@@ -17,8 +25,30 @@ import { Field, FieldControl, FieldLabel } from '@/registry/liqui/ui/field';
  * optics are live.
  *
  * The components inside are the same files `shadcn add` installs, imported from
- * the registry. If this looks right, what you install looks right.
+ * the registry. If this looks right, what you install looks right — which is
+ * why the controls are built out of them too, down to the scrollbar on the
+ * optics panel.
  */
+
+/**
+ * The optics panel's own surface, and deliberately *not* the dials the panel is
+ * setting. The playground lets its panel wear the live optics, because there
+ * the whole page is the demo; here there is one surface under test and the
+ * panel is the instrument reading it. A panel that went `material: 'clear'`
+ * along with the card would be a control you had just made harder to see.
+ *
+ * `frost: 0.6` is Tooltip's argument: this is small text with no container of
+ * its own, standing on a photograph, and legibility cannot be left to whatever
+ * the wallpaper happens to be doing behind it.
+ */
+const PANEL_GLASS = {
+  elevated: true,
+  radius: 20,
+  blur: 1,
+  refraction: 110,
+  bezel: 22,
+  frost: 0.6,
+} as const;
 
 export function GlassStage() {
   const [backdrop, setBackdrop] = React.useState<BackdropId>('wallpaper');
@@ -121,38 +151,63 @@ export function GlassStage() {
 
       {/* Controls */}
       <div className="absolute inset-x-3 bottom-3 flex flex-col gap-3 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-60">
+        {/* A picker, in pill form: exactly one backdrop is on, so each chip is
+            a latching control and gets Toggle's treatment — flat at rest, a
+            solid accent fill while it is the one selected. It used to hardcode
+            white-on-black alphas, which assumed the backdrop was always dark
+            and went muddy the day the day-lit wallpaper became the default.
+            The tokens follow the stage's own theme instead.
+
+            `onPressedChange` only ever turns one *on*: pressing the active chip
+            would otherwise leave the stage with no backdrop at all. */}
         <div className="flex flex-wrap gap-1.5">
           {BACKDROPS.map((b) => (
-            <button
+            <Toggle
               key={b.id}
-              type="button"
-              onClick={() => setBackdrop(b.id)}
+              pressed={backdrop === b.id}
+              onPressedChange={(pressed) => pressed && setBackdrop(b.id)}
               title={b.hint}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-[11px] backdrop-blur-md transition',
-                backdrop === b.id
-                  ? 'border-white/70 bg-white/25 text-white'
-                  : 'border-white/25 bg-black/25 text-white/70 hover:bg-black/40',
-              )}
+              className="rounded-full px-2.5 py-1 text-[11.5px]"
             >
               {b.label}
-            </button>
+            </Toggle>
           ))}
         </div>
 
-        <GlassControls
-          value={optics}
-          onChange={setOptics}
-          onReset={() => {
-            setOptics(DEFAULT_OPTICS);
-            setPos({ x: 0, y: 0 });
-          }}
-          // Eight dials are taller than the stage on a phone, where the panel
-          // spans the full width rather than sitting in a column. An absolute
-          // cap, not a percentage: the wrapper's height is auto, so a percentage
-          // max-height resolves to none and silently does nothing.
-          className="max-h-80 overflow-y-auto rounded-2xl border border-white/20 bg-black/35 p-3 backdrop-blur-md"
-        />
+        {/* The panel is a liqui surface and scrolls with liqui's own scroll
+            area. A native `overflow-y-auto` here put a square-cornered
+            scrollbar through the rounded corner of a glass panel, on the front
+            page of a glass library.
+
+            A definite height rather than a max: Base UI's viewport is the
+            element that scrolls and sizes itself to its content, so a
+            `max-height` on the root clamps the panel and lets the content
+            overflow it instead of scrolling. Eight dials are taller than this
+            at every breakpoint, so there is no dead space to trade for it.
+
+            Shorter on a phone, where the panel spans the full width and the
+            surface it is tuning is directly behind it rather than beside it. */}
+        <LiquiGlass {...PANEL_GLASS} contentClassName="rounded-[inherit]">
+          <ScrollArea className="h-64 sm:h-[23rem]">
+            <ScrollAreaViewport>
+              <ScrollAreaContent className="px-3.5 py-3">
+                <GlassControls
+                  value={optics}
+                  onChange={setOptics}
+                  onReset={() => {
+                    setOptics(DEFAULT_OPTICS);
+                    setPos({ x: 0, y: 0 });
+                  }}
+                />
+              </ScrollAreaContent>
+            </ScrollAreaViewport>
+            <ScrollAreaScrollbar>
+              {/* On a panel, so the thumb has the panel's tint behind it rather
+                  than the page — see the Scroll Area page. */}
+              <ScrollAreaThumb glass={{ material: 'clear' }} />
+            </ScrollAreaScrollbar>
+          </ScrollArea>
+        </LiquiGlass>
       </div>
     </div>
   );

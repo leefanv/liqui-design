@@ -57,10 +57,11 @@ part. Positioner props pass straight through, so `side`, `align` and
 `sideOffset` work as documented — `sideOffset` just defaults to `10` to clear
 the tail rather than Base UI's `0`.
 
-`nativeButton={false}` on the trigger: a liqui `Button` is not a native
+`nativeButton={false}` on the trigger: a *glass* `Button` is not a native
 `<button>` — it cannot be, the glass anatomy is invalid inside one — and Base UI
-warns unless the composing component is told so. See
-[Button](/docs/components/button#why-it-isnt-a-native-button).
+warns unless the composing component is told so. A solid `accent` or `danger`
+button is one, and must not be given it. See
+[Button](/docs/components/button#only-the-glass-variant-opts-out-of-button).
 
 ## Notes
 

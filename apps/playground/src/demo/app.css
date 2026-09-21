@@ -1,8 +1,13 @@
 @import 'tailwindcss';
 
 /* The components live in the docs app's registry, outside this project, so
-   Tailwind's automatic source detection never sees their class names. */
+   Tailwind's automatic source detection never sees their class names. The
+   optics panel is shared with the home stage and lives outside the registry,
+   so it needs saying separately — named as one file rather than the whole
+   components directory, which would compile the docs site's chrome into this
+   bundle for nothing. */
 @source '../../../www/registry/liqui';
+@source '../../../www/components/glass-controls.tsx';
 
 * {
   margin: 0;
@@ -244,7 +249,11 @@ body {
   z-index: 2;
 }
 
-.panel .liqui-glass__content {
+/* Direct child, not any descendant. The panel's own rows are glass now — the
+   select triggers inside it are `LiquiGlass` surfaces with a content wrapper of
+   the same class — and a descendant selector laid this column layout over every
+   one of them, which stacked each trigger's label above its chevron. */
+.panel > .liqui-glass__content {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -260,47 +269,6 @@ body {
   color: var(--lq-text-dim);
 }
 
-.panel__row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 12.5px;
-  font-weight: 550;
-  color: var(--lq-text);
-}
-
-.panel__row > span {
-  display: flex;
-  justify-content: space-between;
-}
-
-.panel__row em {
-  font-style: normal;
-  color: var(--lq-text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.panel__row select {
-  font: inherit;
-  font-size: 12.5px;
-  color: var(--lq-text);
-  background: color-mix(in srgb, var(--lq-highlight) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--lq-text) 15%, transparent);
-  border-radius: 8px;
-  padding: 5px 8px;
-  outline: none;
-}
-
-[data-theme='dark'] .panel__row select option {
-  color: #eee;
-  background: #222;
-}
-
-.panel__row input[type='range'] {
-  accent-color: var(--lq-accent);
-  margin: 0;
-}
-
 /* ---- dock --------------------------------------------------------------- */
 
 .dock-wrap {
@@ -310,7 +278,9 @@ body {
   z-index: 2;
 }
 
-.dock .liqui-glass__content {
+/* Direct child, for the reason above: nothing nests glass in the dock today,
+   and the day something does it should not inherit the bar's row layout. */
+.dock > .liqui-glass__content {
   display: flex;
   align-items: center;
   gap: 14px;

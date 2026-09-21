@@ -12,17 +12,15 @@ import {
 import { Button } from '@/registry/liqui/ui/button';
 
 /**
- * `nativeButton={false}` on the trigger and closes: a liqui Button is not a
- * native <button> — it cannot be, the glass anatomy is invalid inside one — and
- * Base UI warns unless the composing component is told so.
+ * `nativeButton={false}` follows the *material*. The Cancel button is glass —
+ * four stacked layers, invalid inside a native <button> — so it opts out and
+ * its close has to be told. Both `danger` buttons are solid, and solid means a
+ * real <button> again, so they are composed without the escape hatch.
  */
 export default function AlertDialogDemo() {
   return (
     <AlertDialog>
-      <AlertDialogTrigger
-        nativeButton={false}
-        render={<Button variant="danger">Delete workspace</Button>}
-      />
+      <AlertDialogTrigger render={<Button variant="danger">Delete workspace</Button>} />
       <AlertDialogContent>
         <AlertDialogTitle>Delete this workspace?</AlertDialogTitle>
         <AlertDialogDescription>
@@ -30,10 +28,7 @@ export default function AlertDialogDemo() {
         </AlertDialogDescription>
         <AlertDialogActions>
           <AlertDialogClose nativeButton={false} render={<Button>Cancel</Button>} />
-          <AlertDialogClose
-            nativeButton={false}
-            render={<Button variant="danger">Delete</Button>}
-          />
+          <AlertDialogClose render={<Button variant="danger">Delete</Button>} />
         </AlertDialogActions>
       </AlertDialogContent>
     </AlertDialog>

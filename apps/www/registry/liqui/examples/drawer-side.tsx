@@ -19,8 +19,9 @@ import {
  * than away — but for a plain panel they match, and mismatching them gives you a
  * sheet that leaves in a direction it never came from.
  *
- * `nativeButton={false}` on the trigger and closes: a liqui Button is not a
- * native <button>, and Base UI warns when it is handed one that says it is.
+ * `nativeButton={false}` on the glass trigger and close: a glass Button is not
+ * a native <button>, and Base UI warns when it is handed one that says it is.
+ * The solid `accent` close below is a real button, so it needs no such note.
  */
 export default function DrawerSide() {
   return (
@@ -36,7 +37,7 @@ export default function DrawerSide() {
           </DrawerDescription>
 
           <div className="mt-5 flex justify-end">
-            <DrawerClose nativeButton={false} render={<Button variant="accent" />}>Done</DrawerClose>
+            <DrawerClose render={<Button variant="accent" />}>Done</DrawerClose>
           </div>
         </DrawerBody>
       </DrawerContent>
