@@ -1,41 +1,64 @@
 import { gitConfig } from './shared';
 
 /**
- * How long a star count stays good for. The number moves slowly and nobody
- * refreshes the docs to watch it tick, so an hour buys a fresh figure while
- * keeping the site to 24 GitHub calls a day — well inside the 60/hour the API
- * gives an unauthenticated caller, which is what lets this work with no token
- * in the deployment.
+ * How long a star count stays good for in this browser tab. The number moves
+ * slowly, and remembering it keeps a reader clicking through the docs to one
+ * GitHub call per session — well inside the 60/hour the API gives each visitor's
+ * IP without a token.
  */
-const STARS_TTL_SECONDS = 3600;
+const STARS_TTL_MS = 60 * 60 * 1000;
+const STARS_CACHE_KEY = 'liqui:github-stars';
 
 /**
  * The repository's star count, or `null` when GitHub does not answer.
  *
  * Null is a real outcome, not an error path to swallow quietly: the API is rate
- * limited per IP, a build machine may have no network, and a docs site that
- * fails to render because a badge could not load has its priorities backwards.
- * Callers render the GitHub link without a number instead.
+ * limited per IP and may be blocked outright, and a nav that breaks because a
+ * badge could not load has its priorities backwards. Callers render the GitHub
+ * link without a number instead.
  *
- * The `revalidate` here is what makes the count dynamic. It caches the response
- * for {@link STARS_TTL_SECONDS} and, because the fetch happens inside the two
- * layouts, gives every page the same revalidation interval — the count updates
- * on its own without a redeploy.
+ * This runs in the browser, not during rendering. A fetch with `revalidate` in
+ * the shared layouts gave every page an hourly revalidation, so each page was
+ * re-rendered and re-written to the ISR cache every hour it was visited — all
+ * to move one number. Fetched here, the pages stay fully static.
  */
 export async function fetchStarCount(): Promise<number | null> {
+  const cached = readCache();
+  if (cached !== null) return cached;
+
   try {
     const res = await fetch(`https://api.github.com/repos/${gitConfig.user}/${gitConfig.repo}`, {
       headers: { Accept: 'application/vnd.github+json' },
-      next: { revalidate: STARS_TTL_SECONDS },
     });
     if (!res.ok) return null;
 
     const repo: unknown = await res.json();
     const count = (repo as { stargazers_count?: unknown }).stargazers_count;
-    return typeof count === 'number' ? count : null;
+    if (typeof count !== 'number') return null;
+
+    writeCache(count);
+    return count;
   } catch {
     return null;
   }
+}
+
+// Storage can throw (private mode, blocked site data); a miss just means a fetch.
+function readCache(): number | null {
+  try {
+    const raw = sessionStorage.getItem(STARS_CACHE_KEY);
+    if (!raw) return null;
+    const { count, at } = JSON.parse(raw) as { count: number; at: number };
+    return Date.now() - at < STARS_TTL_MS ? count : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(count: number) {
+  try {
+    sessionStorage.setItem(STARS_CACHE_KEY, JSON.stringify({ count, at: Date.now() }));
+  } catch {}
 }
 
 /**
