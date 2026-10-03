@@ -44,6 +44,9 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   );
 }
 
+// Anything not generated at build is a 404, not an on-demand render.
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return source.generateParams();
 }

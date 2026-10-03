@@ -30,3 +30,10 @@ export default function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+// Both rewrites live under the docs route, so nothing else needs to wake the
+// proxy. Without a matcher it would run on every request — static chunks,
+// registry JSON, wallpapers — each one billed as function time.
+export const config = {
+  matcher: '/docs/:path*',
+};
