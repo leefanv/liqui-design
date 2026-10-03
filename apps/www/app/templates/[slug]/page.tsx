@@ -6,6 +6,9 @@ import { getTemplate, getTemplates, installCommand } from '@/lib/templates';
 import { gitConfig, repoUrl, siteUrl } from '@/lib/shared';
 import { TemplateChrome } from '@/components/template-chrome';
 
+// Anything not generated at build is a 404, not an on-demand render.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return getTemplates().map((template) => ({ slug: template.name }));
 }

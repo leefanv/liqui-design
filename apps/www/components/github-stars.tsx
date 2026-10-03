@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 
 import { fetchStarCount, formatStarCount } from '@/lib/github';
 
@@ -9,8 +11,9 @@ import { fetchStarCount, formatStarCount } from '@/lib/github';
  * spaced like the theme switch it sits next to, so this renders no chrome of
  * its own and lets the surrounding button styles size the mark.
  *
- * The count is fetched by a nested async component behind Suspense, so a slow
- * or unreachable GitHub API delays the number and not the page around it.
+ * The count is fetched in the browser after hydration — see `fetchStarCount` —
+ * so a slow or unreachable GitHub API delays the number and not the page, and
+ * the page itself stays static.
  */
 export function GitHubStars() {
   return (
@@ -19,9 +22,7 @@ export function GitHubStars() {
       {/* The link carries no `aria-label`, so these two make its accessible
           name "liqui on GitHub, 20 stars" instead of a bare "20". */}
       <span className="sr-only">liqui on GitHub</span>
-      <Suspense fallback={<StarCountPlaceholder />}>
-        <StarCount />
-      </Suspense>
+      <StarCount />
     </span>
   );
 }
@@ -30,8 +31,21 @@ export function GitHubStars() {
  * A null count means GitHub did not answer — see `fetchStarCount`. The link is
  * still worth showing, so the number is the only thing that goes missing.
  */
-async function StarCount() {
-  const count = await fetchStarCount();
+function StarCount() {
+  // `undefined` while loading, `null` once GitHub has not answered.
+  const [count, setCount] = useState<number | null | undefined>(undefined);
+
+  useEffect(() => {
+    let live = true;
+    fetchStarCount().then((value) => {
+      if (live) setCount(value);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (count === undefined) return <StarCountPlaceholder />;
   if (count === null) return null;
 
   return (
@@ -44,7 +58,7 @@ async function StarCount() {
 
 /**
  * Holds the number's width while the count resolves, so the nav does not jump
- * sideways on the rare render that is not served from the cache.
+ * sideways while the count loads.
  */
 function StarCountPlaceholder() {
   return <span className="h-3.5 w-6 animate-pulse rounded bg-fd-muted" />;

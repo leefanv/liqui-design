@@ -15,6 +15,9 @@ export async function GET(_req: Request, { params }: RouteContext<'/llms.mdx/doc
   });
 }
 
+// Anything not generated at build is a 404, not an on-demand render.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return source.getPages().map((page) => ({
     lang: page.locale,
