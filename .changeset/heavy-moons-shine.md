@@ -16,4 +16,8 @@ Rework the surface optics toward the reference material look:
 - Corners are continuous: the displacement map and lighting are generated on
   a superellipse (|x|⁴+|y|⁴=r⁴) and the surface declares CSS
   `corner-shape: squircle` (Chromium 139+), so optics and clip agree on one
-  geometry. Browsers without the property keep round corners.
+  geometry. Where the squircle actually renders, the declared radius is
+  inflated 1.4× internally — a superellipse reads "less round" than a circle
+  at the same number, and this keeps the perceived corner size of previous
+  releases. Browsers without the property keep round corners at the declared
+  value, unchanged.

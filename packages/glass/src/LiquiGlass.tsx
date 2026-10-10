@@ -31,6 +31,22 @@ export type GlassMaterial = 'auto' | 'frost' | 'clear';
 export type GlassProfile = 'squircle' | 'convex' | 'rim';
 
 /**
+ * Squircle corners read "less round" than circular ones at the same radius —
+ * the superellipse hugs the corner and keeps its curvature away from the
+ * edges — so surfaces looked tighter than the circular-corner releases at
+ * identical numbers. Where the squircle actually renders, the declared
+ * radius is inflated to restore the perceived corner size; elsewhere the
+ * value passes through and the look matches older releases exactly. The
+ * inflated radius feeds both --lq-radius and the displacement map, so clip
+ * and optics stay on one geometry.
+ */
+const SQUIRCLE_RADIUS_SCALE = 1.4;
+const supportsSquircle =
+  typeof window !== 'undefined' &&
+  typeof CSS !== 'undefined' &&
+  CSS.supports('corner-shape', 'squircle');
+
+/**
  * Refraction magnitude along the bezel, indexed by normalized depth from the
  * outer edge (0 = edge, 1 = inner end of the bezel). The physical profiles
  * model a glass slab whose top surface follows a height function h(t): the
@@ -436,30 +452,37 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       ...rest
     } = props;
 
-    // Geometry is scaled, not replaced — see theme.tsx. Rounding is not
-    // cosmetic: radius and bezel key the displacement-map cache and refraction
-    // keys the filter registry, so a multiplier dragged through 0.9137× would
-    // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
-    // Blur only reaches a CSS string, but is rounded for the same reason in
-    // reverse — an unrounded one churns the style attribute every frame.
-    const radius = Math.round(ownRadius * theme.radiusScale);
-    const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
-    const refraction = Math.round(ownRefraction * theme.refractionScale);
-    // A zero-width bezel divides through in the map generator (`depth / bezel`),
-    // turning the whole surface into NaN displacement — a fully smeared box.
-    const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
-
     // `supportsRefraction` sniffs the UA, so it is false during SSR and true in
     // Chromium — reading it directly at render time would make the server emit
     // the frost tier and the client's first render emit the refract tier, which
     // is a hydration mismatch React explicitly won't patch up. Start every
     // render pass in the tier the server can also produce, then upgrade in a
     // layout effect: that runs after hydration commits but before paint, so
-    // there is no visible frost flash.
+    // there is no visible frost flash. `squircleActive` follows the same
+    // pattern: the radius compensation only applies once the client knows
+    // corner-shape will actually render, and must not differ from the server
+    // markup on the hydration pass.
     const [refractionAllowed, setRefractionAllowed] = React.useState(false);
+    const [squircleActive, setSquircleActive] = React.useState(false);
     React.useLayoutEffect(() => {
       if (supportsRefraction) setRefractionAllowed(true);
+      if (supportsSquircle) setSquircleActive(true);
     }, []);
+
+    // Geometry is scaled, not replaced — see theme.tsx. Rounding is not
+    // cosmetic: radius and bezel key the displacement-map cache and refraction
+    // keys the filter registry, so a multiplier dragged through 0.9137× would
+    // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
+    // Blur only reaches a CSS string, but is rounded for the same reason in
+    // reverse — an unrounded one churns the style attribute every frame.
+    const radius = Math.round(
+      ownRadius * theme.radiusScale * (squircleActive ? SQUIRCLE_RADIUS_SCALE : 1),
+    );
+    const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
+    const refraction = Math.round(ownRefraction * theme.refractionScale);
+    // A zero-width bezel divides through in the map generator (`depth / bezel`),
+    // turning the whole surface into NaN displacement — a fully smeared box.
+    const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
 
     const tier: 'refract' | 'frost' | 'clear' =
       material === 'clear'
