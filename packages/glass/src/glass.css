@@ -28,6 +28,13 @@
     position: relative;
     isolation: isolate;
     border-radius: var(--lq-radius, 16px);
+    /* Continuous corners (superellipse |x|⁴+|y|⁴=r⁴) where supported —
+       Chromium 139+. The displacement map and the baked lighting are
+       generated on the same curve (see surfaceField in LiquiGlass.tsx), so
+       optics and clip agree at the corners. Browsers without the property
+       ignore the declaration and keep round corners — they are on the frost
+       tier, which uses no generated map. */
+    corner-shape: squircle;
     color: var(--lq-text, inherit);
   }
 }
@@ -46,6 +53,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  corner-shape: inherit;
   pointer-events: none;
 }
 
@@ -59,6 +67,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  corner-shape: inherit;
   pointer-events: none;
   z-index: 0;
 }
@@ -114,15 +123,32 @@
   --lq-clear-wash-deep: rgba(18, 20, 32, 0.47);
 }
 
-/* Normal-lit specular image (refraction tier): the arc of light along the
-   profile that makes the rim read as polished glass. */
+/* Normal-lit specular image (refraction tier): the crisp rim stroke + inner
+   glow that make the edge read as polished glass. Baked once per appearance —
+   dark dims the highlight and deepens the side shade — and CSS picks the one
+   matching the mode, so a theme switch changes the lighting with no JS. */
 .liqui-glass__specular {
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  corner-shape: inherit;
   pointer-events: none;
   z-index: 2;
   background-size: 100% 100%;
+}
+
+.liqui-glass__specular--dark {
+  display: none;
+}
+
+[data-theme='dark'] .liqui-glass__specular--light,
+.dark .liqui-glass__specular--light {
+  display: none;
+}
+
+[data-theme='dark'] .liqui-glass__specular--dark,
+.dark .liqui-glass__specular--dark {
+  display: block;
 }
 
 /* Cheap fallback shine: bright top-left catch-light, faint bottom rim. */
