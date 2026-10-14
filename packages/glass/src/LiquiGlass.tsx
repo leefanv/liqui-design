@@ -31,6 +31,22 @@ export type GlassMaterial = 'auto' | 'frost' | 'clear';
 export type GlassProfile = 'squircle' | 'convex' | 'rim';
 
 /**
+ * Squircle corners read "less round" than circular ones at the same radius —
+ * the superellipse hugs the corner and keeps its curvature away from the
+ * edges — so surfaces looked tighter than the circular-corner releases at
+ * identical numbers. Where the squircle actually renders, the declared
+ * radius is inflated to restore the perceived corner size; elsewhere the
+ * value passes through and the look matches older releases exactly. The
+ * inflated radius feeds both --lq-radius and the displacement map, so clip
+ * and optics stay on one geometry.
+ */
+const SQUIRCLE_RADIUS_SCALE = 1.4;
+const supportsSquircle =
+  typeof window !== 'undefined' &&
+  typeof CSS !== 'undefined' &&
+  CSS.supports('corner-shape', 'squircle');
+
+/**
  * Refraction magnitude along the bezel, indexed by normalized depth from the
  * outer edge (0 = edge, 1 = inner end of the bezel). The physical profiles
  * model a glass slab whose top surface follows a height function h(t): the
@@ -85,14 +101,67 @@ function surfaceLUTs(profile: GlassProfile): SurfaceLUTs {
 }
 
 /**
- * Rim-light angles: key light toward the top-left corner, dim counter-light
- * toward the bottom-right. Specular intensity falls off with the *positional*
- * azimuth around the shape center (a normal-based falloff would light whole
- * straight edges uniformly — bevel-button, not glass), shaped by a Gaussian
- * band across the bezel. Tuned for the bold arcs of the reference look.
+ * Rim lighting is derived from the surface normal: a directional light from
+ * above and its counterpart from below catch the top and bottom arcs — a
+ * straight edge lights evenly along its whole run — while the left/right
+ * flanks fall into a thin shade. What keeps this from reading as a bevelled
+ * button is the shaping: the highlight lives in a ~1px stroke hugging the
+ * boundary plus a few px of diffuse glow, not a wide band across the bezel.
+ * (The earlier positional-azimuth model lit straight edges unevenly, which is
+ * the single most visible tell against real glass.)
  */
-const THETA_KEY = Math.atan2(-0.9, -0.45);
-const THETA_COUNTER = Math.atan2(0.9, 0.5);
+const LIGHT_SPREAD = 1.08; // radians off vertical the top/bottom highlight reaches
+const DIFFUSE_SPREAD = LIGHT_SPREAD * 0.65;
+const SIDE_SPREAD = 0.98; // radians off horizontal the side shade reaches
+
+const sat = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+interface SurfaceField {
+  /** Signed distance to the outline, negative inside. */
+  sd: number;
+  nx: number;
+  ny: number;
+}
+
+/**
+ * Signed distance and outward normal for the surface outline: straight edges
+ * joined by superellipse corners, |x|⁴ + |y|⁴ = r⁴ — the curve CSS
+ * `corner-shape: squircle` draws, so the refraction map, the baked lighting
+ * and the CSS clip agree on one geometry. The corner distance is a
+ * first-order estimate (field / |gradient|): exact at the curve, drifting
+ * only well inside, where nothing reads absolute distance anymore.
+ */
+function surfaceField(
+  px: number,
+  py: number,
+  bx: number,
+  by: number,
+  r: number,
+  out: SurfaceField,
+) {
+  const qx = Math.abs(px) - bx;
+  const qy = Math.abs(py) - by;
+  if (qx > 0 && qy > 0) {
+    const x3 = qx * qx * qx;
+    const y3 = qy * qy * qy;
+    const q = Math.pow(qx * x3 + qy * y3, 0.25);
+    const len = Math.hypot(x3, y3) || 1;
+    out.sd = ((q - r) * q * q * q) / len;
+    out.nx = (Math.sign(px) * x3) / len;
+    out.ny = (Math.sign(py) * y3) / len;
+  } else {
+    const ox = Math.max(qx, 0);
+    const oy = Math.max(qy, 0);
+    out.sd = Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r;
+    if (qx > qy) {
+      out.nx = Math.sign(px);
+      out.ny = 0;
+    } else {
+      out.nx = 0;
+      out.ny = Math.sign(py);
+    }
+  }
+}
 
 /**
  * Displacement map for the lens effect, generated per-pixel on a canvas.
@@ -109,16 +178,18 @@ const THETA_COUNTER = Math.atan2(0.9, 0.5);
 /**
  * Maps are cached module-wide: popups remount at identical sizes on every
  * open, so a reopen costs a Map lookup instead of a canvas render. Large
- * surfaces render at half resolution — displacement vectors and the specular
- * glow are smooth fields, so feImage/background stretching is invisible, and
- * generation + PNG decode get ~4× cheaper (less pop-in latency).
+ * displacement maps render at half resolution — displacement vectors are a
+ * smooth field, so feImage stretching is invisible, and generation + PNG
+ * decode get ~4× cheaper (less pop-in latency). The specular always renders
+ * at full resolution: its rim is a ~1px stroke, which is exactly the feature
+ * stretching would soften.
  *
  * Bounded LRU: a surface that animates its box (an accordion panel expanding)
  * walks through a distinct size every frame, so an unbounded cache would grow
- * a PNG pair per intermediate height and never release them.
+ * a PNG set per intermediate height and never release them.
  */
 const IMAGE_CACHE_MAX = 48;
-const imageCache = new Map<string, { map: string; specular: string }>();
+const imageCache = new Map<string, { map: string; specular: string; specularDark: string }>();
 
 function cacheGet(key: string) {
   const hit = imageCache.get(key);
@@ -129,7 +200,7 @@ function cacheGet(key: string) {
   return hit;
 }
 
-function cacheSet(key: string, value: { map: string; specular: string }) {
+function cacheSet(key: string, value: { map: string; specular: string; specularDark: string }) {
   imageCache.set(key, value);
   if (imageCache.size > IMAGE_CACHE_MAX) {
     imageCache.delete(imageCache.keys().next().value!);
@@ -160,14 +231,8 @@ function glassImages(
   const image = ctx.createImageData(w, h);
   const data = image.data;
 
-  const specCanvas = document.createElement('canvas');
-  specCanvas.width = w;
-  specCanvas.height = h;
-  const specCtx = specCanvas.getContext('2d')!;
-  const specImage = specCtx.createImageData(w, h);
-  const spec = specImage.data;
-
   const { mag: lut } = surfaceLUTs(profile);
+  const field: SurfaceField = { sd: 0, nx: 0, ny: 0 };
 
   const r = Math.min(radius, w / 2, h / 2);
   const bx = w / 2 - r;
@@ -177,27 +242,8 @@ function glassImages(
     for (let x = 0; x < w; x++) {
       const px = x + 0.5 - w / 2;
       const py = y + 0.5 - h / 2;
-      const qx = Math.abs(px) - bx;
-      const qy = Math.abs(py) - by;
-
-      // Signed distance to the rounded-rect boundary (negative inside).
-      const ox = Math.max(qx, 0);
-      const oy = Math.max(qy, 0);
-      const sd = Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r;
-      const depth = -sd; // distance from the edge, measured inward
-
-      let nx = 0;
-      let ny = 0;
-      if (qx > 0 && qy > 0) {
-        // Corner region: normal points away from the corner circle center.
-        const len = Math.hypot(qx, qy) || 1;
-        nx = (Math.sign(px) * qx) / len;
-        ny = (Math.sign(py) * qy) / len;
-      } else if (qx > qy) {
-        nx = Math.sign(px);
-      } else {
-        ny = Math.sign(py);
-      }
+      surfaceField(px, py, bx, by, r, field);
+      const depth = -field.sd; // distance from the edge, measured inward
 
       const d = depth / bezel;
       const inRim = d < 1 && d >= 0;
@@ -205,30 +251,114 @@ function glassImages(
       const mag = inRim ? lut[idx] : 0;
 
       const i = (y * w + x) * 4;
-      data[i] = Math.round(128 - nx * mag * 127); // R → x displacement
+      data[i] = Math.round(128 - field.nx * mag * 127); // R → x displacement
       data[i + 1] = 128;
-      data[i + 2] = Math.round(128 - ny * mag * 127); // B → y displacement
+      data[i + 2] = Math.round(128 - field.ny * mag * 127); // B → y displacement
       data[i + 3] = 255;
-
-      // Specular rim light: Gaussian band across the bezel × cosine-power
-      // falloff around each light's corner.
-      if (inRim) {
-        const theta = Math.atan2(py, px);
-        const band = Math.exp(-(((d - 0.2) / 0.4) ** 2));
-        const c1 = Math.max(Math.cos(theta - THETA_KEY), 0);
-        const c2 = Math.max(Math.cos(theta - THETA_COUNTER), 0);
-        const intensity = Math.min(band * (1.15 * c1 ** 3 + 0.75 * c2 ** 3.5), 1);
-        spec[i] = 255;
-        spec[i + 1] = 255;
-        spec[i + 2] = 255;
-        spec[i + 3] = Math.round(intensity * 255);
-      }
     }
   }
-
   ctx.putImageData(image, 0, 0);
-  specCtx.putImageData(specImage, 0, 0);
-  const result = { map: canvas.toDataURL(), specular: specCanvas.toDataURL() };
+
+  /**
+   * Specular overlay, one image per appearance. Unpremultiplied compose of
+   * two features, both driven by the outline normal and distance:
+   *
+   * - highlight — a crisp stroke hugging the boundary where the normal faces
+   *   up or down (times a soft compression so it never clips), plus a wider
+   *   diffuse glow fading over a few px into the surface;
+   * - shade — a hairline just inside the left/right flanks, the dark
+   *   contact edge that makes the bright arcs read as a lit rim rather than
+   *   a painted-on white line.
+   *
+   * Dark appearance dims the highlight and deepens the shade; the two PNGs
+   * are swapped by CSS (see glass.css) so the appearance change needs no JS.
+   */
+  const specW = fullW;
+  const specH = fullH;
+  const specR = Math.min(fullRadius, specW / 2, specH / 2);
+  const specBx = specW / 2 - specR;
+  const specBy = specH / 2 - specR;
+
+  const makeSpecCanvas = () => {
+    const c = document.createElement('canvas');
+    c.width = specW;
+    c.height = specH;
+    return c;
+  };
+  const lightCanvas = makeSpecCanvas();
+  const darkCanvas = makeSpecCanvas();
+  const lightCtx = lightCanvas.getContext('2d')!;
+  const darkCtx = darkCanvas.getContext('2d')!;
+  const lightImage = lightCtx.createImageData(specW, specH);
+  const darkImage = darkCtx.createImageData(specW, specH);
+
+  const cosLight = Math.cos(LIGHT_SPREAD);
+  const cosDiffuse = Math.cos(DIFFUSE_SPREAD);
+  const cosSide = Math.cos(SIDE_SPREAD);
+  // The diffuse glow reaches a few px into the surface, growing gently with
+  // the bezel so wide rims keep a visible inner falloff.
+  const reach = 4.5 + fullBezel * 0.15;
+
+  const compose = (
+    out: Uint8ClampedArray,
+    i: number,
+    specAmount: number,
+    diffuse: number,
+    shadeBase: number,
+    specScale: number,
+    diffuseScale: number,
+    shadeStrength: number,
+  ) => {
+    const highlight = sat(specAmount * specScale + diffuse * diffuseScale);
+    const shade = shadeBase * shadeStrength;
+    const alpha = highlight + shade * (1 - highlight);
+    if (alpha <= 0) return;
+    // Light over a dark rim, unpremultiplied for the PNG encoder.
+    const value = Math.min((specScale * highlight) / alpha, 1);
+    const v = Math.round(value * 255);
+    out[i] = v;
+    out[i + 1] = v;
+    out[i + 2] = v;
+    out[i + 3] = Math.round(Math.min(alpha, 1) * 255);
+  };
+
+  for (let y = 0; y < specH; y++) {
+    for (let x = 0; x < specW; x++) {
+      const px = x + 0.5 - specW / 2;
+      const py = y + 0.5 - specH / 2;
+      surfaceField(px, py, specBx, specBy, specR, field);
+      const sd = field.sd;
+      // Everything lives within a hair of the boundary; skip the bulk early.
+      if (sd > 1 || sd < -(reach + 1)) continue;
+
+      const coverage = sat(0.5 - sd);
+      const vertical = Math.abs(field.ny);
+      const directional = Math.pow(sat((vertical - cosLight) / (1 - cosLight)), 1.25);
+      const diffuseDir = Math.pow(sat((vertical - cosDiffuse) / (1 - cosDiffuse)), 1.25);
+      const stroke = sat(sd + 1.4) * sat(0.5 - sd);
+      let specAmount = directional * stroke;
+      specAmount = specAmount / (1 + 0.5 * (1 - specAmount));
+      const glow = 1 - sat(-sd / reach);
+      const diffuse = diffuseDir * 0.18 * glow * glow * coverage;
+
+      // Side shade: same hairline band, weighted toward horizontal normals.
+      const wL = sat((field.nx - cosSide) / (1 - cosSide)) * stroke;
+      const wR = sat((-field.nx - cosSide) / (1 - cosSide)) * stroke;
+      const shadeBase = wL / (1 + 0.4 * (1 - wL)) + wR / (1 + 0.4 * (1 - wR));
+
+      const i = (y * specW + x) * 4;
+      compose(lightImage.data, i, specAmount, diffuse, shadeBase, 1, 1, 0.48);
+      compose(darkImage.data, i, specAmount, diffuse, shadeBase, 0.82, 0.4, 0.6);
+    }
+  }
+  lightCtx.putImageData(lightImage, 0, 0);
+  darkCtx.putImageData(darkImage, 0, 0);
+
+  const result = {
+    map: canvas.toDataURL(),
+    specular: lightCanvas.toDataURL(),
+    specularDark: darkCanvas.toDataURL(),
+  };
   cacheSet(key, result);
   return result;
 }
@@ -322,30 +452,37 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       ...rest
     } = props;
 
-    // Geometry is scaled, not replaced — see theme.tsx. Rounding is not
-    // cosmetic: radius and bezel key the displacement-map cache and refraction
-    // keys the filter registry, so a multiplier dragged through 0.9137× would
-    // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
-    // Blur only reaches a CSS string, but is rounded for the same reason in
-    // reverse — an unrounded one churns the style attribute every frame.
-    const radius = Math.round(ownRadius * theme.radiusScale);
-    const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
-    const refraction = Math.round(ownRefraction * theme.refractionScale);
-    // A zero-width bezel divides through in the map generator (`depth / bezel`),
-    // turning the whole surface into NaN displacement — a fully smeared box.
-    const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
-
     // `supportsRefraction` sniffs the UA, so it is false during SSR and true in
     // Chromium — reading it directly at render time would make the server emit
     // the frost tier and the client's first render emit the refract tier, which
     // is a hydration mismatch React explicitly won't patch up. Start every
     // render pass in the tier the server can also produce, then upgrade in a
     // layout effect: that runs after hydration commits but before paint, so
-    // there is no visible frost flash.
+    // there is no visible frost flash. `squircleActive` follows the same
+    // pattern: the radius compensation only applies once the client knows
+    // corner-shape will actually render, and must not differ from the server
+    // markup on the hydration pass.
     const [refractionAllowed, setRefractionAllowed] = React.useState(false);
+    const [squircleActive, setSquircleActive] = React.useState(false);
     React.useLayoutEffect(() => {
       if (supportsRefraction) setRefractionAllowed(true);
+      if (supportsSquircle) setSquircleActive(true);
     }, []);
+
+    // Geometry is scaled, not replaced — see theme.tsx. Rounding is not
+    // cosmetic: radius and bezel key the displacement-map cache and refraction
+    // keys the filter registry, so a multiplier dragged through 0.9137× would
+    // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
+    // Blur only reaches a CSS string, but is rounded for the same reason in
+    // reverse — an unrounded one churns the style attribute every frame.
+    const radius = Math.round(
+      ownRadius * theme.radiusScale * (squircleActive ? SQUIRCLE_RADIUS_SCALE : 1),
+    );
+    const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
+    const refraction = Math.round(ownRefraction * theme.refractionScale);
+    // A zero-width bezel divides through in the map generator (`depth / bezel`),
+    // turning the whole surface into NaN displacement — a fully smeared box.
+    const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
 
     const tier: 'refract' | 'frost' | 'clear' =
       material === 'clear'
@@ -399,21 +536,33 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     }, [tier]);
 
     const refractionReady = tier === 'refract' && size !== null;
+    // Tone response of the material: lift the darkest backdrop tones and roll
+    // off the brightest, so refracted content sits in a narrower band and the
+    // foreground keeps contrast against it. Clear glass (frost 0) needs the
+    // full curve — nothing else quiets the backdrop; heavy frost already
+    // carries legibility through blur + tint, so the curve relaxes. Rounded to
+    // 3 decimals because these key the filter registry (see the geometry
+    // rounding note above).
+    const toneLift = Math.round(180 * (1 - 0.45 * frost)) / 1000;
+    const toneRoll = Math.round(140 * (1 - 0.45 * frost)) / 1000;
     // Filters live in a global, never-unmounted registry so a remounted
     // popup references an already-decoded filter (see filterRegistry.ts).
     const glassRefs = React.useMemo(() => {
       if (!refractionReady) return null;
       const images = glassImages(size!.w, size!.h, radius, bezel, profile);
       prewarmImage(images.specular);
+      prewarmImage(images.specularDark);
       const { id: filterId, cold } = ensureFilter({
         w: size!.w,
         h: size!.h,
         mapHref: images.map,
         refraction,
         dispersion,
+        toneLift,
+        toneRoll,
       });
       return { images, filterId, cold };
-    }, [refractionReady, size, radius, bezel, profile, refraction, dispersion]);
+    }, [refractionReady, size, radius, bezel, profile, refraction, dispersion, toneLift, toneRoll]);
 
     // The masking fade-in is only for a cold filter (feImage still decoding).
     // It must also be REMOVED after it plays: under keepMounted a closed
@@ -478,17 +627,34 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         )}
         <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
         {glassRefs && specular > 0 && (
-          <span
-            className={
-              needsFade
-                ? 'liqui-glass__specular liqui-glass__specular--fade'
-                : 'liqui-glass__specular'
-            }
-            style={{
-              backgroundImage: `url(${glassRefs.images.specular})`,
-              opacity: specular,
-            }}
-          />
+          <>
+            {/* One image per appearance; CSS shows the matching one, so a
+                light/dark switch changes the lighting without JS. */}
+            <span
+              className={[
+                'liqui-glass__specular liqui-glass__specular--light',
+                needsFade ? 'liqui-glass__specular--fade' : '',
+              ]
+                .join(' ')
+                .trim()}
+              style={{
+                backgroundImage: `url(${glassRefs.images.specular})`,
+                opacity: specular,
+              }}
+            />
+            <span
+              className={[
+                'liqui-glass__specular liqui-glass__specular--dark',
+                needsFade ? 'liqui-glass__specular--fade' : '',
+              ]
+                .join(' ')
+                .trim()}
+              style={{
+                backgroundImage: `url(${glassRefs.images.specularDark})`,
+                opacity: specular,
+              }}
+            />
+          </>
         )}
         <span className="liqui-glass__shine" />
         <div className={['liqui-glass__content', contentClassName ?? ''].join(' ').trim()}>

@@ -21,6 +21,16 @@ interface FilterParams {
   mapHref: string;
   refraction: number;
   dispersion: number;
+  /**
+   * Tone response of the material, applied after displacement: `toneLift`
+   * raises the darkest backdrop tones, `toneRoll` compresses the brightest,
+   * both weighted cubically so midtones pass through unchanged. Content seen
+   * through the glass then sits in a narrower band and foreground text keeps
+   * contrast over any backdrop — this is what makes the surface read as a
+   * material rather than a transparent hole. 0/0 skips the stage.
+   */
+  toneLift?: number;
+  toneRoll?: number;
 }
 
 const ISOLATE = {
@@ -87,10 +97,10 @@ function displacement(scale: number, result?: string): SVGElement {
  * decide whether a masking fade-in is needed at all.
  */
 export function ensureFilter(params: FilterParams): { id: string; cold: boolean } {
-  const { w, h, mapHref, refraction, dispersion } = params;
+  const { w, h, mapHref, refraction, dispersion, toneLift = 0, toneRoll = 0 } = params;
   // The map href fully encodes size/radius/bezel/profile (it's cached by
   // those in glassImages), so id dedup can key on it plus the optics.
-  const key = `${w}x${h}|r${refraction}|d${dispersion}|${mapHref.length}:${mapHref.slice(-24)}`;
+  const key = `${w}x${h}|r${refraction}|d${dispersion}|t${toneLift},${toneRoll}|${mapHref.length}:${mapHref.slice(-24)}`;
   const existing = filterIds.get(key);
   if (existing) {
     // Re-insert to mark most-recently-used (Map preserves insertion order).
@@ -129,6 +139,24 @@ export function ensureFilter(params: FilterParams): { id: string; cold: boolean 
     );
   } else {
     filter.appendChild(displacement(refraction));
+  }
+
+  if (toneLift > 0 || toneRoll > 0) {
+    // Takes the previous primitive's output implicitly. Sampled into a lookup
+    // table: v + lift·(1−v)³ − roll·v'³ — pure shadow lift at black, pure
+    // rolloff at white, ~1/8 strength at midgray.
+    const STEPS = 17;
+    const samples: string[] = [];
+    for (let i = 0; i < STEPS; i++) {
+      const v = i / (STEPS - 1);
+      const lifted = v + toneLift * (1 - v) ** 3;
+      samples.push(String(Math.round((lifted - toneRoll * lifted ** 3) * 1000) / 1000));
+    }
+    const tone = el('feComponentTransfer', {});
+    for (const name of ['feFuncR', 'feFuncG', 'feFuncB']) {
+      tone.appendChild(el(name, { type: 'table', tableValues: samples.join(' ') }));
+    }
+    filter.appendChild(tone);
   }
 
   ensureHost().appendChild(filter);
