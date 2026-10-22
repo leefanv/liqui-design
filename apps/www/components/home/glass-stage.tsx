@@ -4,7 +4,15 @@ import * as React from 'react';
 import { LiquiGlass } from '@liqui-design/glass';
 
 import { Backdrop, BACKDROPS, type BackdropId } from '@/components/home/backdrops';
-import { DEFAULT_OPTICS, GlassControls, type GlassOptics } from '@/components/glass-controls';
+import {
+  ControlGroup,
+  DEFAULT_OPTICS,
+  GlassControls,
+  Segmented,
+  sameOptics,
+  shuffleOptics,
+  type GlassOptics,
+} from '@/components/glass-controls';
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/liqui/ui/button';
 import { Checkbox, CheckboxLabel } from '@/registry/liqui/ui/checkbox';
@@ -16,7 +24,6 @@ import {
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from '@/registry/liqui/ui/scroll-area';
-import { Toggle } from '@/registry/liqui/ui/toggle';
 
 /**
  * The home page's argument, made by letting you move the glass rather than by
@@ -43,12 +50,29 @@ import { Toggle } from '@/registry/liqui/ui/toggle';
  */
 const PANEL_GLASS = {
   elevated: true,
-  radius: 20,
+  radius: 18,
   blur: 1,
   refraction: 110,
   bezel: 22,
   frost: 0.6,
 } as const;
+
+/**
+ * The panel reads as an instrument window: a title bar with the three lights,
+ * a hairline under it, the dials below. The lights are decoration and say so —
+ * `aria-hidden`, no hover, nothing to click — because a close button that does
+ * not close is worse than none.
+ */
+function TitleBar({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-[7px] border-b border-[color-mix(in_srgb,var(--lq-text)_10%,transparent)] px-3.5 py-2.5">
+      <span aria-hidden className="size-[11px] rounded-full bg-[#ff5f57]" />
+      <span aria-hidden className="size-[11px] rounded-full bg-[#febc2e]" />
+      <span aria-hidden className="size-[11px] rounded-full bg-[#28c840]" />
+      <span className="ml-2 text-[12.5px] font-semibold text-[var(--lq-text-dim)]">{title}</span>
+    </div>
+  );
+}
 
 export function GlassStage() {
   const [backdrop, setBackdrop] = React.useState<BackdropId>('wallpaper');
@@ -58,6 +82,7 @@ export function GlassStage() {
   const [checked, setChecked] = React.useState(true);
 
   const stageRef = React.useRef<HTMLDivElement>(null);
+  const surfaceRef = React.useRef<HTMLDivElement>(null);
   const origin = React.useRef({ px: 0, py: 0, x: 0, y: 0 });
 
   // Pointer capture rather than window listeners: the drag keeps following the
@@ -76,13 +101,19 @@ export function GlassStage() {
       x: origin.current.x + (event.clientX - origin.current.px),
       y: origin.current.y + (event.clientY - origin.current.py),
     };
-    if (stage) {
+    const surface = surfaceRef.current;
+    if (stage && surface) {
       // Keep the surface inside the stage; dragging it off screen would just
-      // look broken.
-      const limitX = Math.max(0, stage.clientWidth / 2 - 190);
-      const limitY = Math.max(0, stage.clientHeight / 2 - 150);
-      next.x = Math.min(limitX, Math.max(-limitX, next.x));
-      next.y = Math.min(limitY, Math.max(-limitY, next.y));
+      // look broken. Measured from where layout actually put it rather than
+      // assumed to start at the centre — beside the panel it does not — and
+      // with offset*, which ignore the translate being applied here.
+      const inset = 8;
+      const minX = inset - surface.offsetLeft;
+      const maxX = stage.clientWidth - surface.offsetLeft - surface.offsetWidth - inset;
+      const minY = inset - surface.offsetTop;
+      const maxY = stage.clientHeight - surface.offsetTop - surface.offsetHeight - inset;
+      next.x = Math.min(Math.max(next.x, minX), Math.max(maxX, minX));
+      next.y = Math.min(Math.max(next.y, minY), Math.max(maxY, minY));
     }
     setPos(next);
   };
@@ -93,7 +124,11 @@ export function GlassStage() {
     <div
       ref={stageRef}
       data-glass-stage={backdrop}
-      className="relative isolate flex min-h-[34rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-fd-border sm:min-h-[38rem]"
+      // On a phone the panel spans the bottom of the stage, so the surface
+      // moves to the top and the stage grows to hold both — centred, the
+      // panel covered the very surface it was tuning. Wider, the panel docks
+      // right and the surface centres in what is left beside it.
+      className="relative isolate flex min-h-[44rem] w-full items-start justify-center overflow-hidden rounded-3xl border border-fd-border pt-14 sm:min-h-[38rem] sm:items-center sm:pt-0 sm:pr-[18rem]"
       // Every generated backdrop is dark whatever the page is wearing, so the
       // glass on top of them has to be the dark token set. The wallpaper is the
       // exception: it ships as a day/night pair and follows the page, so the
@@ -105,6 +140,7 @@ export function GlassStage() {
 
       {/* The surface under test */}
       <LiquiGlass
+        ref={surfaceRef}
         elevated
         radius={24}
         {...optics}
@@ -150,30 +186,7 @@ export function GlassStage() {
       </LiquiGlass>
 
       {/* Controls */}
-      <div className="absolute inset-x-3 bottom-3 flex flex-col gap-3 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-60">
-        {/* A picker, in pill form: exactly one backdrop is on, so each chip is
-            a latching control and gets Toggle's treatment — flat at rest, a
-            solid accent fill while it is the one selected. It used to hardcode
-            white-on-black alphas, which assumed the backdrop was always dark
-            and went muddy the day the day-lit wallpaper became the default.
-            The tokens follow the stage's own theme instead.
-
-            `onPressedChange` only ever turns one *on*: pressing the active chip
-            would otherwise leave the stage with no backdrop at all. */}
-        <div className="flex flex-wrap gap-1.5">
-          {BACKDROPS.map((b) => (
-            <Toggle
-              key={b.id}
-              pressed={backdrop === b.id}
-              onPressedChange={(pressed) => pressed && setBackdrop(b.id)}
-              title={b.hint}
-              className="rounded-full px-2.5 py-1 text-[11.5px]"
-            >
-              {b.label}
-            </Toggle>
-          ))}
-        </div>
-
+      <div className="absolute inset-x-3 bottom-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-[17rem]">
         {/* The panel is a liqui surface and scrolls with liqui's own scroll
             area. A native `overflow-y-auto` here put a square-cornered
             scrollbar through the rounded corner of a glass panel, on the front
@@ -182,18 +195,36 @@ export function GlassStage() {
             A definite height rather than a max: Base UI's viewport is the
             element that scrolls and sizes itself to its content, so a
             `max-height` on the root clamps the panel and lets the content
-            overflow it instead of scrolling. Eight dials are taller than this
-            at every breakpoint, so there is no dead space to trade for it.
-
-            Shorter on a phone, where the panel spans the full width and the
-            surface it is tuning is directly behind it rather than beside it. */}
-        <LiquiGlass {...PANEL_GLASS} contentClassName="rounded-[inherit]">
-          <ScrollArea className="h-64 sm:h-[23rem]">
+            overflow it instead of scrolling. Shorter on a phone, where the
+            panel spans the full width and the surface it is tuning is directly
+            behind it rather than beside it. */}
+        <LiquiGlass {...PANEL_GLASS} contentClassName="flex flex-col rounded-[inherit]">
+          <TitleBar title="Optics" />
+          <ScrollArea className="h-60 sm:h-[29rem]">
             <ScrollAreaViewport>
-              <ScrollAreaContent className="px-3.5 py-3">
+              <ScrollAreaContent className="flex flex-col gap-5 px-4 pt-3.5 pb-4">
+                {/* Which picture is behind the glass. Not an optic, so it is
+                    the stage's group rather than the shared panel's — the
+                    playground has a desktop there instead. */}
+                <ControlGroup title="Backdrop">
+                  <Segmented
+                    label="Backdrop"
+                    items={BACKDROPS.slice(0, 3).map((b) => ({ ...b, value: b.id }))}
+                    value={backdrop}
+                    onValueChange={setBackdrop}
+                  />
+                  <Segmented
+                    label="More backdrops"
+                    items={BACKDROPS.slice(3).map((b) => ({ ...b, value: b.id }))}
+                    value={backdrop}
+                    onValueChange={setBackdrop}
+                  />
+                </ControlGroup>
                 <GlassControls
                   value={optics}
                   onChange={setOptics}
+                  onShuffle={() => setOptics(shuffleOptics(optics))}
+                  dirty={!sameOptics(optics, DEFAULT_OPTICS) || pos.x !== 0 || pos.y !== 0}
                   onReset={() => {
                     setOptics(DEFAULT_OPTICS);
                     setPos({ x: 0, y: 0 });
