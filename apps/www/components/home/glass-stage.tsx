@@ -8,6 +8,7 @@ import {
   ControlGroup,
   DEFAULT_OPTICS,
   GlassControls,
+  PanelActions,
   Segmented,
   sameOptics,
   shuffleOptics,
@@ -186,7 +187,7 @@ export function GlassStage() {
       </LiquiGlass>
 
       {/* Controls */}
-      <div className="absolute inset-x-3 bottom-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-[17rem]">
+      <div className="absolute inset-x-3 bottom-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-4 sm:w-[17rem]">
         {/* The panel is a liqui surface and scrolls with liqui's own scroll
             area. A native `overflow-y-auto` here put a square-cornered
             scrollbar through the rounded corner of a glass panel, on the front
@@ -195,12 +196,19 @@ export function GlassStage() {
             A definite height rather than a max: Base UI's viewport is the
             element that scrolls and sizes itself to its content, so a
             `max-height` on the root clamps the panel and lets the content
-            overflow it instead of scrolling. Shorter on a phone, where the
-            panel spans the full width and the surface it is tuning is directly
-            behind it rather than beside it. */}
-        <LiquiGlass {...PANEL_GLASS} contentClassName="flex flex-col rounded-[inherit]">
+            overflow it instead of scrolling. Beside the surface the panel
+            runs the full height of the stage, inset as far from the bottom
+            as from the top and the side, and the scroll area takes whatever
+            the title bar leaves — the stage's own height is the definite one.
+            On a phone, where the panel spans the full width under the
+            surface, it keeps a fixed height instead. */}
+        <LiquiGlass
+          {...PANEL_GLASS}
+          className="sm:h-full"
+          contentClassName="flex flex-col rounded-[inherit] sm:h-full"
+        >
           <TitleBar title="Optics" />
-          <ScrollArea className="h-60 sm:h-[29rem]">
+          <ScrollArea className="h-60 sm:h-auto sm:min-h-0 sm:flex-1">
             <ScrollAreaViewport>
               <ScrollAreaContent className="flex flex-col gap-5 px-4 pt-3.5 pb-4">
                 {/* Which picture is behind the glass. Not an optic, so it is
@@ -220,16 +228,7 @@ export function GlassStage() {
                     onValueChange={setBackdrop}
                   />
                 </ControlGroup>
-                <GlassControls
-                  value={optics}
-                  onChange={setOptics}
-                  onShuffle={() => setOptics(shuffleOptics(optics))}
-                  dirty={!sameOptics(optics, DEFAULT_OPTICS) || pos.x !== 0 || pos.y !== 0}
-                  onReset={() => {
-                    setOptics(DEFAULT_OPTICS);
-                    setPos({ x: 0, y: 0 });
-                  }}
-                />
+                <GlassControls value={optics} onChange={setOptics} />
               </ScrollAreaContent>
             </ScrollAreaViewport>
             <ScrollAreaScrollbar>
@@ -238,6 +237,14 @@ export function GlassStage() {
               <ScrollAreaThumb glass={{ material: 'clear' }} />
             </ScrollAreaScrollbar>
           </ScrollArea>
+          <PanelActions
+            onShuffle={() => setOptics(shuffleOptics(optics))}
+            dirty={!sameOptics(optics, DEFAULT_OPTICS) || pos.x !== 0 || pos.y !== 0}
+            onReset={() => {
+              setOptics(DEFAULT_OPTICS);
+              setPos({ x: 0, y: 0 });
+            }}
+          />
         </LiquiGlass>
       </div>
     </div>

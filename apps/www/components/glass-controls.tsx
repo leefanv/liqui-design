@@ -245,18 +245,10 @@ export function Segmented<T extends string>({
 export function GlassControls({
   value,
   onChange,
-  onReset,
-  onShuffle,
-  dirty = true,
   className,
 }: {
   value: GlassOptics;
   onChange: (next: GlassOptics) => void;
-  onReset?: () => void;
-  /** Shown as a button beside Reset when given. */
-  onShuffle?: () => void;
-  /** Whether Reset has anything to undo. Without it Reset is always live. */
-  dirty?: boolean;
   className?: string;
 }) {
   const set = <K extends keyof GlassOptics>(key: K, next: GlassOptics[K]) =>
@@ -327,22 +319,48 @@ export function GlassControls({
         </ControlGroup>
       ))}
 
-      {(onShuffle || onReset) && (
-        <div className="flex gap-2">
-          {onShuffle && (
-            <PanelButton onClick={onShuffle}>
-              <Shuffle className="size-3.5" strokeWidth={2.2} />
-              Shuffle
-            </PanelButton>
-          )}
-          {onReset && (
-            <PanelButton onClick={onReset} disabled={!dirty} title="Back to the defaults">
-              <RotateCcw className="size-3.5" strokeWidth={2.2} />
-              Reset
-            </PanelButton>
-          )}
-        </div>
+    </div>
+  );
+}
+
+/**
+ * Shuffle and Reset, as the panel's footer.
+ *
+ * Its own export rather than the last row of the dials, so a host can pin it
+ * under the scroll area: the two actions that act on *every* dial should not
+ * scroll away with the dials. Mirrors the title bar — a hairline on the
+ * scrolling side, the same inset — so the panel reads as a window with a top
+ * and a bottom rather than a list that happens to end.
+ */
+export function PanelActions({
+  onShuffle,
+  onReset,
+  dirty = true,
+  className,
+}: {
+  onShuffle?: () => void;
+  onReset: () => void;
+  /** Whether Reset has anything to undo. Without it Reset is always live. */
+  dirty?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 gap-2 border-t border-[color-mix(in_srgb,var(--lq-text)_10%,transparent)] px-4 py-3',
+        className,
       )}
+    >
+      {onShuffle && (
+        <PanelButton onClick={onShuffle}>
+          <Shuffle className="size-3.5" strokeWidth={2.2} />
+          Shuffle
+        </PanelButton>
+      )}
+      <PanelButton onClick={onReset} disabled={!dirty} title="Back to the defaults">
+        <RotateCcw className="size-3.5" strokeWidth={2.2} />
+        Reset
+      </PanelButton>
     </div>
   );
 }
