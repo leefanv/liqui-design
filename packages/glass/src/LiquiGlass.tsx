@@ -130,6 +130,9 @@ interface SurfaceField {
  * and the CSS clip agree on one geometry. The corner distance is a
  * first-order estimate (field / |gradient|): exact at the curve, drifting
  * only well inside, where nothing reads absolute distance anymore.
+ *
+ * `round` swaps in circular corners, for capsules and discs — see
+ * `isCapsule`. Exact distance there, since a circle has one.
  */
 function surfaceField(
   px: number,
@@ -137,11 +140,17 @@ function surfaceField(
   bx: number,
   by: number,
   r: number,
+  round: boolean,
   out: SurfaceField,
 ) {
   const qx = Math.abs(px) - bx;
   const qy = Math.abs(py) - by;
-  if (qx > 0 && qy > 0) {
+  if (round && qx > 0 && qy > 0) {
+    const len = Math.hypot(qx, qy) || 1;
+    out.sd = len - r;
+    out.nx = (Math.sign(px) * qx) / len;
+    out.ny = (Math.sign(py) * qy) / len;
+  } else if (qx > 0 && qy > 0) {
     const x3 = qx * qx * qx;
     const y3 = qy * qy * qy;
     const q = Math.pow(qx * x3 + qy * y3, 0.25);
@@ -213,8 +222,9 @@ function glassImages(
   fullRadius: number,
   fullBezel: number,
   profile: GlassProfile,
+  round: boolean,
 ) {
-  const key = `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}`;
+  const key = `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}${round ? 'o' : 's'}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 
@@ -242,7 +252,7 @@ function glassImages(
     for (let x = 0; x < w; x++) {
       const px = x + 0.5 - w / 2;
       const py = y + 0.5 - h / 2;
-      surfaceField(px, py, bx, by, r, field);
+      surfaceField(px, py, bx, by, r, round, field);
       const depth = -field.sd; // distance from the edge, measured inward
 
       const d = depth / bezel;
@@ -326,7 +336,7 @@ function glassImages(
     for (let x = 0; x < specW; x++) {
       const px = x + 0.5 - specW / 2;
       const py = y + 0.5 - specH / 2;
-      surfaceField(px, py, specBx, specBy, specR, field);
+      surfaceField(px, py, specBx, specBy, specR, round, field);
       const sd = field.sd;
       // Everything lives within a hair of the boundary; skip the bulk early.
       if (sd > 1 || sd < -(reach + 1)) continue;
@@ -475,9 +485,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
     // Blur only reaches a CSS string, but is rounded for the same reason in
     // reverse — an unrounded one churns the style attribute every frame.
-    const radius = Math.round(
-      ownRadius * theme.radiusScale * (squircleActive ? SQUIRCLE_RADIUS_SCALE : 1),
-    );
+    const baseRadius = Math.round(ownRadius * theme.radiusScale);
     const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
     const refraction = Math.round(ownRefraction * theme.refractionScale);
     // A zero-width bezel divides through in the map generator (`depth / bezel`),
@@ -495,6 +503,18 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
 
     const localRef = React.useRef<HTMLDivElement | null>(null);
     const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
+
+    // A capsule or a disc — corners already reaching half the short side —
+    // keeps round corners. A superellipse cannot close into a semicircle: at
+    // that radius it draws a bulging rounded rectangle, which on a pill
+    // button or a circular control reads as a mistake rather than as a
+    // continuous corner. So those surfaces skip both the squircle and its
+    // radius compensation, and the map is drawn with circular corners to
+    // match. Known once the surface is measured; until then the declared
+    // shape stands.
+    const capsule = size !== null && baseRadius >= Math.min(size.w, size.h) / 2 - 0.5;
+    const radius =
+      squircleActive && !capsule ? Math.round(baseRadius * SQUIRCLE_RADIUS_SCALE) : baseRadius;
 
     // The empty dependency array is load-bearing. Without it this runs on every
     // render, and each run detaches the previous handle before attaching the
@@ -514,7 +534,9 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     React.useImperativeHandle(forwardedRef, () => localRef.current as HTMLDivElement, []);
 
     React.useLayoutEffect(() => {
-      if (tier !== 'refract' || !localRef.current) return;
+      // Measured for the map in the refraction tier, and wherever corner-shape
+      // renders, for the capsule check above.
+      if ((tier !== 'refract' && !squircleActive) || !localRef.current) return;
       const el = localRef.current;
       const apply = (w: number, h: number) => {
         if (w > 0 && h > 0) {
@@ -533,7 +555,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       });
       observer.observe(el);
       return () => observer.disconnect();
-    }, [tier]);
+    }, [tier, squircleActive]);
 
     const refractionReady = tier === 'refract' && size !== null;
     // Tone response of the material: lift the darkest backdrop tones and roll
@@ -549,7 +571,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // popup references an already-decoded filter (see filterRegistry.ts).
     const glassRefs = React.useMemo(() => {
       if (!refractionReady) return null;
-      const images = glassImages(size!.w, size!.h, radius, bezel, profile);
+      const images = glassImages(size!.w, size!.h, radius, bezel, profile, capsule);
       prewarmImage(images.specular);
       prewarmImage(images.specularDark);
       const { id: filterId, cold } = ensureFilter({
@@ -562,7 +584,18 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         toneRoll,
       });
       return { images, filterId, cold };
-    }, [refractionReady, size, radius, bezel, profile, refraction, dispersion, toneLift, toneRoll]);
+    }, [
+      refractionReady,
+      size,
+      radius,
+      capsule,
+      bezel,
+      profile,
+      refraction,
+      dispersion,
+      toneLift,
+      toneRoll,
+    ]);
 
     // The masking fade-in is only for a cold filter (feImage still decoding).
     // It must also be REMOVED after it plays: under keepMounted a closed
@@ -607,7 +640,11 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         ]
           .join(' ')
           .trim()}
-        style={{ ...style, ['--lq-radius' as string]: `${radius}px` }}
+        style={{
+          ...style,
+          ['--lq-radius' as string]: `${radius}px`,
+          ...(capsule ? { ['--lq-corner-shape' as string]: 'round' } : null),
+        }}
       >
         {backdropFilter && (
           <span
