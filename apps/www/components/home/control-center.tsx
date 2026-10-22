@@ -7,16 +7,15 @@ import {
   Contrast,
   Copy,
   FastForward,
-  Keyboard,
   Moon,
   Music2,
-  PanelLeft,
+  PanelBottom,
+  PanelLeftDashed,
   Pause,
   Play,
   Radar,
   Rewind,
   Sun,
-  SunDim,
   Volume,
   Volume2,
   Wifi,
@@ -24,18 +23,25 @@ import {
 } from 'lucide-react';
 import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 
-import { FINE_SLIDER, type GlassOptics } from '@/components/glass-controls';
+import type { GlassOptics } from '@/components/glass-controls';
 import { cn } from '@/lib/utils';
 import { Slider, SliderControl, SliderThumb, SliderTrack } from '@/registry/liqui/ui/slider';
 
 /**
- * The stage's subject: a control center, modelled on the one macOS draws.
+ * The stage's subject: a control center, drawn to the one macOS 26 ships.
  *
  * It replaced a single form card because it makes the argument the card could
  * not. Liquid glass is not one panel; it is many small surfaces of different
  * shapes — capsules, discs, a tall tile, two wide slabs — each refracting on
  * its own, side by side over the same picture. Drag the group over an edge and
  * every module bends it differently, by its own size and corner.
+ *
+ * The measurements are taken off the system's own control center: a 62px
+ * module pitch with 12px gaps, 38px icon discs in the capsules, white type
+ * over a neutral grey glass with a dark drop under every module. That last
+ * pair is why this scopes its own tokens rather than following the page
+ * theme — the platform draws this panel white-on-grey in light and dark mode
+ * alike, and so does this.
  *
  * Every module is a separate LiquiGlass. The optics panel drives all of them,
  * but its Strength and Bezel are dialled for a card-sized surface, and the
@@ -62,6 +68,27 @@ function glassFor(optics: GlassOptics, w: number, h: number): Partial<LiquiGlass
   };
 }
 
+/**
+ * The panel's own palette. A neutral grey wash rather than the library's white
+ * one — white type needs something under it to stand on — and a brighter rim,
+ * since a module this small reads as glass mostly by its edge.
+ */
+const PALETTE = {
+  '--lq-text': '#ffffff',
+  '--lq-text-dim': 'rgba(255,255,255,0.8)',
+  '--lq-tint': 'rgba(206,206,212,0.42)',
+  '--lq-tint-deep': 'rgba(168,168,176,0.34)',
+  '--lq-rim-hi': 'rgba(255,255,255,0.95)',
+  '--lq-rim-lo': 'rgba(255,255,255,0.55)',
+} as React.CSSProperties;
+
+/** A dark drop under each module — the platform lifts every one off the desk. */
+const MODULE_SHADOW = 'shadow-[0_10px_24px_-8px_rgba(0,0,0,0.38),0_2px_6px_-2px_rgba(0,0,0,0.18)]';
+
+/** Washes on the glass, white over grey. */
+const WASH = 'bg-[rgba(255,255,255,0.22)]';
+const WASH_HOVER = 'hover:bg-[rgba(255,255,255,0.3)]';
+
 interface Track {
   title: string;
   artist: string;
@@ -72,17 +99,17 @@ interface Track {
 const TRACKS: Track[] = [
   {
     title: 'Refraction',
-    artist: 'Anna Vey — Index of Light',
-    art: 'linear-gradient(135deg, #ff5f8f, #ffb347 55%, #7b3fe4)',
+    artist: 'Anna Vey – Index of Light',
+    art: 'linear-gradient(135deg, #ff4d6d, #ff2e4f 55%, #c9143a)',
   },
   {
     title: 'Bezel',
-    artist: 'Anna Vey — Index of Light',
+    artist: 'Anna Vey – Index of Light',
     art: 'linear-gradient(135deg, #2f7bff, #49e0c1 60%, #0d1b4a)',
   },
   {
     title: 'Dispersion',
-    artist: 'Anna Vey — Prism Hours',
+    artist: 'Anna Vey – Prism Hours',
     art: 'linear-gradient(135deg, #b35cff, #ff5a5f 50%, #ffd23f)',
   },
 ];
@@ -112,7 +139,7 @@ function Module({
     <LiquiGlass
       {...glassFor(optics, w, h)}
       radius={radius}
-      className="select-none"
+      className={cn('select-none', MODULE_SHADOW)}
       style={{ gridColumn: `span ${cols}`, gridRow: `span ${rows}`, width: w, height: h }}
       contentClassName={cn('h-full rounded-[inherit]', className)}
     >
@@ -122,20 +149,18 @@ function Module({
 }
 
 /**
- * The disc a toggle's icon sits in. Lit, it is an opaque white button with the
- * accent icon — the one solid thing on the glass, which is how the platform
- * says "on". Unlit, it is a faint wash, still glass.
+ * The disc a capsule's icon sits in. Lit, it is an opaque white button with
+ * the accent icon — the one solid thing on the glass, which is how the
+ * platform says "on". Unlit, a white wash with a white icon: still glass.
  */
 function IconDisc({
   icon: Icon,
   on,
-  size = 40,
   label,
   onToggle,
 }: {
   icon: LucideIcon;
   on: boolean;
-  size?: number;
   label: string;
   onToggle: () => void;
 }) {
@@ -145,21 +170,20 @@ function IconDisc({
       aria-label={label}
       aria-pressed={on}
       onClick={onToggle}
-      style={{ width: size, height: size }}
       className={cn(
-        'grid shrink-0 cursor-default place-items-center rounded-full outline-none transition-colors duration-200',
-        'focus-visible:shadow-[0_0_0_2px_var(--lq-accent)] active:scale-[0.96]',
+        'grid size-[38px] shrink-0 cursor-default place-items-center rounded-full outline-none transition-colors duration-200',
+        'focus-visible:shadow-[0_0_0_2px_var(--lq-accent)] active:scale-[0.95]',
         on
-          ? 'bg-white text-[var(--lq-accent)] shadow-[0_1px_4px_rgba(0,0,0,0.12)]'
-          : 'bg-[color-mix(in_srgb,var(--lq-text)_12%,transparent)] text-[var(--lq-text)]',
+          ? 'bg-white text-[var(--lq-accent)] shadow-[0_1px_3px_rgba(0,0,0,0.15)]'
+          : cn(WASH, WASH_HOVER, 'text-white'),
       )}
     >
-      <Icon className="size-[20px]" strokeWidth={2.2} />
+      <Icon className="size-[19px]" strokeWidth={2.3} />
     </button>
   );
 }
 
-/** Wi-Fi, Bluetooth, AirDrop, Focus: a disc and two lines, in a capsule. */
+/** Wi-Fi, Bluetooth, AirDrop, Focus: a disc and one or two lines, in a capsule. */
 function CapsuleToggle({
   optics,
   icon,
@@ -176,22 +200,24 @@ function CapsuleToggle({
   onToggle: () => void;
 }) {
   return (
-    <Module optics={optics} cols={2} rows={1} radius={CELL / 2} className="flex items-center gap-2.5 px-[11px]">
+    <Module optics={optics} cols={2} rows={1} radius={CELL / 2} className="flex items-center gap-[9px] pl-3 pr-2.5">
       <IconDisc icon={icon} on={on} label={title} onToggle={onToggle} />
-      <div className="min-w-0 leading-tight">
-        <div className="truncate text-[13px] font-semibold text-[var(--lq-text)]">{title}</div>
-        {status && (
-          <div className="truncate text-[11.5px] text-[var(--lq-text-dim)]">{status}</div>
-        )}
+      <div className="min-w-0 leading-[1.2]">
+        <div className="truncate text-[13.5px] font-semibold">{title}</div>
+        {status && <div className="truncate text-[12px] font-semibold text-[var(--lq-text-dim)]">{status}</div>}
       </div>
     </Module>
   );
 }
 
-/** A single-cell disc module. */
+/**
+ * A single-cell module. No inner disc — the icon sits straight on the glass,
+ * and the whole module is the button. Lit, it fills dark, as the platform
+ * draws an engaged mode like Screen Mirroring.
+ */
 function DiscToggle({
   optics,
-  icon,
+  icon: Icon,
   label,
   on,
   onToggle,
@@ -203,13 +229,39 @@ function DiscToggle({
   onToggle: () => void;
 }) {
   return (
-    <Module optics={optics} cols={1} rows={1} radius={CELL / 2} className="grid place-items-center">
-      <IconDisc icon={icon} on={on} size={44} label={label} onToggle={onToggle} />
+    <Module optics={optics} cols={1} rows={1} radius={CELL / 2}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={on}
+        onClick={onToggle}
+        className={cn(
+          'grid size-full cursor-default place-items-center rounded-full outline-none transition-colors duration-200',
+          'focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]',
+          on ? 'bg-[rgba(36,36,40,0.62)]' : 'hover:bg-[rgba(255,255,255,0.12)]',
+        )}
+      >
+        <Icon className="size-[23px]" strokeWidth={2} />
+      </button>
     </Module>
   );
 }
 
-/** Display and Sound: a label over an icon-flanked slider, the full width. */
+/**
+ * Display and Sound: a heading over a white hairline slider between a small
+ * and a large glyph. The platform's slider has no knob — the fill is the
+ * reading — so the knob here shrinks to the rail's own height and vanishes
+ * into the end of the fill, while the control keeps a finger-sized hit area.
+ */
+const MODULE_SLIDER = {
+  '--lq-rail-h': '4px',
+  '--lq-knob-w': '4px',
+  '--lq-knob-h': '4px',
+  '--lq-knob-pad': '0px',
+  '--lq-accent': '#ffffff',
+  '--lq-slider-rail': 'rgba(255,255,255,0.3)',
+} as React.CSSProperties;
+
 function SliderModule({
   optics,
   title,
@@ -228,27 +280,27 @@ function SliderModule({
   trailing?: React.ReactNode;
 }) {
   return (
-    <Module optics={optics} cols={4} rows={1} radius={22} className="flex flex-col justify-center gap-1.5 px-4">
-      <span className="text-[12.5px] font-semibold text-[var(--lq-text)]">{title}</span>
-      <div className="flex items-center gap-2.5 text-[var(--lq-text-dim)]">
-        <Low className="size-4 shrink-0" />
+    <Module optics={optics} cols={4} rows={1} radius={20} className="flex flex-col justify-center gap-[7px] px-4">
+      <span className="text-[13.5px] leading-none font-semibold">{title}</span>
+      <div className="flex items-center gap-3">
+        <Low className="size-[13px] shrink-0 text-[var(--lq-text-dim)]" strokeWidth={2.2} />
         <Slider
           aria-label={title}
           value={value}
           onValueChange={(next) => onValueChange(Array.isArray(next) ? next[0] : next)}
           thumbAlignment="edge"
-          style={FINE_SLIDER}
+          style={MODULE_SLIDER}
           className="flex-1"
         >
-          <SliderControl>
+          <SliderControl className="py-2">
             <SliderTrack>
               {/* On a module, so no lens — see the nesting note in
                   glass-controls.tsx. */}
-              <SliderThumb lens={false} aria-label={title} />
+              <SliderThumb lens={false} aria-label={title} className="shadow-none" />
             </SliderTrack>
           </SliderControl>
         </Slider>
-        <High className="size-4 shrink-0" />
+        <High className="size-[17px] shrink-0 text-[var(--lq-text-dim)]" strokeWidth={2} />
         {trailing}
       </div>
     </Module>
@@ -266,12 +318,12 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
   const [bluetooth, setBluetooth] = React.useState(true);
   const [airdrop, setAirdrop] = React.useState(false);
   const [stageManager, setStageManager] = React.useState(false);
-  const [mirroring, setMirroring] = React.useState(false);
+  const [mirroring, setMirroring] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(false);
-  const [keyboard, setKeyboard] = React.useState(true);
+  const [menuBar, setMenuBar] = React.useState(false);
   const [focus, setFocus] = React.useState(false);
-  const [display, setDisplay] = React.useState(72);
-  const [volume, setVolume] = React.useState(45);
+  const [display, setDisplay] = React.useState(96);
+  const [volume, setVolume] = React.useState(82);
   const [playing, setPlaying] = React.useState(false);
   const [trackIndex, setTrackIndex] = React.useState(0);
 
@@ -281,16 +333,17 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
 
   return (
     <div
-      className="grid"
+      className="grid text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.22)]"
       style={{
+        ...PALETTE,
         gridTemplateColumns: `repeat(4, ${CELL}px)`,
         gridAutoRows: `${CELL}px`,
         gap: GAP,
       }}
     >
       {/* Rows 1–2, left: the two network toggles. Right: now playing, two
-          rows tall. Grid auto-placement fills the left column first because
-          the tall tile is declared second. */}
+          rows tall. Auto-placement puts Bluetooth under Wi-Fi because the
+          tall tile has already claimed the right half of both rows. */}
       <CapsuleToggle
         optics={optics}
         icon={Wifi}
@@ -300,36 +353,35 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
         onToggle={() => setWifi((on) => !on)}
       />
 
-      <Module optics={optics} cols={2} rows={2} radius={22} className="flex flex-col p-3">
-        <div className="flex items-start justify-between">
+      <Module optics={optics} cols={2} rows={2} radius={20} className="flex flex-col px-3.5 pt-3.5 pb-2">
+        {/* The app's icon in a frosted well, as the platform shows the source
+            of what is playing — not the album art, which belongs to the
+            player itself. */}
+        <div aria-hidden className={cn('grid size-[40px] place-items-center rounded-[10px]', WASH)}>
           <div
-            aria-hidden
-            className="grid size-11 place-items-center rounded-[11px] text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
+            className="grid size-[24px] place-items-center rounded-[6px] text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
             style={{ background: track.art }}
           >
-            <Music2 className="size-5" strokeWidth={2.2} />
+            <Music2 className="size-[14px]" strokeWidth={2.6} />
           </div>
-          <span className="text-[10px] font-semibold tracking-wide text-[var(--lq-text-dim)] uppercase">
-            {playing ? 'Playing' : 'Paused'}
-          </span>
         </div>
-        <div className="mt-auto min-w-0 leading-tight">
-          <div className="truncate text-[13px] font-semibold text-[var(--lq-text)]">{track.title}</div>
-          <div className="truncate text-[11.5px] text-[var(--lq-text-dim)]">{track.artist}</div>
+        <div className="mt-auto min-w-0 leading-[1.2]">
+          <div className="truncate text-[13.5px] font-semibold">{track.title}</div>
+          <div className="truncate text-[12px] font-semibold text-[var(--lq-text-dim)]">{track.artist}</div>
         </div>
-        <div className="mt-1.5 flex items-center justify-between text-[var(--lq-text)]">
+        <div className="mt-1 flex items-center justify-between px-1">
           <TransportButton label="Previous track" onClick={() => step(-1)}>
-            <Rewind className="size-[18px]" fill="currentColor" strokeWidth={0} />
+            <Rewind className="size-[21px]" fill="currentColor" strokeWidth={0} />
           </TransportButton>
           <TransportButton label={playing ? 'Pause' : 'Play'} onClick={() => setPlaying((p) => !p)}>
             {playing ? (
-              <Pause className="size-[20px]" fill="currentColor" strokeWidth={0} />
+              <Pause className="size-[21px]" fill="currentColor" strokeWidth={0} />
             ) : (
-              <Play className="size-[20px]" fill="currentColor" strokeWidth={0} />
+              <Play className="size-[21px]" fill="currentColor" strokeWidth={0} />
             )}
           </TransportButton>
           <TransportButton label="Next track" onClick={() => step(1)}>
-            <FastForward className="size-[18px]" fill="currentColor" strokeWidth={0} />
+            <FastForward className="size-[21px]" fill="currentColor" strokeWidth={0} />
           </TransportButton>
         </div>
       </Module>
@@ -348,13 +400,13 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
         optics={optics}
         icon={Radar}
         title="AirDrop"
-        status={airdrop ? 'Contacts only' : 'Off'}
+        status={airdrop ? 'Contacts Only' : 'Off'}
         on={airdrop}
         onToggle={() => setAirdrop((on) => !on)}
       />
       <DiscToggle
         optics={optics}
-        icon={PanelLeft}
+        icon={PanelLeftDashed}
         label="Stage Manager"
         on={stageManager}
         onToggle={() => setStageManager((on) => !on)}
@@ -377,16 +429,15 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
       />
       <DiscToggle
         optics={optics}
-        icon={Keyboard}
-        label="Keyboard Brightness"
-        on={keyboard}
-        onToggle={() => setKeyboard((on) => !on)}
+        icon={PanelBottom}
+        label="Hide Menu Bar"
+        on={menuBar}
+        onToggle={() => setMenuBar((on) => !on)}
       />
       <CapsuleToggle
         optics={optics}
         icon={Moon}
         title="Focus"
-        status={focus ? 'Do Not Disturb' : undefined}
         on={focus}
         onToggle={() => setFocus((on) => !on)}
       />
@@ -397,7 +448,7 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
         title="Display"
         value={display}
         onValueChange={setDisplay}
-        low={SunDim}
+        low={Sun}
         high={Sun}
       />
       <SliderModule
@@ -411,9 +462,14 @@ export function ControlCenter({ optics }: { optics: GlassOptics }) {
           <button
             type="button"
             aria-label="AirPlay"
-            className="grid size-7 shrink-0 cursor-default place-items-center rounded-full bg-[color-mix(in_srgb,var(--lq-text)_12%,transparent)] text-[var(--lq-text)] outline-none focus-visible:shadow-[0_0_0_2px_var(--lq-accent)]"
+            className={cn(
+              'grid size-[26px] shrink-0 cursor-default place-items-center rounded-full outline-none',
+              WASH,
+              WASH_HOVER,
+              'focus-visible:shadow-[0_0_0_2px_var(--lq-accent)]',
+            )}
           >
-            <Airplay className="size-3.5" strokeWidth={2.2} />
+            <Airplay className="size-[14px]" strokeWidth={2.2} />
           </button>
         }
       />
@@ -435,7 +491,7 @@ function TransportButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-8 cursor-default place-items-center rounded-full outline-none transition-[background-color,scale] hover:bg-[color-mix(in_srgb,var(--lq-text)_10%,transparent)] focus-visible:shadow-[0_0_0_2px_var(--lq-accent)] active:scale-[0.92]"
+      className="grid size-9 cursor-default place-items-center rounded-full text-[rgba(255,255,255,0.88)] outline-none transition-[background-color,scale] hover:bg-[rgba(255,255,255,0.14)] focus-visible:shadow-[0_0_0_2px_var(--lq-accent)] active:scale-[0.92]"
     >
       {children}
     </button>

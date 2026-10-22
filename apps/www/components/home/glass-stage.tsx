@@ -73,9 +73,18 @@ function TitleBar({ title }: { title: string }) {
   );
 }
 
+/**
+ * Where the stage starts, and where Reset takes it back to. The shared
+ * defaults with the frost turned up: the system's control center blurs what
+ * is behind its modules heavily — the white type on them depends on it — and a
+ * panel that opened on clearer glass than the thing it imitates would be
+ * starting from the wrong picture.
+ */
+const STAGE_OPTICS: GlassOptics = { ...DEFAULT_OPTICS, frost: 0.5, blur: 2, specular: 0.85 };
+
 export function GlassStage() {
   const [backdrop, setBackdrop] = React.useState<BackdropId>('wallpaper');
-  const [optics, setOptics] = React.useState<GlassOptics>(DEFAULT_OPTICS);
+  const [optics, setOptics] = React.useState<GlassOptics>(STAGE_OPTICS);
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
 
@@ -229,9 +238,9 @@ export function GlassStage() {
           </ScrollArea>
           <PanelActions
             onShuffle={() => setOptics(shuffleOptics(optics))}
-            dirty={!sameOptics(optics, DEFAULT_OPTICS) || pos.x !== 0 || pos.y !== 0}
+            dirty={!sameOptics(optics, STAGE_OPTICS) || pos.x !== 0 || pos.y !== 0}
             onReset={() => {
-              setOptics(DEFAULT_OPTICS);
+              setOptics(STAGE_OPTICS);
               setPos({ x: 0, y: 0 });
             }}
           />
