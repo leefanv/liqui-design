@@ -130,7 +130,7 @@ const GROUPS: { title: string; dials: Dial[] }[] = [
  * 28×18 knob. `--lq-knob-pad` is what keeps the knob from being clipped by the
  * control's box — half the difference between knob and rail.
  */
-const FINE_SLIDER = {
+export const FINE_SLIDER = {
   '--lq-rail-h': '4px',
   '--lq-knob-w': '28px',
   '--lq-knob-h': '18px',

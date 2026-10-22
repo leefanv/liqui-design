@@ -4,6 +4,7 @@ import * as React from 'react';
 import { LiquiGlass } from '@liqui-design/glass';
 
 import { Backdrop, BACKDROPS, type BackdropId } from '@/components/home/backdrops';
+import { CONTROL_CENTER_WIDTH, ControlCenter } from '@/components/home/control-center';
 import {
   ControlGroup,
   DEFAULT_OPTICS,
@@ -15,9 +16,6 @@ import {
   type GlassOptics,
 } from '@/components/glass-controls';
 import { cn } from '@/lib/utils';
-import { Button } from '@/registry/liqui/ui/button';
-import { Checkbox, CheckboxLabel } from '@/registry/liqui/ui/checkbox';
-import { Field, FieldControl, FieldLabel } from '@/registry/liqui/ui/field';
 import {
   ScrollArea,
   ScrollAreaContent,
@@ -29,8 +27,8 @@ import {
 /**
  * The home page's argument, made by letting you move the glass rather than by
  * describing it. A still image cannot show refraction — the effect only reads
- * when an edge passes under the bezel — so the surface is draggable and the
- * optics are live.
+ * when an edge passes under the bezel — so the control center is draggable and
+ * the optics are live.
  *
  * The components inside are the same files `shadcn add` installs, imported from
  * the registry. If this looks right, what you install looks right — which is
@@ -41,9 +39,9 @@ import {
 /**
  * The optics panel's own surface, and deliberately *not* the dials the panel is
  * setting. The playground lets its panel wear the live optics, because there
- * the whole page is the demo; here there is one surface under test and the
+ * the whole page is the demo; here there is one group under test and the
  * panel is the instrument reading it. A panel that went `material: 'clear'`
- * along with the card would be a control you had just made harder to see.
+ * along with the modules would be a control you had just made harder to see.
  *
  * `frost: 0.6` is Tooltip's argument: this is small text with no container of
  * its own, standing on a photograph, and legibility cannot be left to whatever
@@ -80,7 +78,6 @@ export function GlassStage() {
   const [optics, setOptics] = React.useState<GlassOptics>(DEFAULT_OPTICS);
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
-  const [checked, setChecked] = React.useState(true);
 
   const stageRef = React.useRef<HTMLDivElement>(null);
   const surfaceRef = React.useRef<HTMLDivElement>(null);
@@ -129,7 +126,7 @@ export function GlassStage() {
       // moves to the top and the stage grows to hold both — centred, the
       // panel covered the very surface it was tuning. Wider, the panel docks
       // right and the surface centres in what is left beside it.
-      className="relative isolate flex min-h-[44rem] w-full items-start justify-center overflow-hidden rounded-3xl border border-fd-border pt-14 sm:min-h-[38rem] sm:items-center sm:pt-0 sm:pr-[18rem]"
+      className="relative isolate flex min-h-[57rem] w-full items-start justify-center overflow-hidden rounded-3xl border border-fd-border pt-8 sm:min-h-[38rem] sm:items-center sm:pt-0 sm:pr-[18rem]"
       // Every generated backdrop is dark whatever the page is wearing, so the
       // glass on top of them has to be the dark token set. The wallpaper is the
       // exception: it ships as a day/night pair and follows the page, so the
@@ -139,52 +136,45 @@ export function GlassStage() {
     >
       <Backdrop id={backdrop} />
 
-      {/* The surface under test */}
-      <LiquiGlass
+      {/* The surfaces under test: a control center, dragged as one group by
+          the pill above it. Only the pill starts a drag — the modules are
+          buttons and sliders, and a drag that began on one would fight it. */}
+      <div
         ref={surfaceRef}
-        elevated
-        radius={24}
-        {...optics}
-        className={cn('w-[21rem] max-w-[calc(100%-2rem)] select-none', dragging && 'cursor-grabbing')}
-        style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-        contentClassName="rounded-[inherit] overflow-hidden"
+        className="flex flex-col items-center gap-2.5"
+        style={{ width: CONTROL_CENTER_WIDTH, transform: `translate(${pos.x}px, ${pos.y}px)` }}
       >
-        <div
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          className={cn(
-            'flex items-center justify-center gap-2 py-2 text-[11px] tracking-[0.14em] uppercase text-[var(--lq-text-dim)]',
-            dragging ? 'cursor-grabbing' : 'cursor-grab',
-          )}
+        <LiquiGlass
+          {...optics}
+          radius={14}
+          refraction={optics.refraction * 0.2}
+          bezel={Math.max(4, optics.bezel * 0.25)}
+          className="select-none"
+          contentClassName="rounded-[inherit]"
         >
-          <svg width="14" height="8" viewBox="0 0 14 8" fill="currentColor" aria-hidden>
-            <circle cx="2" cy="2" r="1" />
-            <circle cx="7" cy="2" r="1" />
-            <circle cx="12" cy="2" r="1" />
-            <circle cx="2" cy="6" r="1" />
-            <circle cx="7" cy="6" r="1" />
-            <circle cx="12" cy="6" r="1" />
-          </svg>
-          drag me over an edge
-        </div>
-
-        <div className="flex flex-col gap-4 px-5 pt-1 pb-5">
-          <Field>
-            <FieldLabel>Workspace</FieldLabel>
-            <FieldControl placeholder="acme-design" />
-          </Field>
-          <CheckboxLabel>
-            <Checkbox checked={checked} onCheckedChange={setChecked} />
-            Refract the backdrop
-          </CheckboxLabel>
-          <div className="flex gap-2">
-            <Button>Cancel</Button>
-            <Button variant="accent">Continue</Button>
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            className={cn(
+              'flex touch-none items-center gap-2 px-3.5 py-1.5 text-[10.5px] font-semibold tracking-[0.14em] uppercase text-[var(--lq-text-dim)]',
+              dragging ? 'cursor-grabbing' : 'cursor-grab',
+            )}
+          >
+            <svg width="14" height="8" viewBox="0 0 14 8" fill="currentColor" aria-hidden>
+              <circle cx="2" cy="2" r="1" />
+              <circle cx="7" cy="2" r="1" />
+              <circle cx="12" cy="2" r="1" />
+              <circle cx="2" cy="6" r="1" />
+              <circle cx="7" cy="6" r="1" />
+              <circle cx="12" cy="6" r="1" />
+            </svg>
+            drag me over an edge
           </div>
-        </div>
-      </LiquiGlass>
+        </LiquiGlass>
+        <ControlCenter optics={optics} />
+      </div>
 
       {/* Controls */}
       <div className="absolute inset-x-3 bottom-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-4 sm:w-[17rem]">
