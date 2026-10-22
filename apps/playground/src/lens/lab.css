@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* Same reason as demo/app.css: the components live in the docs app's registry,
+   outside Tailwind's automatic source detection. */
+@source '../../../www/registry/liqui';
+
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    'SF Pro Text',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Inter,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f2f2f4;
+  color: #16161a;
+}
+
+[data-theme='dark'] body {
+  background: #0d0d10;
+  color: #ececf1;
+}
