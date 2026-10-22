@@ -10,9 +10,12 @@ import {
   LensFilter,
   LIP,
   lerp,
+  resolveLens,
   spring,
   supportsRefraction,
   type LensMaps,
+  type LensOptics,
+  type LensScale,
 } from '@/lib/lens';
 import { cn } from '@/lib/utils';
 
@@ -112,6 +115,12 @@ const PILL_PEAK = 0.3196;
 const REST_RATIO = 0.14;
 const PRESS_RATIO = 1;
 /**
+ * The gentlest dome of the lens controls. The pill is wide and sits over the
+ * item's own icon and label, so a strong dome would magnify the very content
+ * you are pressing; this is enough to round the window into a drop.
+ */
+const PILL_OPTICS: Required<LensOptics> = { curvature: 0.2, dispersion: 0.12 };
+/**
  * The highlight over the lens: a selected tab at rest, a window under a press.
  *
  * Full strength at rest, and it has to be. `--lq-highlight` is 0.5 white on a
@@ -162,13 +171,22 @@ interface PillHandle {
  * the bar and the detached search button — want exactly the same press, and the
  * only difference between them is that the search pill never travels.
  */
-const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(function Pill(
+interface PillProps {
+  height: number;
+  lens?: boolean | LensOptics;
+}
+
+const Pill = React.forwardRef<PillHandle, PillProps>(function Pill(
   { height, lens = true },
   forwarded,
 ) {
+  const optics = resolveLens(lens, PILL_OPTICS);
+  const enabled = optics !== null;
+  const curvature = optics?.curvature ?? 0;
+  const dispersion = optics?.dispersion ?? 0;
   const filterId = `lq-tabpill-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const elementRef = React.useRef<HTMLSpanElement | null>(null);
-  const scaleRef = React.useRef<SVGFEDisplacementMapElement | null>(null);
+  const scaleRef = React.useRef<LensScale | null>(null);
   const hasLens = React.useRef(false);
   const [maps, setMaps] = React.useState<LensMaps | null>(null);
   /** The width the maps were built for; the pill only ever resizes on layout. */
@@ -228,13 +246,7 @@ const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(fu
       const fill = clamp(lerp(REST_FILL, PRESS_FILL, press.value), 0, 1);
       el.style.backgroundColor = `color-mix(in srgb, var(--lq-highlight) ${fill * 100}%, transparent)`;
     }
-    if (scaleRef.current) {
-      const peak = PILL_PEAK * height;
-      scaleRef.current.setAttribute(
-        'scale',
-        `${peak * lerp(REST_RATIO, PRESS_RATIO, press.value)}`,
-      );
-    }
+    scaleRef.current?.set(PILL_PEAK * height * lerp(REST_RATIO, PRESS_RATIO, press.value));
   }, [engine, height]);
 
   const paintRef = React.useRef(paint);
@@ -249,7 +261,7 @@ const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(fu
   // Maps are keyed on size, so they are built once per box the pill settles at.
   // Every item in a bar is the same width, so in practice that is once.
   React.useEffect(() => {
-    if (!lens || width === 0 || !supportsRefraction()) return;
+    if (!enabled || width === 0 || !supportsRefraction()) return;
     hasLens.current = true;
     setMaps(
       buildLensMaps({
@@ -258,10 +270,11 @@ const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(fu
         radius: height / 2,
         bezel: PILL_BEZEL * (height / 2),
         surface: LIP,
+        curvature,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [height, lens, width]);
+  }, [curvature, enabled, height, width]);
 
   React.useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -311,6 +324,7 @@ const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(fu
           blur={0}
           specularOpacity={0.42}
           specularSaturation={5}
+          dispersion={dispersion}
           scaleRef={scaleRef}
         />
       )}
@@ -341,6 +355,12 @@ const Pill = React.forwardRef<PillHandle, { height: number; lens?: boolean }>(fu
 export interface TabBarProps extends BaseTabs.Root.Props {
   /** Overrides for the bar's own glass (radius, refraction, bezel…). */
   glass?: Partial<LiquiGlassProps>;
+  /**
+   * The selection pill's lens. `false` keeps a plain highlight; an object
+   * tunes it — `{ curvature, dispersion }`, each 0–1, over the pill's own
+   * optics.
+   */
+  lens?: boolean | LensOptics;
 }
 
 /**
@@ -358,7 +378,7 @@ function splitSearch(children: React.ReactNode) {
   return { items: all.filter((c) => !search.includes(c)), search };
 }
 
-export function TabBar({ glass, className, children, ...props }: TabBarProps) {
+export function TabBar({ glass, lens, className, children, ...props }: TabBarProps) {
   const { items, search } = splitSearch(children);
   const searchProps = React.isValidElement<TabBarSearchProps>(search[0])
     ? search[0].props
@@ -606,7 +626,7 @@ export function TabBar({ glass, className, children, ...props }: TabBarProps) {
               to `backdrop-filter`: isolation does not make an element a backdrop
               root in Chromium, so the pill still reaches the page. */}
           <BaseTabs.List className="relative isolate flex items-stretch">
-            <Pill ref={pill} height={ITEM_H} />
+            <Pill ref={pill} height={ITEM_H} lens={lens} />
             {items}
           </BaseTabs.List>
         </LiquiGlass>
@@ -628,7 +648,7 @@ export function TabBar({ glass, className, children, ...props }: TabBarProps) {
                 triggerRef.current = node?.querySelector('button') ?? null;
               }}
             >
-              <Pill ref={searchPill} height={ITEM_H} />
+              <Pill ref={searchPill} height={ITEM_H} lens={lens} />
               {search}
             </div>
           </LiquiGlass>

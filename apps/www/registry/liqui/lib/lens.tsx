@@ -173,6 +173,69 @@ export interface LensMapOptions {
   surface: LensSurface;
   /** Device pixel ratio to render at. Clamp it yourself; 3 is plenty. */
   dpr: number;
+  /**
+   * Strength of the dome, 0–1: a convex cap across the *whole* lens, on top of
+   * the band. 0 keeps the classic window — the middle untouched, all the
+   * optics at the rim. Raised, the middle magnifies what is under it, which is
+   * what makes a small lens read as a drop of liquid rather than a framed
+   * pane. See `domeShift` for the shape.
+   */
+  curvature?: number;
+}
+
+/**
+ * Optical character of a control's lens, on top of its fixed profile — the
+ * two dials a component exposes through `lens={{ … }}`.
+ */
+export interface LensOptics {
+  /** Dome strength, 0–1. See `LensMapOptions.curvature`. */
+  curvature?: number;
+  /**
+   * Chromatic aberration, 0–1: red bends by `1 − dispersion` of the
+   * displacement and blue by `1 + dispersion`, so the rim splits into colour.
+   * Three displacement passes instead of one — cheap at thumb size, which is
+   * why it is a lens dial and not a surface one.
+   */
+  dispersion?: number;
+}
+
+/**
+ * A control's `lens` prop, resolved: `false` is no lens at all, `true` (or
+ * nothing) is the control's own optics, and an object overrides them a dial at
+ * a time.
+ */
+export function resolveLens(
+  lens: boolean | LensOptics | undefined,
+  defaults: Required<LensOptics>,
+): Required<LensOptics> | null {
+  if (lens === false) return null;
+  if (typeof lens !== 'object') return defaults;
+  return {
+    curvature: lens.curvature ?? defaults.curvature,
+    dispersion: lens.dispersion ?? defaults.dispersion,
+  };
+}
+
+/**
+ * Height of the spherical cap the dome is cut from, as a fraction of the lens
+ * half-extent. Fixed rather than a dial: it sets the *shape* of the dome (how
+ * fast magnification climbs toward the rim), and `curvature` sets how much of
+ * it there is. 0.6 keeps the middle a gentle, even zoom and saves the
+ * steepening for the outer third, where the band takes over anyway.
+ */
+const DOME_CAP = 0.6;
+const DOME_RADIUS = (1 + DOME_CAP * DOME_CAP) / (2 * DOME_CAP);
+const DOME_EDGE = 1 / Math.sqrt(DOME_RADIUS * DOME_RADIUS - 1);
+
+/**
+ * Inward shift of the dome at normalized position `u` (−1…1 across one axis),
+ * as a fraction of the lens's peak displacement — the slope of a spherical cap,
+ * u / √(R² − u²), normalized to 1 at the edge. Applied per axis, so a capsule
+ * magnifies most across its short side, as a real elongated drop does.
+ */
+function domeShift(u: number): number {
+  const a = Math.min(Math.abs(u), 1);
+  return (Math.sign(u) * (a / Math.sqrt(DOME_RADIUS * DOME_RADIUS - a * a))) / DOME_EDGE;
 }
 
 /**
@@ -189,8 +252,10 @@ export interface LensMapOptions {
  * gradient-built map would need.
  */
 export function buildLensMaps(options: LensMapOptions): LensMaps {
-  const { width, height, radius, bezel, surface, dpr } = options;
-  const key = `${surface.id}|${width}x${height}r${radius}b${bezel.toFixed(3)}@${dpr}`;
+  const { width, height, radius, bezel, surface, dpr, curvature = 0 } = options;
+  const key =
+    `${surface.id}|${width}x${height}r${radius}b${bezel.toFixed(3)}` +
+    `c${curvature.toFixed(3)}@${dpr}`;
   const hit = mapCache.get(key);
   if (hit) return hit;
 
@@ -211,6 +276,10 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
   const rSq = R * R;
   const outerSq = (R + 1) * (R + 1);
   const innerSq = (R - B) * (R - B);
+  const dome = Math.max(0, Math.min(1, curvature));
+  // Half-extents the dome is normalized against.
+  const halfW = W / 2;
+  const halfH = H / 2;
 
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
@@ -219,7 +288,10 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
       const lx = x < R ? x - R : x >= W - R ? x - R - innerW : 0;
       const ly = y < R ? y - R : y >= H - R ? y - R - innerH : 0;
       const sq = lx * lx + ly * ly;
-      if (sq > outerSq || sq < innerSq) continue;
+      if (sq > outerSq) continue;
+      const inBand = sq >= innerSq;
+      // Without a dome the interior stays at the neutral fill above.
+      if (!inBand && dome === 0) continue;
 
       const dist = Math.sqrt(sq) || 1e-6;
       const depth = R - dist;
@@ -229,12 +301,31 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
       // border-radius clip rather than stair-stepping against it.
       const aa = sq < rSq ? 1 : 1 - (dist - R);
 
+      // Outward shift, as a fraction of the peak: the band's profile along the
+      // edge normal, plus the dome along each axis. Summed as vectors and
+      // clamped, so near the rim — where the band already runs at full
+      // strength — the dome adds nothing it would have to fight for.
+      let sx = 0;
+      let sy = 0;
+      if (inBand) {
+        const mag = shift[Math.min(((depth / B) * PROFILE_SIZE) | 0, PROFILE_SIZE - 1)] ?? 0;
+        sx = nx * mag;
+        sy = ny * mag;
+      }
+      if (dome > 0) {
+        sx += dome * domeShift((x + 0.5 - halfW) / halfW);
+        sy += dome * domeShift((y + 0.5 - halfH) / halfH);
+      }
+      sx = Math.max(-1, Math.min(1, sx));
+      sy = Math.max(-1, Math.min(1, sy));
+
       const i = (y * W + x) * 4;
-      const mag = shift[Math.min(((depth / B) * PROFILE_SIZE) | 0, PROFILE_SIZE - 1)] ?? 0;
-      disp.data[i] = 128 - nx * mag * 127 * aa;
-      disp.data[i + 1] = 128 - ny * mag * 127 * aa;
+      disp.data[i] = 128 - sx * 127 * aa;
+      disp.data[i + 1] = 128 - sy * 127 * aa;
       disp.data[i + 2] = 0;
       disp.data[i + 3] = 255;
+
+      if (!inBand) continue;
 
       // The rim light: one axis of light, cos² around the outward normal, laid
       // on a hairline just inside the edge — not a broad arc over the band.
@@ -274,19 +365,42 @@ function toPng(image: ImageData): string {
 /* Filter                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Moves the lens's displacement scale without a render. With dispersion there
+ * are three passes, each at its own multiple of the scale, and a press spring
+ * has to move all of them in step — hence a handle rather than a ref to one
+ * `feDisplacementMap`.
+ */
+export interface LensScale {
+  set(scale: number): void;
+}
+
 export interface LensFilterProps {
   id: string;
   maps: LensMaps;
   /** The lens element's box, in CSS px — where the maps are laid down. */
   width: number;
   height: number;
-  /** `feDisplacementMap` scale for the first paint. Animate it via `scaleRef`. */
+  /** Displacement scale for the first paint. Animate it via `scaleRef`. */
   scale: number;
   blur: number;
   specularOpacity: number;
   specularSaturation: number;
-  scaleRef?: React.Ref<SVGFEDisplacementMapElement>;
+  /** Chromatic aberration, 0–1. See `LensOptics.dispersion`. */
+  dispersion?: number;
+  scaleRef?: React.Ref<LensScale>;
 }
+
+/** Multiple of the scale each displacement pass runs at, red-green-blue. */
+const passSpread = (dispersion: number) =>
+  dispersion > 0 ? [1 - dispersion, 1, 1 + dispersion] : [1];
+
+/** `feColorMatrix` rows keeping one channel (and alpha) of a pass. */
+const ISOLATE = {
+  r: '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0',
+  g: '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',
+  b: '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0',
+};
 
 /**
  * The chain, in order: soften the backdrop a hair so the displacement has no
@@ -302,6 +416,10 @@ export interface LensFilterProps {
  * plus 10%, and the optics need it: a profile with a concave stretch samples
  * outward, past the element's own edge, and a region pinned to the element
  * would have Chromium clamp those samples into a smeared ring.
+ *
+ * With `dispersion` the bend is three passes — red short of the scale, green
+ * on it, blue past it — each cut to its own channel and summed back, so the
+ * rim fringes the way a real lens edge does. Everything after reads the sum.
  */
 export function LensFilter({
   id,
@@ -312,23 +430,59 @@ export function LensFilter({
   blur,
   specularOpacity,
   specularSaturation,
+  dispersion = 0,
   scaleRef,
 }: LensFilterProps) {
+  const passes = React.useRef<(SVGFEDisplacementMapElement | null)[]>([]);
+  const spread = passSpread(dispersion);
+
+  React.useImperativeHandle(
+    scaleRef,
+    () => ({
+      set(next) {
+        passSpread(dispersion).forEach((k, i) =>
+          passes.current[i]?.setAttribute('scale', `${next * k}`),
+        );
+      },
+    }),
+    [dispersion],
+  );
+
+  const pass = (k: number, i: number, result: string) => (
+    <feDisplacementMap
+      key={result}
+      ref={(node) => {
+        passes.current[i] = node;
+      }}
+      in="softened"
+      in2="map"
+      scale={scale * k}
+      xChannelSelector="R"
+      yChannelSelector="G"
+      result={result}
+    />
+  );
+
   return (
     <svg aria-hidden className="pointer-events-none absolute size-0" focusable="false">
       <defs>
         <filter id={id} colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceGraphic" stdDeviation={blur} result="softened" />
           <feImage href={maps.displacement} x={0} y={0} width={width} height={height} result="map" />
-          <feDisplacementMap
-            ref={scaleRef}
-            in="softened"
-            in2="map"
-            scale={scale}
-            xChannelSelector="R"
-            yChannelSelector="G"
-            result="bent"
-          />
+          {dispersion > 0 ? (
+            <>
+              {pass(spread[0], 0, 'bentR')}
+              <feColorMatrix in="bentR" type="matrix" values={ISOLATE.r} result="onlyR" />
+              {pass(spread[1], 1, 'bentG')}
+              <feColorMatrix in="bentG" type="matrix" values={ISOLATE.g} result="onlyG" />
+              {pass(spread[2], 2, 'bentB')}
+              <feColorMatrix in="bentB" type="matrix" values={ISOLATE.b} result="onlyB" />
+              <feComposite in="onlyR" in2="onlyG" operator="arithmetic" k2={1} k3={1} result="rg" />
+              <feComposite in="rg" in2="onlyB" operator="arithmetic" k2={1} k3={1} result="bent" />
+            </>
+          ) : (
+            pass(1, 0, 'bent')
+          )}
           <feColorMatrix in="bent" type="saturate" values={`${specularSaturation}`} result="vivid" />
           <feImage href={maps.specular} x={0} y={0} width={width} height={height} result="rim" />
           <feComposite in="vivid" in2="rim" operator="in" result="colouredRim" />

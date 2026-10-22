@@ -9,9 +9,12 @@ import {
   CONVEX,
   LensFilter,
   lerp,
+  resolveLens,
   spring,
   supportsRefraction,
   type LensMaps,
+  type LensOptics,
+  type LensScale,
 } from '@/lib/lens';
 import { cn } from '@/lib/utils';
 
@@ -109,6 +112,17 @@ const PRESS_RATIO = 0.9;
 const BLUR = 0;
 const SPECULAR_OPACITY = 0.4;
 const SPECULAR_SATURATION = 7;
+
+/**
+ * The strongest dome of the three lens controls, because this is the one with
+ * something to magnify: the rail's own fill runs straight through the knob, and
+ * a dome swells it into the drop the knob is meant to be.
+ *
+ * Dispersion is a fraction of the displacement, and this lens displaces about
+ * four times as far as the switch's — so the same ~2px fringe is a quarter of
+ * the number. At 0.2 the fill's edge splits into a ten-pixel magenta band.
+ */
+const OPTICS: Required<LensOptics> = { curvature: 0.4, dispersion: 0.04 };
 
 const REST_FILL = 1;
 const PRESS_FILL = 0.1;
@@ -210,16 +224,23 @@ export interface SliderThumbProps extends BaseSlider.Thumb.Props {
    * thumb on a frosted panel is the panel's own tint: a flat wash with nothing
    * in it to bend. Without the lens the thumb takes its size from `className`,
    * so a panel can ask for a small knob.
+   *
+   * Pass an object to tune the lens instead — `{ curvature, dispersion }`,
+   * each 0–1, over this thumb's own optics.
    */
-  lens?: boolean;
+  lens?: boolean | LensOptics;
 }
 
 export function SliderThumb({ lens = true, className, style, ...props }: SliderThumbProps) {
+  const optics = resolveLens(lens, OPTICS);
+  const enabled = optics !== null;
+  const curvature = optics?.curvature ?? 0;
+  const dispersion = optics?.dispersion ?? 0;
   const filterId = `lq-slider-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
   const thumbRef = React.useRef<HTMLDivElement | null>(null);
   const lensRef = React.useRef<HTMLSpanElement | null>(null);
-  const scaleRef = React.useRef<SVGFEDisplacementMapElement | null>(null);
+  const scaleRef = React.useRef<LensScale | null>(null);
   const hasLens = React.useRef(false);
 
   const [maps, setMaps] = React.useState<LensMaps | null>(null);
@@ -228,7 +249,7 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
   // lens is invisible, so there is nothing to flash and no reason to make first
   // paint wait on two canvas renders and a pair of PNG encodes.
   React.useEffect(() => {
-    if (!lens || !supportsRefraction()) return;
+    if (!enabled || !supportsRefraction()) return;
     hasLens.current = true;
     setMaps(
       buildLensMaps({
@@ -237,10 +258,11 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
         radius: LENS_R,
         bezel: BEZEL,
         surface: CONVEX,
+        curvature,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [lens]);
+  }, [enabled, curvature]);
 
   /** Barely underdamped (ζ ≈ 0.89), so the grab has some life in it. */
   const press = React.useRef(spring(2000, 80)).current;
@@ -252,9 +274,7 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
       const floor = hasLens.current ? PRESS_FILL : PRESS_FILL_NO_LENS;
       lensRef.current.style.backgroundColor = `rgba(255,255,255,${lerp(REST_FILL, floor, t)})`;
     }
-    if (scaleRef.current) {
-      scaleRef.current.setAttribute('scale', `${PEAK * lerp(REST_RATIO, PRESS_RATIO, t)}`);
-    }
+    scaleRef.current?.set(PEAK * lerp(REST_RATIO, PRESS_RATIO, t));
   }, [press]);
 
   const paintRef = React.useRef(paint);
@@ -297,7 +317,7 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
   // input mid-interaction. With a lens the box is fixed — the map is baked for
   // exactly that size, so it is not a caller's to change — and only the
   // `backdropFilter` waits.
-  if (!lens) {
+  if (!enabled) {
     return (
       <BaseSlider.Thumb
         {...props}
@@ -341,6 +361,7 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
           blur={BLUR}
           specularOpacity={SPECULAR_OPACITY}
           specularSaturation={SPECULAR_SATURATION}
+          dispersion={dispersion}
           scaleRef={scaleRef}
         />
       )}
