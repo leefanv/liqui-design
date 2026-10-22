@@ -7,6 +7,12 @@ const resolve = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      // The lens acceptance page is a second entry, kept off the desktop demo.
+      input: { main: resolve('./index.html'), lens: resolve('./lens.html') },
+    },
+  },
   resolve: {
     // Array form (not object) because a string alias matches as a prefix, which
     // would rewrite `@liqui-design/glass/tokens.css` into `…/index.ts/tokens.css`.

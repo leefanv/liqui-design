@@ -9,9 +9,12 @@ import {
   LensFilter,
   LIP,
   lerp,
+  resolveLens,
   spring,
   supportsRefraction,
   type LensMaps,
+  type LensOptics,
+  type LensScale,
 } from '@/lib/lens';
 import { cn } from '@/lib/utils';
 
@@ -103,6 +106,16 @@ const BLUR = 0.2 * K;
 const SPECULAR_OPACITY = 0.5;
 const SPECULAR_SATURATION = 6;
 
+/**
+ * A light dome under the lip, and a faint fringe. The lip's inner bowl still
+ * reads zoomed *out* across most of the window; the dome just keeps the very
+ * middle from going dead, so the thumb reads as a drop of liquid rather than
+ * a ring around a hole. Kept low because the track behind it is a flat fill —
+ * there is little to magnify, and a strong dome only magnifies the rim of the
+ * track into a smear.
+ */
+const OPTICS: Required<LensOptics> = { curvature: 0.3, dispersion: 0.15 };
+
 /* Press response. */
 const REST_FILL = 1;
 const PRESS_FILL = 0.1;
@@ -135,17 +148,24 @@ export interface SwitchProps extends BaseSwitch.Root.Props {
    * switch on a frosted panel is the panel's own tint: a flat wash with
    * nothing in it to bend. The filter runs, the maps decode, and the result is
    * indistinguishable from not having done any of it.
+   *
+   * Pass an object to tune the lens instead — `{ curvature, dispersion }`,
+   * each 0–1, over this switch's own optics.
    */
-  lens?: boolean;
+  lens?: boolean | LensOptics;
 }
 
 export function Switch({ className, lens = true, onPointerDown, ...props }: SwitchProps) {
+  const optics = resolveLens(lens, OPTICS);
+  const enabled = optics !== null;
+  const curvature = optics?.curvature ?? 0;
+  const dispersion = optics?.dispersion ?? 0;
   const filterId = `lq-switch-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
   const rootRef = React.useRef<HTMLSpanElement | null>(null);
   const thumbRef = React.useRef<HTMLSpanElement | null>(null);
   const accentRef = React.useRef<HTMLSpanElement | null>(null);
-  const scaleRef = React.useRef<SVGFEDisplacementMapElement | null>(null);
+  const scaleRef = React.useRef<LensScale | null>(null);
   const hasLens = React.useRef(false);
 
   const [maps, setMaps] = React.useState<LensMaps | null>(null);
@@ -156,7 +176,7 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
   // the lens is invisible, so there is nothing to flash and no reason to make
   // first paint wait on two canvas renders and a pair of PNG encodes.
   React.useEffect(() => {
-    if (!lens || !supportsRefraction()) return;
+    if (!enabled || !supportsRefraction()) return;
     hasLens.current = true;
     setMaps(
       buildLensMaps({
@@ -165,10 +185,11 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
         radius: THUMB_R,
         bezel: BEZEL,
         surface: LIP,
+        curvature,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [lens]);
+  }, [enabled, curvature]);
 
   const engine = React.useRef({
     /** Thumb position, 0…1. Overdamped (ζ ≈ 1.27): arrives, never overshoots. */
@@ -198,12 +219,7 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
       thumb.style.boxShadow = engine.dragging ? SHADOW_DRAGGING : SHADOW;
     }
     if (accentRef.current) accentRef.current.style.opacity = `${tint.value}`;
-    if (scaleRef.current) {
-      scaleRef.current.setAttribute(
-        'scale',
-        `${PEAK * lerp(REST_RATIO, PRESS_RATIO, press.value)}`,
-      );
-    }
+    scaleRef.current?.set(PEAK * lerp(REST_RATIO, PRESS_RATIO, press.value));
   }, [engine]);
 
   // Indirected through a ref so the loop, which is built once, never holds a
@@ -372,6 +388,7 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
           blur={BLUR}
           specularOpacity={SPECULAR_OPACITY}
           specularSaturation={SPECULAR_SATURATION}
+          dispersion={dispersion}
           scaleRef={scaleRef}
         />
       )}
