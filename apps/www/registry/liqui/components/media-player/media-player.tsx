@@ -115,7 +115,15 @@ export default function MediaPlayer() {
   // on the library's default blue, which looks like a bug because it is one.
   // A real app's accent is a property of the page, so this writes it there and
   // puts back whatever it found on the way out.
+  //
+  // Except inside an `inert` ancestor — a miniature on a page about something
+  // else, like the templates index or the home page. Nothing in there can open
+  // a popup, so the reason above does not apply, and writing the document's
+  // accent from a thumbnail recolours every control on the host page. The
+  // inline style on the root below still tints the miniature itself.
+  const rootRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
+    if (rootRef.current?.closest('[inert]')) return;
     const root = document.documentElement;
     const previous = root.style.getPropertyValue('--lq-accent');
     root.style.setProperty('--lq-accent', track.palette.accent);
@@ -136,6 +144,7 @@ export default function MediaPlayer() {
   return (
     <TooltipProvider>
       <div
+        ref={rootRef}
         // `dark`, not `data-theme="dark"`. Both work in this repo, but the CLI
         // writes the dark token set under `.dark` in a consumer's stylesheet —
         // so a template shipped with `data-theme` would look right here and
