@@ -46,7 +46,13 @@ export function ToggleGroup({ glass, className, children, ...props }: ToggleGrou
             {...glass}
             // `data-orientation` lands on the root, not on the wrapper the
             // toggles actually sit in, so the wrapper reads it off the group.
-            contentClassName="flex gap-0.5 rounded-[inherit] p-[3px] group-data-[orientation=vertical]:flex-col"
+            // Merged rather than replaced: a caller stretching the strip to a
+            // row (`w-full`) needs the wrapper to stretch with it, or the
+            // toggles bunch up at the start of a wide empty capsule.
+            contentClassName={cn(
+              'flex gap-0.5 rounded-[inherit] p-[3px] group-data-[orientation=vertical]:flex-col',
+              glass?.contentClassName,
+            )}
           />
         }
       >

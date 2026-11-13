@@ -67,6 +67,15 @@ test.describe('no console errors', () => {
       page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
       page.on('pageerror', (e) => errors.push(String(e)));
 
+      // The header's star count is fetched from the GitHub API in the browser,
+      // which rate-limits by IP. A suite that loads two dozen pages runs into
+      // that limit, and the 403 reaches the console as an error this test
+      // cannot tell from a real one. Answered locally, so the check is about
+      // the page and not about how busy GitHub is.
+      await page.route('https://api.github.com/**', (route) =>
+        route.fulfill({ json: { stargazers_count: 0 } }),
+      );
+
       await page.goto(path);
       await waitForGlass(page);
 

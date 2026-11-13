@@ -23,6 +23,14 @@
    no Tailwind present the layer is created here and any unlayered consumer CSS
    beats it — which is what a default should do. The structural rules below stay
    unlayered: nothing outside should be overriding the surface anatomy. */
+/* Set inline by LiquiGlass on capsules and discs (see `capsule` there).
+   Registered as non-inheriting so a surface nested inside a capsule does not
+   pick up its round corners — it falls back to the squircle below. */
+@property --lq-corner-shape {
+  syntax: '*';
+  inherits: false;
+}
+
 @layer base {
   .liqui-glass {
     position: relative;
@@ -31,10 +39,11 @@
     /* Continuous corners (superellipse |x|⁴+|y|⁴=r⁴) where supported —
        Chromium 139+. The displacement map and the baked lighting are
        generated on the same curve (see surfaceField in LiquiGlass.tsx), so
-       optics and clip agree at the corners. Browsers without the property
-       ignore the declaration and keep round corners — they are on the frost
-       tier, which uses no generated map. */
-    corner-shape: squircle;
+       optics and clip agree at the corners. Capsules and discs override it
+       with `round` — a superellipse cannot close into a semicircle. Browsers
+       without the property ignore the declaration and keep round corners —
+       they are on the frost tier, which uses no generated map. */
+    corner-shape: var(--lq-corner-shape, squircle);
     color: var(--lq-text, inherit);
   }
 }
