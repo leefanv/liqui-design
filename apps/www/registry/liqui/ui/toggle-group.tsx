@@ -22,8 +22,15 @@ import { ToggleOwnsSurface } from '@/registry/liqui/ui/toggle';
  * context, so a toggle behaves correctly by being in the right place.
  */
 
+/**
+ * `radius: 18` is half the strip's height, which makes a one-row strip a
+ * capsule — round ends, the segmented-control shape. At 14 it was neither: the
+ * squircle inflation took it past half the height, the browser clamped it, and
+ * the ends came out as flattened bulges around toggles drawn with ordinary
+ * round corners.
+ */
 const GROUP_GLASS = {
-  radius: 14,
+  radius: 18,
   blur: 1,
   refraction: 60,
   bezel: 13,
@@ -38,6 +45,7 @@ export function ToggleGroup({ glass, className, children, ...props }: ToggleGrou
   return (
     <ToggleOwnsSurface.Provider value={false}>
       <BaseToggleGroup
+        data-slot="toggle-group"
         {...props}
         className={cn('group inline-flex', className)}
         render={
@@ -50,7 +58,7 @@ export function ToggleGroup({ glass, className, children, ...props }: ToggleGrou
             // row (`w-full`) needs the wrapper to stretch with it, or the
             // toggles bunch up at the start of a wide empty capsule.
             contentClassName={cn(
-              'flex gap-0.5 rounded-[inherit] p-[3px] group-data-[orientation=vertical]:flex-col',
+              'flex gap-0.5 rounded-[inherit] [corner-shape:inherit] p-[3px] group-data-[orientation=vertical]:flex-col',
               glass?.contentClassName,
             )}
           />

@@ -261,3 +261,105 @@ test.describe('install command tracking', () => {
     expect(await events()).toHaveLength(before);
   });
 });
+
+test.describe('the theme panel', () => {
+  // The editor docks beside any page: the page makes room rather than being
+  // covered, and it is mounted in the root layout so it outlives a navigation.
+  // Each of those is one rule away from regressing silently — a panel laid
+  // over the page still looks fine in a screenshot, it just hides the column
+  // you were reading.
+  test('docks beside a docs page, makes room, and survives navigation', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({ json: { stargazers_count: 0 } }),
+    );
+
+    await page.goto('/docs/components/button');
+    await waitForGlass(page);
+
+    const trigger = page.locator('#nd-subnav').getByRole('button', { name: 'Theme' });
+    const panel = page.getByRole('complementary', { name: 'Theme settings' });
+    // Retried: a click before hydration does nothing.
+    await expect(async () => {
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true', { timeout: 1000 });
+    }).toPass();
+    await expect(panel).toBeVisible();
+
+    // The panel is a lazy chunk; its first preset button is proof it arrived.
+    await expect(panel.getByRole('button', { name: 'Prism' })).toBeVisible();
+
+    // Docked: the article ends where the panel begins, it does not run under it.
+    const panelBox = await panel.boundingBox();
+    const articleBox = await page.locator('#nd-page').boundingBox();
+    expect(articleBox!.x + articleBox!.width).toBeLessThanOrEqual(panelBox!.x + 1);
+
+    // Mounted above the route: still out on the next page.
+    await page.locator('#nd-sidebar').getByRole('link', { name: 'Checkbox', exact: true }).click();
+    await expect(page).toHaveURL(/\/docs\/components\/checkbox$/);
+    await expect(panel).toBeVisible();
+
+    expect(errors.filter((e) => !/favicon|404/i.test(e))).toEqual([]);
+  });
+});
+
+test.describe('the sponsored slot', () => {
+  // A partner link that loses its referral id, its `sponsored` rel or its
+  // events still looks exactly right — the only place it shows is the
+  // commission report a month later. So all three are asserted directly.
+  test('carries the referral link, and reports its impression and click', async ({
+    page,
+    context,
+  }) => {
+    await page.route('**://*.googletagmanager.com/**', (route) => route.abort());
+    // The click opens Mobbin in a new tab; nothing here should reach it.
+    await context.route('https://mobbin.com/**', (route) => route.abort());
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({ json: { stargazers_count: 0 } }),
+    );
+
+    const events = (name: string) =>
+      page.evaluate(
+        (name) =>
+          ((window as { dataLayer?: ArrayLike<unknown>[] }).dataLayer ?? [])
+            .map((entry) => Array.from(entry))
+            .filter((args) => args[0] === 'event' && args[1] === name),
+        name,
+      );
+
+    await page.goto('/docs/components/button');
+    const card = page.locator('a[data-sponsor="mobbin"]');
+    await expect(card).toHaveAttribute('href', 'https://mobbin.com/?via=liqui-design');
+    await expect(card).toHaveAttribute('rel', /\bsponsored\b/);
+    await expect(card).toContainText('Sponsored');
+
+    const docPage = '/docs/components/button';
+    await expect(async () => {
+      expect(await events('affiliate_impression')).toContainEqual([
+        'event',
+        'affiliate_impression',
+        { program: 'Mobbin', placement: 'docs_toc', creative: 'loop-light', doc_page: docPage },
+      ]);
+    }).toPass();
+    // Once per page, not once per frame it stays on screen.
+    expect(await events('affiliate_impression')).toHaveLength(1);
+
+    const popup = page.waitForEvent('popup');
+    await card.click();
+    await popup;
+    expect(await events('affiliate_click')).toContainEqual([
+      'event',
+      'affiliate_click',
+      {
+        program: 'Mobbin',
+        placement: 'docs_toc',
+        creative: 'loop-light',
+        doc_page: docPage,
+        value: 0.35,
+        currency: 'USD',
+      },
+    ]);
+  });
+});

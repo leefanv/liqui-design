@@ -3,6 +3,9 @@ export {
   type LiquiGlassProps,
   type GlassMaterial,
   type GlassProfile,
+  type GlassFinish,
+  type GlassLighting,
+  FINISH_LIGHTING,
 } from './LiquiGlass';
 export { ensureFilter, prewarmImage } from './filterRegistry';
 export {
@@ -12,6 +15,7 @@ export {
   themeCss,
   defaultTheme,
   defaultGlassTheme,
+  prismGlassTheme,
   defaultTokens,
   LIQUI_TOKENS,
   DARK_SELECTOR,

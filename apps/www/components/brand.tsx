@@ -17,7 +17,9 @@ export function Brand() {
   return (
     <>
       <Image src={logoMark} alt="" width={24} height={24} className="size-6" priority />
-      {brandName}
+      {/* Never wraps: beside the docked theme panel the header is narrow,
+          and the search field is what should give way, not the name. */}
+      <span className="whitespace-nowrap">{brandName}</span>
     </>
   );
 }

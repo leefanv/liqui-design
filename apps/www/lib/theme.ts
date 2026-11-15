@@ -1,8 +1,12 @@
 import {
   defaultGlassTheme,
   defaultTokens,
+  FINISH_LIGHTING,
   LIQUI_TOKENS,
+  prismGlassTheme,
   themeCss,
+  type GlassFinish,
+  type GlassLighting,
   type LiquiGlassTheme,
   type LiquiTheme,
   type LiquiTokenName,
@@ -333,6 +337,59 @@ export const GLASS_SCALES: GlassDialSpec[] = [
   { key: 'blurScale', label: 'Blur', min: 0, max: 6, step: 0.1, unit: '×', scale: true },
 ];
 
+/**
+ * The lighting dials. Optional on the theme: unset, each follows the finish,
+ * which is what lets `finish` alone switch the whole look. The editor shows
+ * the resolved value (`resolveLighting`) and writes an explicit one.
+ */
+export const LIGHTING_KEYS = Object.keys(FINISH_LIGHTING.classic) as (keyof GlassLighting)[];
+
+export const GLASS_LIGHTING: GlassDialSpec[] = [
+  {
+    key: 'lightAngle',
+    label: 'Light angle',
+    hint: 'clockwise from above',
+    min: -90,
+    max: 90,
+    step: 1,
+    unit: '°',
+  },
+  { key: 'edgeShade', label: 'Edge shade', hint: 'the side away from the light', min: 0, max: 1, step: 0.02 },
+  { key: 'hairline', label: 'Hairline', hint: 'outline round the whole edge', min: 0, max: 1, step: 0.05 },
+  {
+    key: 'brightness',
+    label: 'Brightness',
+    hint: 'pushed through the glass',
+    min: 0.8,
+    max: 1.5,
+    step: 0.02,
+    unit: '×',
+  },
+  { key: 'tintFloor', label: 'Tint floor', hint: 'tint left at frost 0', min: 0, max: 0.5, step: 0.01 },
+];
+
+/** A lighting dial as the surfaces see it: the theme's own value, else the finish's. */
+export function resolveLighting(glass: LiquiGlassTheme, key: keyof GlassLighting): number {
+  return glass[key] ?? FINISH_LIGHTING[glass.finish][key];
+}
+
+/**
+ * Switches the finish and lets go of every lighting dial with it. A finish is
+ * a light model plus its own defaults for these; carrying classic's angle and
+ * shade into prism would show neither.
+ */
+export function withFinish(glass: LiquiGlassTheme, finish: GlassFinish): LiquiGlassTheme {
+  const next = { ...glass, finish };
+  for (const key of LIGHTING_KEYS) delete next[key];
+  return next;
+}
+
+/** Every key a glass theme can carry — the shipped ones plus the optional lighting. */
+const GLASS_KEYS = [
+  ...(Object.keys(defaultGlassTheme) as (keyof LiquiGlassTheme)[]),
+  ...LIGHTING_KEYS,
+];
+
 /* -------------------------------------------------------------------------- */
 /* Presets                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -353,6 +410,13 @@ export const PRESETS: ThemePreset[] = [
     description: 'The shipped defaults.',
     swatch: ['#2f6bff', '#e8ecf5', '#1e202e'],
     patch: {},
+  },
+  {
+    id: 'prism',
+    name: 'Prism',
+    description: 'Cut, clear glass under one light from the top left — glass type, as a surface.',
+    swatch: ['#2f6bff', '#fbfbfd', '#15161d'],
+    patch: { glass: diffGlass(prismGlassTheme) },
   },
   {
     id: 'arctic',
@@ -486,18 +550,24 @@ export function applyPatch(patch: ThemePatch): LiquiTheme {
   };
 }
 
+/** The glass dials that differ from the shipped theme. */
+function diffGlass(glass: LiquiGlassTheme): Partial<LiquiGlassTheme> {
+  const out: Partial<LiquiGlassTheme> = {};
+  for (const key of GLASS_KEYS) {
+    if (glass[key] !== defaultGlassTheme[key]) {
+      // Narrowing a union of value types through a generic key needs the cast;
+      // the read above already proved the types line up.
+      (out as Record<string, unknown>)[key] = glass[key];
+    }
+  }
+  return out;
+}
+
 /** Only what the user actually moved — what gets stored, shared and exported. */
 export function diffTheme(theme: LiquiTheme): ThemePatch {
   const patch: ThemePatch = {};
 
-  const glass: Partial<LiquiGlassTheme> = {};
-  for (const key of Object.keys(defaultGlassTheme) as (keyof LiquiGlassTheme)[]) {
-    if (theme.glass[key] !== defaultGlassTheme[key]) {
-      // Narrowing a union of value types through a generic key needs the cast;
-      // the read above already proved the types line up.
-      (glass as Record<string, unknown>)[key] = theme.glass[key];
-    }
-  }
+  const glass = diffGlass(theme.glass);
   if (Object.keys(glass).length) patch.glass = glass;
 
   for (const mode of ['light', 'dark'] as const) {
@@ -556,10 +626,16 @@ export function sanitisePatch(patch: ThemePatch | null | undefined): ThemePatch 
   if (patch.glass && typeof patch.glass === 'object') {
     const glass: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(patch.glass)) {
-      if (!(key in defaultGlassTheme)) continue;
-      const shipped = defaultGlassTheme[key as keyof LiquiGlassTheme];
+      if (!GLASS_KEYS.includes(key as keyof LiquiGlassTheme)) continue;
+      // The lighting dials have no shipped value — unset is "follow the
+      // finish" — so they are typed by what they would hold, a number.
+      const shipped = defaultGlassTheme[key as keyof LiquiGlassTheme] ?? 0;
       if (typeof shipped === 'number' && typeof value === 'number' && Number.isFinite(value)) {
         glass[key] = value;
+      } else if (key === 'finish') {
+        // A finish names a light model; one this build doesn't know would be
+        // looked up and crash, where an unknown material merely falls through.
+        if (typeof value === 'string' && value in FINISH_LIGHTING) glass[key] = value;
       } else if (typeof shipped === 'string' && typeof value === 'string') {
         glass[key] = value;
       }

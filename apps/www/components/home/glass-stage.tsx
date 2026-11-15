@@ -1,20 +1,28 @@
 'use client';
 
 import * as React from 'react';
-import { LiquiGlass } from '@liqui-design/glass';
+import {
+  defaultGlassTheme,
+  LiquiGlass,
+  LiquiThemeProvider,
+  type LiquiGlassTheme,
+} from '@liqui-design/glass';
 
 import { Backdrop, BACKDROPS, type BackdropId } from '@/components/home/backdrops';
 import { CONTROL_CENTER_WIDTH, ControlCenter } from '@/components/home/control-center';
 import {
   ControlGroup,
-  DEFAULT_OPTICS,
   GlassControls,
+  opticsFromTheme,
+  opticsToTheme,
   PanelActions,
   Segmented,
   sameOptics,
   shuffleOptics,
+  withoutThemeScales,
   type GlassOptics,
 } from '@/components/glass-controls';
+import { useSiteTheme } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 import {
   ScrollArea,
@@ -23,6 +31,7 @@ import {
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from '@/registry/liqui/ui/scroll-area';
+import { Separator } from '@/registry/liqui/ui/separator';
 
 /**
  * The home page's argument, made by letting you move the glass rather than by
@@ -37,15 +46,11 @@ import {
  */
 
 /**
- * The optics panel's own surface, and deliberately *not* the dials the panel is
- * setting. The playground lets its panel wear the live optics, because there
- * the whole page is the demo; here there is one group under test and the
- * panel is the instrument reading it. A panel that went `material: 'clear'`
- * along with the modules would be a control you had just made harder to see.
- *
- * `frost: 0.6` is Tooltip's argument: this is small text with no container of
- * its own, standing on a photograph, and legibility cannot be left to whatever
- * the wallpaper happens to be doing behind it.
+ * The optics panel's own surface: its geometry, and nothing else. The panel
+ * stands under the optics it is setting (see the provider around it below),
+ * so finish, lighting, frost, dispersion and the multipliers all reach it and
+ * every control on it — move a dial and the instrument changes with the
+ * modules. Only the shape is the panel's own, scaled like any component's.
  */
 const PANEL_GLASS = {
   elevated: true,
@@ -53,7 +58,6 @@ const PANEL_GLASS = {
   blur: 1,
   refraction: 110,
   bezel: 22,
-  frost: 0.6,
 } as const;
 
 /**
@@ -64,27 +68,60 @@ const PANEL_GLASS = {
  */
 function TitleBar({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-[7px] border-b border-[color-mix(in_srgb,var(--lq-text)_10%,transparent)] px-3.5 py-2.5">
-      <span aria-hidden className="size-[11px] rounded-full bg-[#ff5f57]" />
-      <span aria-hidden className="size-[11px] rounded-full bg-[#febc2e]" />
-      <span aria-hidden className="size-[11px] rounded-full bg-[#28c840]" />
-      <span className="ml-2 text-[12.5px] font-semibold text-[var(--lq-text-dim)]">{title}</span>
+    <div className="flex flex-col">
+      <div className="flex items-center gap-[7px] px-3.5 py-2.5">
+        <span aria-hidden className="size-[11px] rounded-full bg-[#ff5f57]" />
+        <span aria-hidden className="size-[11px] rounded-full bg-[#febc2e]" />
+        <span aria-hidden className="size-[11px] rounded-full bg-[#28c840]" />
+        <span className="ml-2 text-[12.5px] font-semibold text-[var(--lq-text-dim)]">{title}</span>
+      </div>
+      <Separator />
     </div>
   );
 }
 
 /**
- * Where the stage starts, and where Reset takes it back to. The shared
- * defaults with the frost turned up: the system's control center blurs what
- * is behind its modules heavily — the white type on them depends on it — and a
- * panel that opened on clearer glass than the thing it imitates would be
- * starting from the wrong picture.
+ * Where the stage starts, and where Reset takes it back to: whatever the site
+ * theme is wearing, read into the panel's units. A theme made on /theme lands
+ * here too — a prism theme opens the stage on prism, its own frost and bend.
+ *
+ * Except where the theme leaves a dial on the shipped value. There the stage
+ * keeps its own: the system's control center blurs what is behind its modules
+ * heavily — the white type on them depends on it — and a panel that opened on
+ * clearer glass than the thing it imitates would be starting from the wrong
+ * picture. A theme that does set one of these has said what it wants, and
+ * gets it.
  */
-const STAGE_OPTICS: GlassOptics = { ...DEFAULT_OPTICS, frost: 0.5, blur: 2, specular: 0.85 };
+function stageOptics(theme: LiquiGlassTheme): GlassOptics {
+  const optics = opticsFromTheme(theme);
+  if (theme.frost === defaultGlassTheme.frost) optics.frost = 0.5;
+  if (theme.specular === defaultGlassTheme.specular) optics.specular = 0.85;
+  if (theme.blurScale === defaultGlassTheme.blurScale) optics.blur = 2;
+  return optics;
+}
 
 export function GlassStage() {
+  const { theme } = useSiteTheme();
+  const base = React.useMemo(() => stageOptics(theme.glass), [theme.glass]);
   const [backdrop, setBackdrop] = React.useState<BackdropId>('wallpaper');
-  const [optics, setOptics] = React.useState<GlassOptics>(STAGE_OPTICS);
+  const [optics, setOptics] = React.useState<GlassOptics>(base);
+  // The stored theme is read after hydration, and the site theme can change
+  // under the stage; either way the panel follows it. Dials moved here are a
+  // look at the stage, not an edit to the theme, so they give way.
+  React.useEffect(() => {
+    setOptics((current) => (sameOptics(current, base) ? current : base));
+  }, [base]);
+  // The panel reads what renders, theme multipliers included; the surfaces
+  // are under that same theme and multiply again, so they get it divided out.
+  const own = React.useMemo(() => withoutThemeScales(optics, theme.glass), [optics, theme.glass]);
+  // The panel wears what it is setting. The readings are absolute — site
+  // multipliers already in them — so this replaces the site's glass theme
+  // under the panel rather than stacking on it; only the corner multiplier,
+  // which the panel has no dial for, is carried over.
+  const panelTheme = React.useMemo(
+    () => ({ glass: { ...opticsToTheme(optics), radiusScale: theme.glass.radiusScale } }),
+    [optics, theme.glass.radiusScale],
+  );
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
 
@@ -154,10 +191,10 @@ export function GlassStage() {
         style={{ width: CONTROL_CENTER_WIDTH, transform: `translate(${pos.x}px, ${pos.y}px)` }}
       >
         <LiquiGlass
-          {...optics}
+          {...own}
           radius={14}
-          refraction={optics.refraction * 0.2}
-          bezel={Math.max(4, optics.bezel * 0.25)}
+          refraction={own.refraction * 0.2}
+          bezel={Math.max(4, own.bezel * 0.25)}
           className="select-none"
           contentClassName="rounded-[inherit]"
         >
@@ -182,7 +219,7 @@ export function GlassStage() {
             drag me over an edge
           </div>
         </LiquiGlass>
-        <ControlCenter optics={optics} />
+        <ControlCenter optics={own} />
       </div>
 
       {/* Controls */}
@@ -201,6 +238,7 @@ export function GlassStage() {
             the title bar leaves — the stage's own height is the definite one.
             On a phone, where the panel spans the full width under the
             surface, it keeps a fixed height instead. */}
+        <LiquiThemeProvider theme={panelTheme} injectTokens={false}>
         <LiquiGlass
           {...PANEL_GLASS}
           className="sm:h-full"
@@ -208,7 +246,11 @@ export function GlassStage() {
         >
           <TitleBar title="Optics" />
           <ScrollArea className="h-60 sm:h-auto sm:min-h-0 sm:flex-1">
-            <ScrollAreaViewport>
+            {/* No edge fade: a mask makes the viewport a backdrop root, and
+                every lens in it — slider thumbs, toggle strips — would sample
+                the transparent scroll content instead of the panel and the
+                page, and draw dark. */}
+            <ScrollAreaViewport className="[mask-image:none]">
               <ScrollAreaContent className="flex flex-col gap-5 px-4 pt-3.5 pb-4">
                 {/* Which picture is behind the glass. Not an optic, so it is
                     the stage's group rather than the shared panel's — the
@@ -231,20 +273,19 @@ export function GlassStage() {
               </ScrollAreaContent>
             </ScrollAreaViewport>
             <ScrollAreaScrollbar>
-              {/* On a panel, so the thumb has the panel's tint behind it rather
-                  than the page — see the Scroll Area page. */}
-              <ScrollAreaThumb glass={{ material: 'clear' }} />
+              <ScrollAreaThumb />
             </ScrollAreaScrollbar>
           </ScrollArea>
           <PanelActions
             onShuffle={() => setOptics(shuffleOptics(optics))}
-            dirty={!sameOptics(optics, STAGE_OPTICS) || pos.x !== 0 || pos.y !== 0}
+            dirty={!sameOptics(optics, base) || pos.x !== 0 || pos.y !== 0}
             onReset={() => {
-              setOptics(STAGE_OPTICS);
+              setOptics(base);
               setPos({ x: 0, y: 0 });
             }}
           />
         </LiquiGlass>
+        </LiquiThemeProvider>
       </div>
     </div>
   );

@@ -96,3 +96,47 @@ export function trackThemePresetApplied(preset: string): void {
   if (process.env.NODE_ENV !== 'production') return;
   sendGAEvent('event', 'theme_preset_applied', { preset });
 }
+
+/**
+ * The sponsored slot under the docs' table of contents.
+ *
+ * Two events, so the slot has a click-through rate rather than a bare click
+ * count: `affiliate_impression` when the card is at least half on screen —
+ * once per page, however often it scrolls in and out — and `affiliate_click`
+ * when someone follows it. The names and parameters match the
+ * liquid-notion-home gallery's, so the same reports read both properties.
+ *
+ * `value` and `currency` ride on the click only: GA sums them as event value,
+ * which is what makes the click count read as estimated revenue once the event
+ * is marked a key event. `program`, `placement`, `creative` and `doc_page` are
+ * custom parameters — register them under Admin → Custom definitions to split
+ * reports by them. (Not `source` or `medium`: those are gtag's attribution
+ * keys.)
+ */
+export type SponsorEvent = {
+  program: string;
+  placement: string;
+  creative: string;
+  /** The docs path the slot was on — which pages earn their keep. */
+  docPage: string;
+};
+
+export function trackSponsorImpression({ program, placement, creative, docPage }: SponsorEvent): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  sendGAEvent('event', 'affiliate_impression', { program, placement, creative, doc_page: docPage });
+}
+
+export function trackSponsorClick(
+  { program, placement, creative, docPage }: SponsorEvent,
+  value: number,
+): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  sendGAEvent('event', 'affiliate_click', {
+    program,
+    placement,
+    creative,
+    doc_page: docPage,
+    value,
+    currency: 'USD',
+  });
+}

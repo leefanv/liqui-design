@@ -11,6 +11,7 @@ import {
   LIP,
   lerp,
   resolveLens,
+  useLensLight,
   spring,
   supportsRefraction,
   type LensMaps,
@@ -184,6 +185,7 @@ const Pill = React.forwardRef<PillHandle, PillProps>(function Pill(
   const enabled = optics !== null;
   const curvature = optics?.curvature ?? 0;
   const dispersion = optics?.dispersion ?? 0;
+  const lightAngle = useLensLight();
   const filterId = `lq-tabpill-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const elementRef = React.useRef<HTMLSpanElement | null>(null);
   const scaleRef = React.useRef<LensScale | null>(null);
@@ -271,10 +273,11 @@ const Pill = React.forwardRef<PillHandle, PillProps>(function Pill(
         bezel: PILL_BEZEL * (height / 2),
         surface: LIP,
         curvature,
+        lightAngle,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [curvature, enabled, height, width]);
+  }, [curvature, enabled, height, lightAngle, width]);
 
   React.useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');

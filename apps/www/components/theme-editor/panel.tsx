@@ -1,18 +1,28 @@
 'use client';
 
 import * as React from 'react';
-import type { GlassMaterial, GlassProfile, LiquiTheme, LiquiTokens } from '@liqui-design/glass';
+import type {
+  GlassFinish,
+  GlassLighting,
+  GlassMaterial,
+  GlassProfile,
+  LiquiTheme,
+  LiquiTokens,
+} from '@liqui-design/glass';
 import { LIQUI_TOKENS } from '@liqui-design/glass';
 
+import { Check, Download, RotateCcw } from 'lucide-react';
+
 import {
-  ActionButton,
-  CopyButton,
+  Checkbox,
+  PlainButton,
   Row,
   Section,
   SegmentedControl,
   Select,
   Slider,
   Swatch,
+  TextField,
 } from '@/components/theme-editor/controls';
 import { useSiteTheme } from '@/components/theme-provider';
 import {
@@ -27,11 +37,14 @@ import {
   exportCss,
   exportProvider,
   GLASS_ABSOLUTE,
+  GLASS_LIGHTING,
   GLASS_SCALES,
   isDefaultTheme,
   PRESETS,
+  resolveLighting,
   toDarkVariant,
   toLightVariant,
+  withFinish,
   type ColorKnob,
   type ColorMode,
   type RangeKnob,
@@ -40,7 +53,10 @@ import { cn } from '@/lib/utils';
 
 /**
  * The dials. Everything they touch is already live everywhere — the theme lives
- * at the root provider, so the docs behind this page are wearing it too.
+ * at the root provider, so whatever page is behind the panel is wearing it too.
+ * Hosted twice: on /theme beside a fixed preview, and in the panel docked
+ * beside any page. Reset and export are not in here but in
+ * `ThemeEditorFooter`, so each host can pin them under its scroll.
  */
 export function ThemeEditorPanel({
   mode,
@@ -49,7 +65,7 @@ export function ThemeEditorPanel({
   mode: ColorMode;
   onModeChange: (next: ColorMode) => void;
 }) {
-  const { theme, setTheme, reset } = useSiteTheme();
+  const { theme, setTheme } = useSiteTheme();
   const [linkModes, setLinkModes] = React.useState(true);
   const [advanced, setAdvanced] = React.useState(false);
 
@@ -80,12 +96,8 @@ export function ThemeEditorPanel({
   const setGlass = (key: string, value: number | string) =>
     setTheme({ ...theme, glass: { ...theme.glass, [key]: value } });
 
-  const css = exportCss(theme);
-  const provider = exportProvider(theme);
-  const untouched = isDefaultTheme(theme);
-
   return (
-    <div className="flex flex-col rounded-xl border border-fd-border bg-fd-card">
+    <div className="flex flex-col text-fd-foreground">
       <Section title="Presets">
         <div className="grid grid-cols-2 gap-1.5">
           {PRESETS.map((preset) => (
@@ -97,9 +109,9 @@ export function ThemeEditorPanel({
                 setTheme(applyPatch(preset.patch));
                 trackThemePresetApplied(preset.id);
               }}
-              className="flex items-center gap-2 rounded-lg border border-fd-border px-2 py-1.5 text-left text-[12px] text-fd-foreground transition hover:bg-fd-muted"
+              className="flex h-8 cursor-pointer items-center gap-2 rounded-md border border-fd-border px-2.5 text-left text-[12px] text-fd-foreground transition-colors hover:bg-fd-accent"
             >
-              <span className="flex shrink-0 overflow-hidden rounded-full border border-fd-border">
+              <span className="flex shrink-0 overflow-hidden rounded-full ring-1 ring-fd-border">
                 {preset.swatch.map((color) => (
                   <span key={color} className="size-2.5" style={{ background: color }} />
                 ))}
@@ -143,6 +155,7 @@ export function ThemeEditorPanel({
             >
               <Slider
                 id={`knob-${knob.id}`}
+                label={knob.label}
                 min={knob.min}
                 max={knob.max}
                 step={knob.step}
@@ -153,39 +166,29 @@ export function ThemeEditorPanel({
           ),
         )}
 
-        <label className="mt-1 flex items-center gap-2 text-[11.5px] text-fd-muted-foreground">
-          <input
-            type="checkbox"
-            checked={linkModes}
-            onChange={(event) => setLinkModes(event.target.checked)}
-            className="accent-fd-primary"
-          />
+        <Checkbox checked={linkModes} onChange={setLinkModes}>
           Derive the other mode&rsquo;s accent and danger
-        </label>
+        </Checkbox>
       </Section>
 
       <Section
         title="Tokens"
         hint="Every themeable custom property, as CSS. Anything valid here is valid there."
         action={
-          <button
-            type="button"
-            onClick={() => setAdvanced((open) => !open)}
-            className="text-[11.5px] text-fd-muted-foreground hover:text-fd-foreground"
-          >
+          <PlainButton variant="ghost" className="h-6 px-2" onClick={() => setAdvanced((open) => !open)}>
             {advanced ? 'Hide' : 'Show'}
-          </button>
+          </PlainButton>
         }
       >
         {advanced &&
           LIQUI_TOKENS.map((name) => (
             <Row key={name} label={`--lq-${name}`} htmlFor={`token-${name}`}>
-              <input
+              <TextField
                 id={`token-${name}`}
                 value={tokens[name]}
                 spellCheck={false}
                 onChange={(event) => setTheme(patchTokens(mode, { [name]: event.target.value }))}
-                className="w-full rounded-md border border-fd-border bg-fd-muted px-2 py-1.5 font-mono text-[11.5px] text-fd-foreground"
+                className="font-mono text-[11.5px]"
               />
             </Row>
           ))}
@@ -219,6 +222,17 @@ export function ThemeEditorPanel({
             ]}
           />
         </Row>
+        <Row label="Finish" hint="how it is lit" htmlFor="glass-finish">
+          <Select<GlassFinish>
+            id="glass-finish"
+            value={theme.glass.finish}
+            onChange={(value) => setTheme({ ...theme, glass: withFinish(theme.glass, value) })}
+            options={[
+              { value: 'classic', label: 'Classic — lit top and bottom, frosted' },
+              { value: 'prism', label: 'Prism — one key light, cut and clear' },
+            ]}
+          />
+        </Row>
         {GLASS_ABSOLUTE.map((dial) => {
           const value = theme.glass[dial.key] as number;
           return (
@@ -231,6 +245,35 @@ export function ThemeEditorPanel({
             >
               <Slider
                 id={`glass-${dial.key}`}
+                label={dial.label}
+                min={dial.min}
+                max={dial.max}
+                step={dial.step}
+                value={value}
+                onChange={(next) => setGlass(dial.key, next)}
+              />
+            </Row>
+          );
+        })}
+      </Section>
+
+      <Section
+        title="Lighting"
+        hint="Each follows the finish until you move it. Switching the finish lets go of them all."
+      >
+        {GLASS_LIGHTING.map((dial) => {
+          const value = resolveLighting(theme.glass, dial.key as keyof GlassLighting);
+          return (
+            <Row
+              key={dial.key}
+              label={dial.label}
+              hint={dial.hint}
+              htmlFor={`glass-${dial.key}`}
+              value={`${dial.step >= 1 ? Math.round(value) : value.toFixed(2)}${dial.unit ?? ''}`}
+            >
+              <Slider
+                id={`glass-${dial.key}`}
+                label={dial.label}
                 min={dial.min}
                 max={dial.max}
                 step={dial.step}
@@ -258,6 +301,7 @@ export function ThemeEditorPanel({
             >
               <Slider
                 id={`glass-${dial.key}`}
+                label={dial.label}
                 min={dial.min}
                 max={dial.max}
                 step={dial.step}
@@ -269,83 +313,157 @@ export function ThemeEditorPanel({
         })}
       </Section>
 
-      <Section title="Take it with you">
-        <div className="flex flex-wrap gap-2">
-          <CopyButton
-            label="Copy link"
-            onCopied={() => trackThemeExported('link')}
-            text={
-              typeof window === 'undefined'
-                ? ''
-                : `${window.location.origin}${window.location.pathname}?t=${encodeTheme(theme)}`
-            }
-          />
-          <ActionButton onClick={reset} disabled={untouched}>
-            Reset
-          </ActionButton>
-        </div>
-
-        {untouched ? (
-          <p className="text-[11.5px] text-fd-muted-foreground">
-            Nothing changed yet — an untouched theme emits no CSS at all.
-          </p>
-        ) : (
-          <>
-            <Snippet
-              title="globals.css"
-              hint="Paste below your liqui import. Only what you changed is here."
-              code={css}
-              kind="css"
-            />
-            {provider && (
-              <Snippet
-                title="Optics"
-                hint="Refraction runs in JavaScript, so this half is a provider rather than CSS."
-                code={provider}
-                language="tsx"
-                kind="provider"
-              />
-            )}
-          </>
-        )}
-      </Section>
     </div>
   );
 }
 
-function Snippet({
-  title,
-  hint,
-  code,
-  kind,
-  language = 'css',
-}: {
-  title: string;
+interface ExportItem {
+  kind: ThemeExportKind | 'download';
+  label: string;
   hint: string;
-  code: string;
-  kind: ThemeExportKind;
-  language?: string;
-}) {
-  if (!code) return null;
+  run: () => Promise<void>;
+}
+
+/**
+ * Reset and Export, pinned under the dials by whichever host shows them.
+ *
+ * Export is a short menu rather than code printed into the panel: the panel is
+ * for tuning, and thirty lines of CSS under the last dial only pushed the dials
+ * further from the page they were changing. Every item copies or saves exactly
+ * what the old snippets showed — only what differs from the shipped theme.
+ */
+export function ThemeEditorFooter({ className }: { className?: string }) {
+  const { theme, reset } = useSiteTheme();
+  const untouched = isDefaultTheme(theme);
+  const [open, setOpen] = React.useState(false);
+  const [done, setDone] = React.useState<string | null>(null);
+  const root = React.useRef<HTMLDivElement>(null);
+
+  // Click outside or Escape closes the menu, the way a menu is expected to.
+  React.useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!done) return;
+    const timer = setTimeout(() => setDone(null), 1600);
+    return () => clearTimeout(timer);
+  }, [done]);
+
+  // Nothing to take away from an untouched theme; a menu left open over it
+  // would offer empty files.
+  React.useEffect(() => {
+    if (untouched) setOpen(false);
+  }, [untouched]);
+
+  const css = exportCss(theme);
+  const provider = exportProvider(theme);
+  const copy = (text: string) => navigator.clipboard.writeText(text);
+
+  const items: ExportItem[] = [
+    { kind: 'css', label: 'Copy CSS', hint: 'globals.css, below your liqui import', run: () => copy(css) },
+    ...(provider
+      ? [
+          {
+            kind: 'provider' as const,
+            label: 'Copy provider',
+            hint: 'the optics, which run in JavaScript',
+            run: () => copy(provider),
+          },
+        ]
+      : []),
+    {
+      kind: 'link',
+      label: 'Copy share link',
+      hint: 'opens this site wearing the theme',
+      run: () =>
+        copy(`${window.location.origin}${window.location.pathname}?t=${encodeTheme(theme)}`),
+    },
+    {
+      kind: 'download',
+      label: 'Download theme.css',
+      hint: 'the CSS as a file',
+      run: async () => {
+        const url = URL.createObjectURL(new Blob([css], { type: 'text/css' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'theme.css';
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+    },
+  ];
+
   return (
-    <div className="rounded-lg border border-fd-border">
-      <div className="flex items-center justify-between gap-2 border-b border-fd-border px-2.5 py-1.5">
-        <span className="font-mono text-[11px] text-fd-muted-foreground">{title}</span>
-        <CopyButton text={code} onCopied={() => trackThemeExported(kind)} />
-      </div>
-      <p className="px-2.5 pt-2 text-[11px] text-fd-muted-foreground">{hint}</p>
-      {/* Only the horizontal axis scrolls. Capping the height would put a
-          third scrollbar on the page for the sake of a block that is thirty
-          lines at its longest; a `--lq-shadow` line, on the other hand, is
-          wider than the panel and would otherwise push the page sideways. */}
-      <pre
-        className={cn(
-          'overflow-x-auto px-2.5 py-2 font-mono text-[11px] leading-relaxed text-fd-foreground',
-          language === 'tsx' && 'whitespace-pre',
-        )}
+    <div
+      ref={root}
+      className={cn('relative flex gap-2 border-t border-fd-border bg-fd-background px-4 py-3', className)}
+    >
+      <PlainButton
+        className="flex-1"
+        onClick={reset}
+        disabled={untouched}
+        title={untouched ? 'Nothing changed yet' : 'Back to the shipped theme'}
       >
-        {code}
-      </pre>
+        <RotateCcw className="size-3.5" />
+        Reset
+      </PlainButton>
+      <PlainButton
+        variant="solid"
+        className="flex-1"
+        onClick={() => setOpen((value) => !value)}
+        disabled={untouched}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={untouched ? 'Nothing changed yet — an untouched theme exports nothing' : undefined}
+      >
+        <Download className="size-3.5" />
+        Export
+      </PlainButton>
+
+      {open && (
+        <div
+          role="menu"
+          aria-label="Export"
+          className="absolute right-4 bottom-full left-4 mb-2 rounded-lg border border-fd-border bg-fd-popover p-1 shadow-lg"
+        >
+          {items.map((item) => (
+            <button
+              key={item.kind}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                item.run().then(
+                  () => {
+                    if (item.kind !== 'download') trackThemeExported(item.kind);
+                    setDone(item.kind);
+                  },
+                  // A refused clipboard write: nothing happened, so nothing
+                  // says it did.
+                  () => {},
+                );
+              }}
+              className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-fd-accent"
+            >
+              <span className="flex flex-col">
+                <span className="text-[12px] text-fd-popover-foreground">{item.label}</span>
+                <span className="text-[11px] text-fd-muted-foreground">{item.hint}</span>
+              </span>
+              {done === item.kind && <Check className="size-3.5 shrink-0 text-fd-foreground" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
