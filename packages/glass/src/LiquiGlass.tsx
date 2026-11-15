@@ -29,6 +29,56 @@ const supportsRefraction = (() => {
 
 export type GlassMaterial = 'auto' | 'frost' | 'clear';
 export type GlassProfile = 'squircle' | 'convex' | 'rim';
+/**
+ * How the surface is lit and toned — orthogonal to the optics dials.
+ *
+ * - 'classic' — light from above and below: the top and bottom arcs catch a
+ *   highlight, the flanks fall into a thin shade, and a frosted tint carries
+ *   legibility.
+ * - 'prism' — the look of glass type: one light from the top left, so the
+ *   up-left edges catch a crisp highlight and the down-right edges a dark rim;
+ *   a hairline outline around the whole outline; a brightened, barely tinted
+ *   interior. Reads as a cut, clear slab rather than a frosted pane, and wants
+ *   a narrow bezel with strong refraction and a little dispersion (see
+ *   `prismGlassTheme`).
+ */
+export type GlassFinish = 'classic' | 'prism';
+
+/**
+ * The lighting dials. Not prism-specific: every finish has a value for each,
+ * and a finish is just a light *model* (`classic` = a dual light along one
+ * axis, `prism` = a single key light) plus these defaults (`FINISH_LIGHTING`).
+ * Any of them can be set on the theme or on a surface; unset ones fall back to
+ * the finish's own.
+ */
+export interface GlassLighting {
+  /**
+   * Direction the light comes from, in degrees clockwise from straight up:
+   * 0 = above, −45 = top left, 45 = top right. Classic lights both ends of
+   * this axis; prism only the end it names.
+   */
+  lightAngle: number;
+  /** Strength of the shade on the edges facing away from the light, 0–1. */
+  edgeShade: number;
+  /**
+   * Opacity of a ~0.6px line around the whole outline, 0–1. Dark in the light
+   * appearance and light in the dark one, so the outline never sinks into a
+   * backdrop of its own tone.
+   */
+  hairline: number;
+  /** Brightness pushed through the glass; 1 leaves the backdrop as it is. */
+  brightness: number;
+  /** Tint opacity left at frost 0, 0–1 — how far from truly clear the glass gets. */
+  tintFloor: number;
+}
+
+export const FINISH_LIGHTING: Record<GlassFinish, GlassLighting> = {
+  classic: { lightAngle: 0, edgeShade: 0.48, hairline: 0, brightness: 1, tintFloor: 0.25 },
+  prism: { lightAngle: -33, edgeShade: 0.42, hairline: 0.3, brightness: 1.14, tintFloor: 0.08 },
+};
+
+/** Shade is stronger in the dark appearance, where a dim rim reads weaker. */
+const DARK_SHADE = 1.25;
 
 /**
  * Squircle corners read "less round" than circular ones at the same radius —
@@ -223,8 +273,13 @@ function glassImages(
   fullBezel: number,
   profile: GlassProfile,
   round: boolean,
+  finish: GlassFinish,
+  lighting: Pick<GlassLighting, 'lightAngle' | 'edgeShade' | 'hairline'>,
 ) {
-  const key = `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}${round ? 'o' : 's'}`;
+  const { lightAngle, edgeShade, hairline: hairlineOpacity } = lighting;
+  const key =
+    `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}${round ? 'o' : 's'}` +
+    `${finish}a${lightAngle}e${edgeShade}h${hairlineOpacity}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 
@@ -309,6 +364,11 @@ function glassImages(
   // the bezel so wide rims keep a visible inner falloff.
   const reach = 4.5 + fullBezel * 0.15;
 
+  // The light axis (toward the light) and its perpendicular, from the angle.
+  const rad = (lightAngle * Math.PI) / 180;
+  const lx = Math.sin(rad);
+  const ly = -Math.cos(rad);
+
   const compose = (
     out: Uint8ClampedArray,
     i: number,
@@ -318,8 +378,9 @@ function glassImages(
     specScale: number,
     diffuseScale: number,
     shadeStrength: number,
+    glint = 0,
   ) => {
-    const highlight = sat(specAmount * specScale + diffuse * diffuseScale);
+    const highlight = sat(specAmount * specScale + diffuse * diffuseScale + glint);
     const shade = shadeBase * shadeStrength;
     const alpha = highlight + shade * (1 - highlight);
     if (alpha <= 0) return;
@@ -342,23 +403,48 @@ function glassImages(
       if (sd > 1 || sd < -(reach + 1)) continue;
 
       const coverage = sat(0.5 - sd);
-      const vertical = Math.abs(field.ny);
+      const i = (y * specW + x) * 4;
+      const stroke = sat(sd + 1.4) * sat(0.5 - sd);
+      // The outline line: ~0.6px just inside the boundary, all the way round.
+      const hairline = hairlineOpacity > 0 ? sat(1 - Math.abs(sd + 0.35) / 0.6) * hairlineOpacity : 0;
+      const darkShade = Math.min(1, edgeShade * DARK_SHADE);
+
+      if (finish === 'prism') {
+        // One key light. The crisp stroke and its glow follow how squarely the
+        // outward normal faces the light; the opposite edges get the shade.
+        const lit = field.nx * lx + field.ny * ly;
+        const facing = sat(lit);
+        const away = sat(-lit);
+        let specAmount = Math.pow(facing, 1.1) * stroke;
+        specAmount = specAmount / (1 + 0.5 * (1 - specAmount));
+        const glow = 1 - sat(-sd / reach);
+        const diffuse = Math.pow(facing, 2) * 0.24 * glow * glow * coverage;
+        const rim = Math.pow(away, 1.2) * stroke;
+        // Light appearance: the hairline is dark, merged with the shade.
+        // Dark: a dark line on dark glass over a dark backdrop vanishes —
+        // the down-right edge and with it the outline disappeared — so there
+        // it turns into a faint light line instead.
+        compose(lightImage.data, i, specAmount, diffuse, Math.max(rim * edgeShade, hairline), 1, 1, 1);
+        compose(darkImage.data, i, specAmount, diffuse, rim * darkShade, 0.9, 0.6, 1, hairline * 0.75);
+        continue;
+      }
+
+      const vertical = Math.abs(field.nx * lx + field.ny * ly);
       const directional = Math.pow(sat((vertical - cosLight) / (1 - cosLight)), 1.25);
       const diffuseDir = Math.pow(sat((vertical - cosDiffuse) / (1 - cosDiffuse)), 1.25);
-      const stroke = sat(sd + 1.4) * sat(0.5 - sd);
       let specAmount = directional * stroke;
       specAmount = specAmount / (1 + 0.5 * (1 - specAmount));
       const glow = 1 - sat(-sd / reach);
       const diffuse = diffuseDir * 0.18 * glow * glow * coverage;
 
-      // Side shade: same hairline band, weighted toward horizontal normals.
-      const wL = sat((field.nx - cosSide) / (1 - cosSide)) * stroke;
-      const wR = sat((-field.nx - cosSide) / (1 - cosSide)) * stroke;
+      // Side shade: same band, weighted toward normals across the light axis.
+      const across = field.nx * -ly + field.ny * lx;
+      const wL = sat((across - cosSide) / (1 - cosSide)) * stroke;
+      const wR = sat((-across - cosSide) / (1 - cosSide)) * stroke;
       const shadeBase = wL / (1 + 0.4 * (1 - wL)) + wR / (1 + 0.4 * (1 - wR));
 
-      const i = (y * specW + x) * 4;
-      compose(lightImage.data, i, specAmount, diffuse, shadeBase, 1, 1, 0.48);
-      compose(darkImage.data, i, specAmount, diffuse, shadeBase, 0.82, 0.4, 0.6);
+      compose(lightImage.data, i, specAmount, diffuse, Math.max(shadeBase * edgeShade, hairline), 1, 1, 1);
+      compose(darkImage.data, i, specAmount, diffuse, shadeBase * darkShade, 0.82, 0.4, 1, hairline * 0.75);
     }
   }
   lightCtx.putImageData(lightImage, 0, 0);
@@ -384,6 +470,18 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
   material?: GlassMaterial;
   /** Lens shape of the refracting rim. 'squircle' is the most glass-like. */
   profile?: GlassProfile;
+  /** Lighting and tone of the surface — see `GlassFinish`. */
+  finish?: GlassFinish;
+  /** Light direction, degrees clockwise from up. Default: the finish's. */
+  lightAngle?: number;
+  /** Shade on the edges facing away from the light, 0–1. Default: the finish's. */
+  edgeShade?: number;
+  /** Outline line opacity, 0–1. Default: the finish's. */
+  hairline?: number;
+  /** Brightness pushed through the glass. Default: the finish's. */
+  brightness?: number;
+  /** Tint opacity at frost 0. Default: the finish's. */
+  tintFloor?: number;
   /**
    * Corner radius of the glass surface in px.
    *
@@ -446,6 +544,12 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     const {
       material = theme.material,
       profile = theme.profile,
+      finish = theme.finish,
+      lightAngle: ownLightAngle,
+      edgeShade: ownEdgeShade,
+      hairline: ownHairline,
+      brightness: ownBrightness,
+      tintFloor: ownTintFloor,
       radius: ownRadius = 16,
       blur: ownBlur = 1,
       refraction: ownRefraction = 140,
@@ -485,6 +589,17 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // otherwise mint a fresh canvas render and a fresh <filter> node per frame.
     // Blur only reaches a CSS string, but is rounded for the same reason in
     // reverse — an unrounded one churns the style attribute every frame.
+    // Lighting: the surface's own value, else the theme's, else the finish's.
+    // The three baked into the specular are rounded — they key the image
+    // cache, and a dragged dial would otherwise mint an image set per frame.
+    const finishLighting = FINISH_LIGHTING[finish];
+    const lightAngle = Math.round(ownLightAngle ?? theme.lightAngle ?? finishLighting.lightAngle);
+    const edgeShade =
+      Math.round((ownEdgeShade ?? theme.edgeShade ?? finishLighting.edgeShade) * 100) / 100;
+    const hairline = Math.round((ownHairline ?? theme.hairline ?? finishLighting.hairline) * 100) / 100;
+    const brightness = ownBrightness ?? theme.brightness ?? finishLighting.brightness;
+    const tintFloor = ownTintFloor ?? theme.tintFloor ?? finishLighting.tintFloor;
+
     const baseRadius = Math.round(ownRadius * theme.radiusScale);
     const blur = Math.round(ownBlur * theme.blurScale * 100) / 100;
     const refraction = Math.round(ownRefraction * theme.refractionScale);
@@ -571,7 +686,11 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // popup references an already-decoded filter (see filterRegistry.ts).
     const glassRefs = React.useMemo(() => {
       if (!refractionReady) return null;
-      const images = glassImages(size!.w, size!.h, radius, bezel, profile, capsule);
+      const images = glassImages(size!.w, size!.h, radius, bezel, profile, capsule, finish, {
+        lightAngle,
+        edgeShade,
+        hairline,
+      });
       prewarmImage(images.specular);
       prewarmImage(images.specularDark);
       const { id: filterId, cold } = ensureFilter({
@@ -591,6 +710,10 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       capsule,
       bezel,
       profile,
+      finish,
+      lightAngle,
+      edgeShade,
+      hairline,
       refraction,
       dispersion,
       toneLift,
@@ -619,14 +742,19 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // sampling A's output. The map's neutral center makes B a no-op wherever
     // there's no displacement, so B arriving late just fades refraction in
     // over an already-frosted surface.
+    // Brightening what the glass shows makes a clear slab read as lit from
+    // within rather than tinted (prism's default; classic leaves it at 1).
+    const tone = brightness !== 1 ? ` brightness(${brightness})` : '';
     const backdropFilter =
       tier === 'clear'
         ? undefined
         : tier === 'frost'
-          ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})`
-          : `blur(${effectiveBlur}px) saturate(${saturation})`;
+          ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})${tone}`
+          : `blur(${effectiveBlur}px) saturate(${saturation})${tone}`;
     const refractFilter = glassRefs ? `url(#${glassRefs.filterId})` : undefined;
-    const tintOpacity = tier === 'clear' ? 1 : 0.25 + 0.75 * frost;
+    // frost 0 sits at the floor, frost 1 at full tint. Classic's floor of 0.25
+    // reproduces its original `0.25 + 0.75 × frost`; prism's is nearly clear.
+    const tintOpacity = tier === 'clear' ? 1 : tintFloor + (1 - tintFloor) * frost;
 
     return (
       <div
@@ -635,6 +763,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         className={[
           'liqui-glass',
           `liqui-glass--${tier}`,
+          finish === 'prism' ? 'liqui-glass--prism' : '',
           elevated ? 'liqui-glass--elevated' : '',
           className ?? '',
         ]

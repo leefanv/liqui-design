@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { GlassMaterial, GlassProfile } from './LiquiGlass';
+import type { GlassFinish, GlassLighting, GlassMaterial, GlassProfile } from './LiquiGlass';
 import { DARK_SELECTOR, defaultTokens, LIQUI_TOKENS, type LiquiTokens } from './tokens';
 
 export {
@@ -46,11 +46,18 @@ export {
 /* Optics                                                                     */
 /* -------------------------------------------------------------------------- */
 
-export interface LiquiGlassTheme {
+/**
+ * Lighting dials are optional on the theme: unset, each follows the finish
+ * (`FINISH_LIGHTING`), so switching `finish` alone switches the whole look and
+ * an untouched theme stays a no-op.
+ */
+export interface LiquiGlassTheme extends Partial<GlassLighting> {
   /** Rendering tier default. Surfaces that pass `material` still win. */
   material: GlassMaterial;
   /** Lens profile default. */
   profile: GlassProfile;
+  /** Lighting and tone default — see `GlassFinish`. */
+  finish: GlassFinish;
   /** Material density default, 0–1. */
   frost: number;
   /** Specular rim opacity default, 0–1. */
@@ -72,6 +79,7 @@ export interface LiquiGlassTheme {
 export const defaultGlassTheme: LiquiGlassTheme = {
   material: 'auto',
   profile: 'squircle',
+  finish: 'classic',
   frost: 0.35,
   specular: 0.7,
   dispersion: 0,
@@ -80,6 +88,23 @@ export const defaultGlassTheme: LiquiGlassTheme = {
   refractionScale: 1,
   bezelScale: 1,
   blurScale: 1,
+};
+
+/**
+ * The prism look as a theme: lighting from `finish: 'prism'`, plus the optics
+ * it is drawn for — a bezel about half as wide, refraction a quarter stronger,
+ * a little dispersion, almost no frost. Geometry is scaled, not set, so every
+ * component keeps its own proportions (see the notes above).
+ */
+export const prismGlassTheme: LiquiGlassTheme = {
+  ...defaultGlassTheme,
+  finish: 'prism',
+  frost: 0.06,
+  specular: 1,
+  dispersion: 0.17,
+  saturation: 1.35,
+  bezelScale: 0.55,
+  refractionScale: 1.25,
 };
 
 /* -------------------------------------------------------------------------- */
