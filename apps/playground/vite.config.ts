@@ -10,7 +10,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // The lens acceptance page is a second entry, kept off the desktop demo.
-      input: { main: resolve('./index.html'), lens: resolve('./lens.html') },
+      input: {
+        main: resolve('./index.html'),
+        lens: resolve('./lens.html'),
+      },
     },
   },
   resolve: {

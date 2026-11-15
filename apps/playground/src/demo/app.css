@@ -74,6 +74,63 @@ body {
   opacity: 1;
 }
 
+/* Pattern wall: four rows of hard-edged tiles drifting in opposite
+   directions — stripes, a disc and a glyph per tile, so straight lines,
+   curves and colour boundaries all pass under every surface. */
+.os__pattern {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  overflow: hidden;
+  background: #111;
+}
+
+.os__pattern-row {
+  display: flex;
+  gap: 3px;
+  width: max-content;
+  min-height: 0;
+  animation: os-pattern-scroll 90s linear infinite;
+}
+
+.os__pattern-row--rev {
+  animation-direction: reverse;
+}
+
+@keyframes os-pattern-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.os__pattern-tile {
+  flex: none;
+  width: 220px;
+  display: grid;
+  place-items: center;
+  font: 800 120px/1 'SF Pro Display', -apple-system, sans-serif;
+  color: hsl(calc(var(--h) + 180) 90% 92%);
+  background:
+    radial-gradient(circle at 70% 30%, hsl(calc(var(--h) + 40) 85% 62%) 0 34px, transparent 35px),
+    repeating-linear-gradient(
+      -35deg,
+      hsl(var(--h) 75% 42%) 0 14px,
+      hsl(var(--h) 80% 54%) 14px 28px
+    );
+}
+
+[data-theme='dark'] .os__pattern-tile {
+  filter: brightness(0.62);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os__pattern-row {
+    animation: none;
+  }
+}
+
 .os__menubar {
   position: absolute;
   top: 0;
@@ -259,6 +316,11 @@ body {
   gap: 10px;
   padding: 16px 18px;
   width: 240px;
+  /* The Lighting group made the panel taller than a laptop screen; it stops
+     above the dock and scrolls. The dials are clear-tier glass (no backdrop
+     filter), so scrolling them costs nothing. */
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
 }
 
 .panel__title {
