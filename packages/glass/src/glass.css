@@ -170,6 +170,22 @@
     inset -1px -1px 1px var(--lq-rim-lo, rgba(255, 255, 255, 0.28));
 }
 
+/* Prism finish (see GlassFinish). Where refraction renders, the baked
+   specular already draws the key-lit edge, dark rim and hairline, so the
+   fallback shine would only add a second, differently lit rim. On the frost
+   and clear tiers the shine is all there is, so it is relit the prism way:
+   the catch-light top left, a dark edge bottom right, a hairline round. */
+.liqui-glass--prism.liqui-glass--refract > .liqui-glass__shine {
+  display: none;
+}
+
+.liqui-glass--prism > .liqui-glass__shine {
+  box-shadow:
+    inset 1px 1px 1px var(--lq-rim-hi, rgba(255, 255, 255, 0.85)),
+    inset -1px -1px 1px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+}
+
 .liqui-glass__content {
   position: relative;
   z-index: 3;

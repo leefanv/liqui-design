@@ -66,8 +66,15 @@ const CONTROLS: Example[] = [
   },
 ];
 
+/**
+ * Screens is off for now: the one template it would show, the media player,
+ * is not where the home page should be pointing yet. Flip this to bring the
+ * group back; nothing else needs to change.
+ */
+const SHOW_SCREENS = false;
+
 export function Examples() {
-  const template = getTemplates()[0];
+  const template = SHOW_SCREENS ? getTemplates()[0] : undefined;
 
   return (
     <section className="mt-20 sm:mt-24" aria-labelledby="examples">

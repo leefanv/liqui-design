@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { ThemeEditorPanel } from '@/components/theme-editor/panel';
+import { ThemeEditorFooter, ThemeEditorPanel } from '@/components/theme-editor/panel';
 import { ThemePreview } from '@/components/theme-editor/preview';
 import type { ColorMode } from '@/lib/theme';
 
@@ -38,7 +38,13 @@ export function ThemeEditor() {
         </div>
       </div>
       <aside className="w-full shrink-0 lg:w-[21rem]">
-        <ThemeEditorPanel mode={mode} onModeChange={setMode} />
+        {/* A plain card, like the docked panel (see controls.tsx). The footer
+            sticks to the bottom of the window while the card scrolls past, so
+            Reset and Export stay in reach however far down the dials you are. */}
+        <div className="rounded-xl border border-fd-border bg-fd-background">
+          <ThemeEditorPanel mode={mode} onModeChange={setMode} />
+          <ThemeEditorFooter className="sticky bottom-0 rounded-b-xl" />
+        </div>
       </aside>
     </div>
   );

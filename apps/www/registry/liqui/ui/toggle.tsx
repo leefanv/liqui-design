@@ -74,6 +74,12 @@ export function Toggle({ className, children, ...props }: ToggleProps) {
             )
           : cn(
               'rounded-[11px] bg-transparent px-[11px] py-[7px] text-[13px] leading-tight',
+              // In a ToggleGroup, concentric with the strip: its radius less
+              // the 3px it is inset by, on the strip's own corner shape —
+              // round on a capsule, squircle otherwise. Toolbar and the
+              // transport bar inset by more and keep the 11px above.
+              'in-data-[slot=toggle-group]:rounded-[calc(var(--lq-radius,14px)-3px)]',
+              'in-data-[slot=toggle-group]:[corner-shape:inherit]',
               'hover:not-data-disabled:not-data-pressed:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)]',
               // Inside the strip the ring is inset: an offset outline would sit
               // on top of the neighbouring toggle.

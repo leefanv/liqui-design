@@ -3,25 +3,30 @@ import { ArrowUpRight } from 'lucide-react';
 
 import { Brand } from '@/components/brand';
 import { GitHubStars } from '@/components/github-stars';
-import { docsRoute, gallery, repoUrl, templatesRoute, themeRoute } from './shared';
+import { SiteHeader } from '@/components/site-header';
+import { docsRoute, gallery, repoUrl, templatesRoute } from './shared';
 
-export function baseOptions(): BaseLayoutProps {
+/**
+ * `docs` gives the header its sidebar controls. The header itself is ours
+ * (see site-header); `links` still feed the docs sidebar's sheet on a phone.
+ */
+export function baseOptions({ docs = false }: { docs?: boolean } = {}): BaseLayoutProps {
   return {
     nav: {
       title: <Brand />,
+      component: <SiteHeader docs={docs} />,
     },
     links: [
       { text: 'Docs', url: docsRoute, active: 'nested-url' },
       { text: 'Templates', url: templatesRoute, active: 'nested-url' },
-      { text: 'Theme', url: themeRoute, active: 'nested-url' },
       {
         // Off-site on purpose: the gallery is where the look is collected,
         // this site is where it becomes code. The arrow marks the hop.
         text: (
-          <>
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             Gallery
             <ArrowUpRight className="size-3.5 opacity-60" />
-          </>
+          </span>
         ),
         url: gallery.url,
         external: true,

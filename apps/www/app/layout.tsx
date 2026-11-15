@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 import StaticSearchDialog from '@/components/search';
+import { ThemePanelProvider } from '@/components/theme-panel';
 import { SiteThemeProvider } from '@/components/theme-provider';
 import { brandName, googleAnalyticsId, siteUrl } from '@/lib/shared';
 
@@ -36,7 +37,10 @@ export default function Layout({ children }: LayoutProps<'/'>) {
           {/* Inside RootProvider so the docs' own light/dark switch is above it:
               this one themes the glass, that one decides which of its two token
               sets the page is wearing. */}
-          <SiteThemeProvider>{children}</SiteThemeProvider>
+          <SiteThemeProvider>
+            {/* The editor's panel, reachable from every page; see theme-panel. */}
+            <ThemePanelProvider>{children}</ThemePanelProvider>
+          </SiteThemeProvider>
         </RootProvider>
       </body>
       {/*

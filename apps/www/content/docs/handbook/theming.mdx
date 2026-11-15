@@ -111,9 +111,9 @@ is fixed at build time belongs in your stylesheet, where it costs nothing.
 
 The glass theme has two halves, and the difference is the whole design.
 
-**Absolute** — `material`, `profile`, `frost`, `specular`, `dispersion`,
-`saturation`. These are the dials components mostly leave alone, so the theme
-supplies the default. A component that sets one for itself keeps it: the
+**Absolute** — `material`, `profile`, `finish`, `frost`, `specular`,
+`dispersion`, `saturation` and the lighting dials. These are the dials
+components mostly leave alone, so the theme supplies the default. A component that sets one for itself keeps it: the
 `preview-card` asks for `frost: 0.6` because its design needs it, and a theme
 that says `0.2` does not take it away.
 
@@ -136,6 +136,31 @@ keeps them in proportion, which is what "make the glass thicker" actually means.
 // Every surface's bezel, 30% wider than the component asked for.
 <LiquiThemeProvider theme={{ glass: { bezelScale: 1.3 } }}>
 ```
+
+### Finish and lighting
+
+`finish` picks the light model. `classic` is the shipped look: lit along the
+top and bottom edges, frosted. `prism` is one key light from the top left, a
+dark rim on the far edges, a hairline round the outline and a clear, brightened
+interior — the look of refracting glass type, applied to a surface. The five
+lighting dials (`lightAngle`, `edgeShade`, `hairline`, `brightness`,
+`tintFloor`) follow the finish until the theme or a surface sets one, so
+switching the finish alone switches the whole look.
+
+A finish is lighting only. Prism is drawn for a narrower bezel, stronger
+refraction and almost no frost, and `prismGlassTheme` is the finish with that
+tuning — spread it and adjust:
+
+```tsx
+import { LiquiThemeProvider, prismGlassTheme } from '@liqui-design/glass';
+
+<LiquiThemeProvider theme={{ glass: { ...prismGlassTheme, dispersion: 0.1 } }}>
+```
+
+The lenses in Switch, Slider and TabBar read `lightAngle` too, so one light
+lands on every edge of the page from the same side. Prism wants a busy
+backdrop: over a flat colour or a soft gradient there is nothing for a clear
+pane to bend, and it reads as thin glass rather than cut glass.
 
 ### Precedence
 

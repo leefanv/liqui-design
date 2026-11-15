@@ -10,6 +10,7 @@ import {
   LensFilter,
   lerp,
   resolveLens,
+  useLensLight,
   spring,
   supportsRefraction,
   type LensMaps,
@@ -236,6 +237,7 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
   const enabled = optics !== null;
   const curvature = optics?.curvature ?? 0;
   const dispersion = optics?.dispersion ?? 0;
+  const lightAngle = useLensLight();
   const filterId = `lq-slider-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
   const thumbRef = React.useRef<HTMLDivElement | null>(null);
@@ -259,10 +261,11 @@ export function SliderThumb({ lens = true, className, style, ...props }: SliderT
         bezel: BEZEL,
         surface: CONVEX,
         curvature,
+        lightAngle,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [enabled, curvature]);
+  }, [enabled, curvature, lightAngle]);
 
   /** Barely underdamped (ζ ≈ 0.89), so the grab has some life in it. */
   const press = React.useRef(spring(2000, 80)).current;

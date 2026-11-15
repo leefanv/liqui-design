@@ -2,15 +2,29 @@
 
 import * as React from 'react';
 import { RotateCcw, Shuffle } from 'lucide-react';
-import type { GlassMaterial, GlassProfile, LiquiGlassProps } from '@liqui-design/glass';
+import {
+  defaultGlassTheme,
+  FINISH_LIGHTING,
+  prismGlassTheme,
+  type GlassFinish,
+  type GlassLighting,
+  type GlassMaterial,
+  type GlassProfile,
+  type LiquiGlassProps,
+  type LiquiGlassTheme,
+} from '@liqui-design/glass';
 
 import { cn } from '@/lib/utils';
+import { Button } from '@/registry/liqui/ui/button';
+import { Fieldset, FieldsetLegend } from '@/registry/liqui/ui/fieldset';
+import { Separator } from '@/registry/liqui/ui/separator';
 import {
   Slider,
   SliderControl,
   SliderLabel,
   SliderThumb,
   SliderTrack,
+  SliderValue,
 } from '@/registry/liqui/ui/slider';
 import { Toggle } from '@/registry/liqui/ui/toggle';
 import { ToggleGroup } from '@/registry/liqui/ui/toggle-group';
@@ -23,32 +37,26 @@ import { ToggleGroup } from '@/registry/liqui/ui/toggle-group';
  * missing four the playground had — and explaining that difference costs more
  * than keeping them the same.
  *
- * **It is built out of the registry.** The dials are
- * [Slider](/docs/components/slider) and the pickers are
- * [Toggle Group](/docs/components/toggle-group), so the control that tunes the
- * material is made of the material. The look is an instrument panel rather
- * than a form: dials grouped under small capitals, the reading in a monospace
- * figure at the end of each row, and a hairline track with a small knob under
- * it. The slider gets there through its own geometry variables — the knob and
- * rail sizes it publishes on its root — so this is the shipped component at
- * another size, not a fork of it.
- *
- * **It assumes it is on a glass panel**, because both hosts put it on one, and
- * that assumption is what the two opt-outs below are: a `backdrop-filter`
- * nested inside another one samples its parent's output rather than the page,
- * so a lens here would bend the panel it is lying on. The slider thumbs drop
- * their lens and the toggle groups go `clear` — the rule written out on
- * [Scroll Area](/docs/components/scroll-area) and
- * [Popover](/docs/components/popover).
+ * **It is built out of the registry, at full strength.** Groups are
+ * [Fieldset](/docs/components/fieldset), dials are
+ * [Slider](/docs/components/slider) with their lens thumbs, pickers are
+ * [Toggle Group](/docs/components/toggle-group) strips that refract, the
+ * footer is [Button](/docs/components/button) and the rules are
+ * [Separator](/docs/components/separator). None of them is turned down for
+ * sitting on a panel: the panel is part of what is being tuned, so a host
+ * puts it under the optics it sets (see `opticsToTheme`) and every control on
+ * it changes with the dials — switch the finish and the panel you are
+ * switching it on turns prism too.
  *
  * Colour comes from the liqui tokens throughout, so the same markup reads on
  * the playground's light chrome and on the home stage's night backdrops
  * without either host restyling it.
  */
 
-export interface GlassOptics {
+export interface GlassOptics extends GlassLighting {
   material: GlassMaterial;
   profile: GlassProfile;
+  finish: GlassFinish;
   refraction: number;
   bezel: number;
   dispersion: number;
@@ -60,26 +68,138 @@ export interface GlassOptics {
 export const DEFAULT_OPTICS: GlassOptics = {
   material: 'auto',
   profile: 'squircle',
+  finish: 'classic',
   refraction: 150,
   bezel: 28,
   dispersion: 0,
   specular: 0.7,
   frost: 0.35,
   blur: 1,
+  ...FINISH_LIGHTING.classic,
 };
+
+/**
+ * The dials each finish is drawn for. Picking a finish on the panel moves the
+ * dials too: prism lighting on a classic 28px bezel reads as a bevelled
+ * button, not as cut glass — it wants the narrow bezel, the stronger bend and
+ * the bit of dispersion of the glass-type study it comes from. Same ratios as
+ * `prismGlassTheme` in the kernel, written out in panel units.
+ */
+export const FINISH_OPTICS: Record<GlassFinish, Omit<GlassOptics, 'material' | 'profile'>> = {
+  classic: {
+    finish: 'classic',
+    refraction: DEFAULT_OPTICS.refraction,
+    bezel: DEFAULT_OPTICS.bezel,
+    dispersion: DEFAULT_OPTICS.dispersion,
+    specular: DEFAULT_OPTICS.specular,
+    frost: DEFAULT_OPTICS.frost,
+    blur: DEFAULT_OPTICS.blur,
+    ...FINISH_LIGHTING.classic,
+  },
+  prism: {
+    finish: 'prism',
+    refraction: 190,
+    bezel: 15,
+    dispersion: 0.15,
+    specular: 1,
+    frost: 0.06,
+    blur: 0.5,
+    ...FINISH_LIGHTING.prism,
+  },
+};
+
+/**
+ * The panel's numbers as a theme, so every component keeps its own tuning.
+ *
+ * The panel reads in the units of one reference surface — the defaults above,
+ * a panel-sized pane — so its geometric dials become the theme's multipliers
+ * against that surface: Strength 300 on a pane whose own is 150 doubles every
+ * component's refraction, the tooltip's 35 included. Spreading the numbers onto
+ * each component instead (`asGlassProps`) hands a tooltip a drawer's bezel.
+ */
+export function opticsToTheme(optics: GlassOptics): LiquiGlassTheme {
+  const base = optics.finish === 'prism' ? prismGlassTheme : defaultGlassTheme;
+  const { classic: ref } = FINISH_OPTICS;
+  return {
+    ...base,
+    material: optics.material,
+    profile: optics.profile,
+    finish: optics.finish,
+    frost: optics.frost,
+    specular: optics.specular,
+    dispersion: optics.dispersion,
+    refractionScale: optics.refraction / ref.refraction,
+    bezelScale: optics.bezel / ref.bezel,
+    blurScale: optics.blur / ref.blur,
+    lightAngle: optics.lightAngle,
+    edgeShade: optics.edgeShade,
+    hairline: optics.hairline,
+    brightness: optics.brightness,
+    tintFloor: optics.tintFloor,
+  };
+}
+
+/**
+ * The way back from a theme: the panel's reading of what the theme is
+ * wearing, so a panel can open on the site's theme instead of on the shipped
+ * one. The geometric dials come back in the reference surface's units —
+ * `refractionScale: 1.25` reads as Strength 187.5 — which is what the
+ * surfaces actually render at, multiplier included. A host spreading these
+ * onto surfaces that are themselves under that theme hands them through
+ * `withoutThemeScales` first, or the multiplier lands twice.
+ */
+export function opticsFromTheme(theme: LiquiGlassTheme): GlassOptics {
+  const { classic: ref } = FINISH_OPTICS;
+  const lighting = FINISH_LIGHTING[theme.finish];
+  return {
+    material: theme.material,
+    profile: theme.profile,
+    finish: theme.finish,
+    refraction: ref.refraction * theme.refractionScale,
+    bezel: ref.bezel * theme.bezelScale,
+    blur: ref.blur * theme.blurScale,
+    dispersion: theme.dispersion,
+    specular: theme.specular,
+    frost: theme.frost,
+    lightAngle: theme.lightAngle ?? lighting.lightAngle,
+    edgeShade: theme.edgeShade ?? lighting.edgeShade,
+    hairline: theme.hairline ?? lighting.hairline,
+    brightness: theme.brightness ?? lighting.brightness,
+    tintFloor: theme.tintFloor ?? lighting.tintFloor,
+  };
+}
+
+/**
+ * Panel readings as own props for a surface under `theme`. LiquiGlass scales
+ * its own geometry by the theme's multipliers, so a reading that already
+ * includes them is divided back out — otherwise a 1.25× theme would bend the
+ * stage at 1.56×. A zero multiplier zeroes the surface whatever is passed, so
+ * the reading goes through untouched there.
+ */
+export function withoutThemeScales(optics: GlassOptics, theme: LiquiGlassTheme): GlassOptics {
+  const unscale = (value: number, scale: number) => (scale > 0 ? value / scale : value);
+  return {
+    ...optics,
+    refraction: unscale(optics.refraction, theme.refractionScale),
+    bezel: unscale(optics.bezel, theme.bezelScale),
+    blur: unscale(optics.blur, theme.blurScale),
+  };
+}
 
 /** Everything here is a valid LiquiGlass prop, so the object spreads straight in. */
 export function asGlassProps(optics: GlassOptics): Partial<LiquiGlassProps> {
   return optics;
 }
 
-/** Tint and rim, no lens — see the note above on nesting. */
-const ON_PANEL = { material: 'clear' } satisfies Partial<LiquiGlassProps>;
-
 const MATERIALS: { value: GlassMaterial; label: string; hint: string }[] = [
   { value: 'auto', label: 'Auto', hint: 'Refraction where supported, frost elsewhere' },
   { value: 'frost', label: 'Frost', hint: 'Blur and saturation only — cheap' },
   { value: 'clear', label: 'Clear', hint: 'Tint and rim, no backdrop filter — cheapest' },
+];
+
+const FINISHES: { value: GlassFinish; label: string; hint: string }[] = [
+  { value: 'classic', label: 'Classic', hint: 'Lit from above and below, frosted' },
+  { value: 'prism', label: 'Prism', hint: 'Key light top left, dark rim, hairline — clear cut glass' },
 ];
 
 const PROFILES: { value: GlassProfile; label: string; hint: string }[] = [
@@ -88,7 +208,7 @@ const PROFILES: { value: GlassProfile; label: string; hint: string }[] = [
   { value: 'rim', label: 'Rim', hint: 'Stylized falloff, kept for comparison' },
 ];
 
-type DialKey = keyof Omit<GlassOptics, 'material' | 'profile'>;
+type DialKey = keyof Omit<GlassOptics, 'material' | 'profile' | 'finish'>;
 
 interface Dial {
   key: DialKey;
@@ -123,19 +243,19 @@ const GROUPS: { title: string; dials: Dial[] }[] = [
       { key: 'specular', label: 'Specular', min: 0, max: 1, step: 0.05 },
     ],
   },
+  {
+    // Every finish has a value for each of these; picking a finish loads its
+    // own (FINISH_LIGHTING), and the dials take it from there.
+    title: 'Lighting',
+    dials: [
+      { key: 'lightAngle', label: 'Light angle', min: -90, max: 90, step: 1, unit: '°' },
+      { key: 'edgeShade', label: 'Edge shade', min: 0, max: 1, step: 0.02 },
+      { key: 'hairline', label: 'Hairline', min: 0, max: 1, step: 0.05 },
+      { key: 'brightness', label: 'Brightness', min: 0.8, max: 1.5, step: 0.02 },
+      { key: 'tintFloor', label: 'Tint floor', min: 0, max: 0.5, step: 0.01 },
+    ],
+  },
 ];
-
-/**
- * The slider's own geometry variables, at instrument size: a 4px rail and a
- * 28×18 knob. `--lq-knob-pad` is what keeps the knob from being clipped by the
- * control's box — half the difference between knob and rail.
- */
-export const FINE_SLIDER = {
-  '--lq-rail-h': '4px',
-  '--lq-knob-w': '28px',
-  '--lq-knob-h': '18px',
-  '--lq-knob-pad': '7px',
-} as React.CSSProperties;
 
 /** Fixed decimals per dial, read off its step, so a reading never jitters in width. */
 const decimals = (step: number) => (Number.isInteger(step) ? 0 : String(step).split('.')[1].length);
@@ -176,7 +296,7 @@ export const sameOptics = (a: GlassOptics, b: GlassOptics) =>
 /* Building blocks, exported so a host can add a group in the same hand        */
 /* -------------------------------------------------------------------------- */
 
-/** A run of controls under a small-capitals heading. */
+/** A run of controls under its legend — a Fieldset, so the name is announced. */
 export function ControlGroup({
   title,
   className,
@@ -187,12 +307,10 @@ export function ControlGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn('flex flex-col gap-3', className)}>
-      <h3 className="text-[10.5px] font-bold tracking-[0.06em] text-[var(--lq-text-dim)] uppercase">
-        {title}
-      </h3>
+    <Fieldset className={className}>
+      <FieldsetLegend>{title}</FieldsetLegend>
       {children}
-    </section>
+    </Fieldset>
   );
 }
 
@@ -217,7 +335,7 @@ export function Segmented<T extends string>({
   return (
     <ToggleGroup
       aria-label={label}
-      glass={{ ...ON_PANEL, contentClassName: 'w-full' }}
+      glass={{ contentClassName: 'w-full' }}
       value={[value]}
       onValueChange={(next) => {
         if (next.length > 0) onValueChange(next[next.length - 1] as T);
@@ -229,7 +347,7 @@ export function Segmented<T extends string>({
           key={item.value}
           value={item.value}
           title={item.hint}
-          className="flex-1 px-1.5 py-[5px] text-[12px] font-semibold"
+          className="flex-1"
         >
           {item.label}
         </Toggle>
@@ -258,6 +376,12 @@ export function GlassControls({
     <div className={cn('flex flex-col gap-5', className)}>
       <ControlGroup title="Material">
         <Segmented
+          label="Finish"
+          items={FINISHES}
+          value={value.finish}
+          onValueChange={(next) => onChange({ ...value, ...FINISH_OPTICS[next] })}
+        />
+        <Segmented
           label="Material"
           items={MATERIALS}
           value={value.material}
@@ -284,17 +408,14 @@ export function GlassControls({
               // range case, which no dial here is.
               onValueChange={(next) => set(dial.key, Array.isArray(next) ? next[0] : next)}
               // Edge, not centre: a knob centred on 0 hangs half off the rail
-              // and past the labels' left edge, which on a panel this narrow
-              // reads as a layout bug.
+              // and past the panel's edge.
               thumbAlignment="edge"
-              style={FINE_SLIDER}
-              className="gap-1.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 {/* `gap` rather than a margin on the hint: the playground's
                     reset is an unlayered `* { margin: 0 }`, which outranks every
                     layered utility no matter how specific. */}
-                <SliderLabel className="flex items-baseline gap-1 text-[12.5px] font-normal text-[color-mix(in_srgb,var(--lq-text)_78%,transparent)]">
+                <SliderLabel className="flex items-baseline gap-1">
                   {dial.label}
                   {dial.hint && (
                     <em className="text-[11px] font-normal not-italic text-[var(--lq-text-dim)]">
@@ -302,16 +423,17 @@ export function GlassControls({
                     </em>
                   )}
                 </SliderLabel>
-                {/* Not `SliderValue`: these carry units and a step-matched
-                    number of decimals, and Base UI formats from the raw value. */}
-                <span className="font-mono text-[12px] text-[var(--lq-text)] tabular-nums">
-                  {value[dial.key].toFixed(decimals(dial.step))}
-                  {dial.unit && <span className="text-[var(--lq-text-dim)]">{dial.unit}</span>}
-                </span>
+                {/* Formatted here rather than by Base UI: a unit, and a
+                    step-matched number of decimals so the width never jitters. */}
+                <SliderValue>
+                  {(_, values) =>
+                    `${values[0].toFixed(decimals(dial.step))}${dial.unit ?? ''}`
+                  }
+                </SliderValue>
               </div>
               <SliderControl>
                 <SliderTrack>
-                  <SliderThumb lens={false} aria-label={dial.label} />
+                  <SliderThumb aria-label={dial.label} />
                 </SliderTrack>
               </SliderControl>
             </Slider>
@@ -331,6 +453,9 @@ export function GlassControls({
  * scroll away with the dials. Mirrors the title bar — a hairline on the
  * scrolling side, the same inset — so the panel reads as a window with a top
  * and a bottom rather than a list that happens to end.
+ *
+ * The buttons are the registry's [Button](/docs/components/button), glass
+ * variant, at full strength like everything else on the panel.
  */
 export function PanelActions({
   onShuffle,
@@ -347,47 +472,34 @@ export function PanelActions({
   return (
     <div
       className={cn(
-        'flex shrink-0 gap-2 border-t border-[color-mix(in_srgb,var(--lq-text)_10%,transparent)] px-4 py-3',
+        'flex shrink-0 flex-col',
         className,
       )}
     >
+      <Separator />
+      <div className="flex gap-2 px-4 py-3">
       {onShuffle && (
-        <PanelButton onClick={onShuffle}>
+        <Button onClick={onShuffle} className={PANEL_BUTTON}>
           <Shuffle className="size-3.5" strokeWidth={2.2} />
           Shuffle
-        </PanelButton>
+        </Button>
       )}
-      <PanelButton onClick={onReset} disabled={!dirty} title="Back to the defaults">
+      <Button
+        onClick={onReset}
+        disabled={!dirty}
+        title="Back to the theme"
+        className={PANEL_BUTTON}
+      >
         <RotateCcw className="size-3.5" strokeWidth={2.2} />
         Reset
-      </PanelButton>
+      </Button>
+      </div>
     </div>
   );
 }
 
 /**
- * A wash on glass that is already there, not a surface of its own — the same
- * call the dialog's dismiss makes. A hairline keeps it reading as a button on
- * a panel whose tint is already most of what a fill would be.
+ * Two buttons sharing the footer evenly. The surface is the flex item; its
+ * content is sized to the label, so the surface centres it.
  */
-function PanelButton({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      {...props}
-      className={cn(
-        'inline-flex flex-1 cursor-default items-center justify-center gap-1.5 rounded-[11px] py-2',
-        'border border-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]',
-        'bg-[color-mix(in_srgb,var(--lq-highlight)_30%,transparent)] font-semibold text-[var(--lq-text)]',
-        'outline-none transition-[background-color,opacity,scale] duration-150 active:scale-[0.97]',
-        'hover:not-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_60%,transparent)]',
-        'focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]',
-        'disabled:opacity-45',
-        // After the font size, not before: tailwind-merge drops an earlier
-        // `leading-*` when a later `text-{size}` could have carried one.
-        'text-[12.5px] leading-tight',
-        className,
-      )}
-    />
-  );
-}
+const PANEL_BUTTON = 'flex-1 justify-center';

@@ -78,6 +78,9 @@ transparency for a backdrop to leak through in the first place.
 | `specular` | 0–1 | Rim light opacity. |
 | `radius` | px | Corner radius. Also drives the displacement map's shape. |
 | `material` | `auto` \| `frost` \| `clear` | Rendering tier. `auto` refracts where supported and frosts elsewhere. |
+| `finish` | `classic` \| `prism` | How the surface is lit. `classic` lights the top and bottom edges and frosts the pane. `prism` is one key light from the top left, a dark far rim, a hairline round the outline and a clear, brightened interior — glass type, as a surface. Wants a narrow bezel, strong refraction and a little dispersion; `prismGlassTheme` is that tuning. |
+| `lightAngle` | ° | Where the light comes from, clockwise from above. Unset, the finish's own: `0` for classic, `-33` for prism. |
+| `edgeShade`, `hairline`, `brightness`, `tintFloor` | 0–1 | The rest of the lighting: shade on the edges facing away from the light, opacity of the outline, brightness pushed through the glass, and the tint left at `frost: 0`. Each follows the finish unless set. |
 
 Each of these is a per-surface prop, and the components set the geometric ones
 (`radius`, `refraction`, `bezel`) to values scaled to their own size. To move

@@ -136,13 +136,16 @@ import {
   TooltipTrigger,
 } from '@registry/ui/tooltip';
 import {
+  LiquiThemeProvider,
   LiquiGlass,
   type GlassMaterial,
   type GlassProfile,
 } from '@liqui-design/glass';
 import {
   DEFAULT_OPTICS,
+  FINISH_OPTICS,
   GlassControls,
+  opticsToTheme,
   type GlassOptics,
 } from '@shared/glass-controls';
 import './demo/app.css';
@@ -157,9 +160,13 @@ const PROFILE_ITEMS = [
 // URL params override defaults so variants are screenshotable/linkable.
 function initialSettings(): GlassOptics {
   const q = new URLSearchParams(location.search);
+  // `?finish=prism` starts from that finish's dials; any dial param still wins.
+  const finish = q.get('finish') === 'prism' ? 'prism' : 'classic';
+  const base = { ...DEFAULT_OPTICS, ...FINISH_OPTICS[finish] };
   const num = (key: keyof GlassOptics) =>
-    q.has(key) ? Number(q.get(key)) : (DEFAULT_OPTICS[key] as number);
+    q.has(key) ? Number(q.get(key)) : (base[key] as number);
   return {
+    finish,
     material: (q.get('material') as GlassMaterial) || DEFAULT_OPTICS.material,
     profile: (q.get('profile') as GlassProfile) || DEFAULT_OPTICS.profile,
     refraction: num('refraction'),
@@ -168,7 +175,45 @@ function initialSettings(): GlassOptics {
     specular: num('specular'),
     frost: num('frost'),
     blur: num('blur'),
+    lightAngle: num('lightAngle'),
+    edgeShade: num('edgeShade'),
+    hairline: num('hairline'),
+    brightness: num('brightness'),
+    tintFloor: num('tintFloor'),
   };
+}
+
+/** Tile hues and glyphs for the pattern wall: saturated, high-contrast, so
+ *  every bent edge and colour fringe has something to show up against. */
+const WALL_HUES = [212, 18, 152, 280, 44, 336, 188, 96];
+const WALL_GLYPHS = 'LIQUIGLASS'.split('');
+
+function PatternWall() {
+  const rows = [0, 1, 2, 3];
+  return (
+    <div className="os__pattern">
+      {rows.map((r) => {
+        // Doubled so the -50% scroll loops without a seam.
+        const tiles = Array.from({ length: 24 }, (_, i) => i % 12);
+        return (
+          <div key={r} className={`os__pattern-row${r % 2 ? ' os__pattern-row--rev' : ''}`}>
+            {tiles.map((t, i) => {
+              const hue = WALL_HUES[(t + r * 3) % WALL_HUES.length];
+              return (
+                <div
+                  key={i}
+                  className="os__pattern-tile"
+                  style={{ '--h': hue } as React.CSSProperties}
+                >
+                  {WALL_GLYPHS[(t + r) % WALL_GLYPHS.length]}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function App() {
@@ -184,6 +229,23 @@ export default function App() {
   const [copied, setCopied] = React.useState(18);
   const [lastAction, setLastAction] = React.useState<string | null>(null);
   const [glass, setGlass] = React.useState<GlassOptics>(initialSettings);
+  // `?wall=pattern` swaps the wallpaper for busy scrolling rows. The macOS
+  // wallpaper is all broad, smooth gradients — there is nothing in it for a
+  // lens to bend, so finishes that differ in refraction and dispersion look
+  // alike over it. The rows are what the prism titles were judged against.
+  const [wall, setWall] = React.useState<'photo' | 'pattern'>(() =>
+    new URLSearchParams(location.search).get('wall') === 'pattern' ? 'pattern' : 'photo',
+  );
+
+  // The panel drives a theme, the way an app consumes the library: no
+  // per-surface props, every component on its own shipped numbers, the panel
+  // scaling them (see `opticsToTheme`). `?route=props` is the old wiring —
+  // one set of dials spread onto every surface, which flattens each
+  // component's tuning (a tooltip gets a drawer's bezel). Kept for poking at
+  // a single surface's optics; wrong for judging a look.
+  const propsRoute = React.useMemo(() => location.search.includes('route=props'), []);
+  const surface = propsRoute ? glass : undefined;
+  const themeGlass = React.useMemo(() => opticsToTheme(glass), [glass]);
 
   // Switch and Slider are not LiquiGlass surfaces — they carry their own lens
   // (see registry/liqui/lib/lens.tsx), so the geometric dials on the panel mean
@@ -234,6 +296,7 @@ export default function App() {
   }, []);
 
   return (
+    <LiquiThemeProvider theme={{ glass: themeGlass }} injectTokens={false}>
     <ContextMenu>
       <ContextMenuTrigger className="desktop" data-theme-root>
         <div className="os" aria-hidden>
@@ -249,6 +312,7 @@ export default function App() {
             alt=""
             draggable={false}
           />
+          {wall === 'pattern' && <PatternWall />}
           <div className="os__menubar">
             <img src="/os/menu-bar-left.png" width={395} height={24} alt="" draggable={false} />
             <img src="/os/menu-bar-right.png" width={235} height={24} alt="" draggable={false} />
@@ -277,7 +341,7 @@ export default function App() {
           <section className="stage__col">
             <h2 className="stage__label">Accordion</h2>
             <Accordion defaultValue={['lens']} className="stage__accordion">
-              <AccordionItem value="lens" glass={glass}>
+              <AccordionItem value="lens" glass={surface}>
                 <AccordionTrigger>How the lens is built</AccordionTrigger>
                 <AccordionPanel>
                   <p>
@@ -293,7 +357,7 @@ export default function App() {
                 </AccordionPanel>
               </AccordionItem>
 
-              <AccordionItem value="resize" glass={glass}>
+              <AccordionItem value="resize" glass={surface}>
                 <AccordionTrigger>Resizing surfaces</AccordionTrigger>
                 <AccordionPanel>
                   <p>
@@ -305,7 +369,7 @@ export default function App() {
                 </AccordionPanel>
               </AccordionItem>
 
-              <AccordionItem value="tiers" glass={glass}>
+              <AccordionItem value="tiers" glass={surface}>
                 <AccordionTrigger>Material tiers</AccordionTrigger>
                 <AccordionPanel>
                   <p>
@@ -376,7 +440,7 @@ export default function App() {
                   <ProgressLabel>Copying 248 items</ProgressLabel>
                   <ProgressValue />
                 </div>
-                <ProgressTrack glass={glass} />
+                <ProgressTrack glass={surface} />
               </Progress>
 
               <Progress value={null}>
@@ -384,7 +448,7 @@ export default function App() {
                   <ProgressLabel>Looking for devices</ProgressLabel>
                   <ProgressValue>{() => 'Searching…'}</ProgressValue>
                 </div>
-                <ProgressTrack glass={glass} />
+                <ProgressTrack glass={surface} />
               </Progress>
             </div>
 
@@ -395,7 +459,7 @@ export default function App() {
             <div className="stage__form">
               <NumberField id="bezel" defaultValue={24} min={0} max={200} step={2}>
                 <NumberFieldLabel htmlFor="bezel">Bezel width</NumberFieldLabel>
-                <NumberFieldGroup glass={glass}>
+                <NumberFieldGroup glass={surface}>
                   <NumberFieldDecrement />
                   <NumberFieldInput />
                   <NumberFieldIncrement />
@@ -414,14 +478,14 @@ export default function App() {
                   ring reachable without a submit button. */}
               <Field name="name" validationMode="onBlur">
                 <FieldLabel>Name</FieldLabel>
-                <FieldControl glass={glass} required placeholder="Ada Lovelace" />
+                <FieldControl glass={surface} required placeholder="Ada Lovelace" />
                 <FieldError match="valueMissing">A name is required</FieldError>
               </Field>
 
               <Field name="email" validationMode="onBlur">
                 <FieldLabel>Email</FieldLabel>
                 <FieldControl
-                  glass={glass}
+                  glass={surface}
                   type="email"
                   required
                   placeholder="ada@liqui.design"
@@ -445,13 +509,13 @@ export default function App() {
                 }
               >
                 <FieldLabel>Passphrase</FieldLabel>
-                <FieldControl glass={glass} type="password" placeholder="••••••••" />
+                <FieldControl glass={surface} type="password" placeholder="••••••••" />
                 <FieldError />
               </Field>
 
               <Field name="disabled" disabled>
                 <FieldLabel>Disabled</FieldLabel>
-                <FieldControl glass={glass} placeholder="Not editable" />
+                <FieldControl glass={surface} placeholder="Not editable" />
               </Field>
             </form>
 
@@ -464,11 +528,11 @@ export default function App() {
               <Popover>
                 <PopoverTrigger
                   nativeButton={false}
-                  render={<Button glass={glass} />}
+                  render={<Button glass={surface} />}
                 >
                   Notifications
                 </PopoverTrigger>
-                <PopoverContent glass={glass}>
+                <PopoverContent glass={surface}>
                   <PopoverTitle>Notifications</PopoverTitle>
                   <PopoverDescription>
                     The tail is outside the panel's box, so it refracts the
@@ -493,12 +557,12 @@ export default function App() {
               <div className="stage__buttons">
                 <DialogTrigger
                   nativeButton={false}
-                  render={<Button glass={glass} />}
+                  render={<Button glass={surface} />}
                 >
                   Share…
                 </DialogTrigger>
               </div>
-              <DialogContent glass={glass}>
+              <DialogContent glass={surface}>
                 <DialogDismiss />
                 <DialogTitle>Share this workspace</DialogTitle>
                 <DialogDescription>
@@ -506,7 +570,7 @@ export default function App() {
                   glass already here rather than a surface of its own.
                 </DialogDescription>
                 <DialogActions>
-                  <DialogClose nativeButton={false} render={<Button glass={glass} />}>
+                  <DialogClose nativeButton={false} render={<Button glass={surface} />}>
                     Cancel
                   </DialogClose>
                   <DialogClose
@@ -529,7 +593,7 @@ export default function App() {
                   <TabsTab value="lens">Lens</TabsTab>
                   <TabsTab value="tint">Tint</TabsTab>
                   <TabsTab value="rim">Rim</TabsTab>
-                  <TabsIndicator glass={glass} />
+                  <TabsIndicator glass={surface} />
                 </TabsList>
                 <TabsPanel value="lens">
                   The pill keeps one size as it travels, so the whole slide
@@ -564,17 +628,17 @@ export default function App() {
                 travelling element, so the bar refracts once and an open menu is
                 a wash on it. */}
             <div className="stage__buttons" onContextMenu={(e) => e.stopPropagation()}>
-              <Menubar glass={glass}>
+              <Menubar glass={surface}>
                 <MenubarMenu>
                   <MenubarTrigger>File</MenubarTrigger>
-                  <MenubarContent glass={glass}>
+                  <MenubarContent glass={surface}>
                     <MenubarItem onClick={() => setLastAction('New Window')}>
                       New Window
                       <MenubarShortcut>⌘N</MenubarShortcut>
                     </MenubarItem>
                     <MenubarSub>
                       <MenubarSubTrigger>Open Recent</MenubarSubTrigger>
-                      <MenubarSubContent glass={glass}>
+                      <MenubarSubContent glass={surface}>
                         <MenubarItem>wallpaper.jpg</MenubarItem>
                         <MenubarItem>bezel-study.fig</MenubarItem>
                       </MenubarSubContent>
@@ -585,7 +649,7 @@ export default function App() {
                 </MenubarMenu>
                 <MenubarMenu>
                   <MenubarTrigger>View</MenubarTrigger>
-                  <MenubarContent glass={glass}>
+                  <MenubarContent glass={surface}>
                     <MenubarCheckboxItem checked={showHidden} onCheckedChange={setShowHidden}>
                       Show Hidden Files
                     </MenubarCheckboxItem>
@@ -599,7 +663,7 @@ export default function App() {
 
             <h2 className="stage__label stage__label--spaced">Toggle group</h2>
             <div className="stage__buttons">
-              <ToggleGroup glass={glass} multiple defaultValue={['bold']} aria-label="Text style">
+              <ToggleGroup glass={surface} multiple defaultValue={['bold']} aria-label="Text style">
                 <Toggle value="bold" aria-label="Bold" className="w-9 font-bold">
                   B
                 </Toggle>
@@ -624,12 +688,12 @@ export default function App() {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Button glass={glass} onClick={() => setLastAction('Glass button')} />
+                      <Button glass={surface} onClick={() => setLastAction('Glass button')} />
                     }
                   >
                     Glass
                   </TooltipTrigger>
-                  <TooltipContent glass={glass}>The default surface</TooltipContent>
+                  <TooltipContent glass={surface}>The default surface</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -642,7 +706,7 @@ export default function App() {
                   >
                     Accent
                   </TooltipTrigger>
-                  <TooltipContent glass={glass}>Solid — a value, not a surface</TooltipContent>
+                  <TooltipContent glass={surface}>Solid — a value, not a surface</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -655,9 +719,9 @@ export default function App() {
                   >
                     Danger
                   </TooltipTrigger>
-                  <TooltipContent glass={glass}>Same rule, different token</TooltipContent>
+                  <TooltipContent glass={surface}>Same rule, different token</TooltipContent>
                 </Tooltip>
-                <Button glass={glass} disabled>
+                <Button glass={surface} disabled>
                   Disabled
                 </Button>
               </div>
@@ -723,10 +787,10 @@ export default function App() {
                   setGlass((current) => ({ ...current, profile: value as GlassProfile }))
                 }
               >
-                <SelectTrigger glass={glass}>
+                <SelectTrigger glass={surface}>
                   <SelectValue placeholder="Choose a profile" />
                 </SelectTrigger>
-                <SelectContent glass={glass}>
+                <SelectContent glass={surface}>
                   <SelectGroup>
                     <SelectGroupLabel>Physical</SelectGroupLabel>
                     <SelectItem value="squircle">Squircle</SelectItem>
@@ -747,10 +811,10 @@ export default function App() {
                 the list refracting the button instead of the wallpaper. */}
             <div className="stage__buttons" onContextMenu={(e) => e.stopPropagation()}>
               <Menu>
-                <MenuTrigger nativeButton={false} render={<Button glass={glass} />}>
+                <MenuTrigger nativeButton={false} render={<Button glass={surface} />}>
                   View
                 </MenuTrigger>
-                <MenuContent glass={glass}>
+                <MenuContent glass={surface}>
                   <MenuGroup>
                     <MenuGroupLabel>Arrange</MenuGroupLabel>
                     <MenuRadioGroup value={view} onValueChange={setView}>
@@ -773,7 +837,7 @@ export default function App() {
 
                   <MenuSub>
                     <MenuSubTrigger>Sort By</MenuSubTrigger>
-                    <MenuSubContent glass={glass}>
+                    <MenuSubContent glass={surface}>
                       <MenuItem onClick={() => setSort('name')}>Name</MenuItem>
                       <MenuItem onClick={() => setSort('date')}>Date Modified</MenuItem>
                       <MenuItem onClick={() => setSort('size')}>Size</MenuItem>
@@ -794,7 +858,7 @@ export default function App() {
                 overlapping stack would put the front toast's backdrop on the
                 card behind it, and the newest one would stop refracting. */}
             <div className="stage__buttons">
-              <ToastButtons glass={glass} />
+              <ToastButtons glass={surface} />
             </div>
 
             <h2 className="stage__label stage__label--spaced">Alert dialog</h2>
@@ -806,7 +870,7 @@ export default function App() {
                   Move to Trash…
                 </AlertDialogTrigger>
               </div>
-              <AlertDialogContent glass={glass}>
+              <AlertDialogContent glass={surface}>
                 <AlertDialogTitle>Move 3 items to Trash?</AlertDialogTitle>
                 <AlertDialogDescription>
                   The dialog refracts the dimmed backdrop rather than the
@@ -816,7 +880,7 @@ export default function App() {
                 <AlertDialogActions>
                   <AlertDialogClose
                     nativeButton={false}
-                    render={<Button glass={glass} />}
+                    render={<Button glass={surface} />}
                   >
                     Cancel
                   </AlertDialogClose>
@@ -859,6 +923,16 @@ export default function App() {
               {theme === 'light' ? '🌙' : '☀️'}
               <span>{theme === 'light' ? 'Dark' : 'Light'}</span>
             </button>
+            <button
+              type="button"
+              className="dock__button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWall(wall === 'photo' ? 'pattern' : 'photo');
+              }}
+            >
+              <span>{wall === 'photo' ? 'Pattern' : 'Wallpaper'}</span>
+            </button>
             <span className="dock__divider" />
             {lastAction ? (
               <span className="dock__note dock__note--action">→ {lastAction}</span>
@@ -874,10 +948,10 @@ export default function App() {
         </div>
 
         {/* Portals to <body>; it sits here only because App has no wrapper. */}
-        <Toaster glass={glass} />
+        <Toaster glass={surface} />
       </ContextMenuTrigger>
 
-      <ContextMenuContent glass={glass}>
+      <ContextMenuContent glass={surface}>
         <ContextMenuItem
           onClick={() => setLastAction('New Folder')}
         >
@@ -903,7 +977,7 @@ export default function App() {
             <span className="inline-flex w-4 justify-center opacity-85">👁️</span>
             View as
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent glass={glass}>
+          <ContextMenuSubContent glass={surface}>
             <ContextMenuRadioGroup value={view} onValueChange={setView}>
               <ContextMenuRadioItem value="icons">Icons</ContextMenuRadioItem>
               <ContextMenuRadioItem value="list">List</ContextMenuRadioItem>
@@ -918,7 +992,7 @@ export default function App() {
             <span className="inline-flex w-4 justify-center opacity-85">↕️</span>
             Sort by
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent glass={glass}>
+          <ContextMenuSubContent glass={surface}>
             <ContextMenuRadioGroup value={sort} onValueChange={setSort}>
               <ContextMenuRadioItem value="name">Name</ContextMenuRadioItem>
               <ContextMenuRadioItem value="kind">Kind</ContextMenuRadioItem>
@@ -955,6 +1029,7 @@ export default function App() {
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+    </LiquiThemeProvider>
   );
 }
 
@@ -962,7 +1037,7 @@ export default function App() {
  * Raising a toast needs a component inside the provider, which is the one thing
  * about this component that is not a prop.
  */
-function ToastButtons({ glass }: { glass: GlassOptics }) {
+function ToastButtons({ glass }: { glass?: GlassOptics }) {
   const toast = useToast();
   const count = React.useRef(0);
 
