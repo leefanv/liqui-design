@@ -184,6 +184,18 @@ Describe the change for someone who will read it in a changelog six months from 
 and say *why* where it isn't obvious. Releases are automated: merging to `main` opens a
 "Version Packages" PR, and merging that publishes.
 
+The release workflow opens that PR with the workflow's own token, and GitHub does
+not run workflows on a PR a workflow opened. Its required checks never report, so it
+sits blocked. Close and reopen it to run them, then merge once they pass:
+
+```bash
+gh pr close <number> && gh pr reopen <number>
+```
+
+Merge it soon after the `dev` → `main` PR that brought the changeset. The site deploys
+with that merge, and a registry component that needs a new export from the package
+only works for people installing it once the new version is on npm.
+
 ## Before opening a PR
 
 Open it against `dev`, not `main` — see [Branches](#branches). GitHub will offer

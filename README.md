@@ -90,18 +90,26 @@ maintain by hand.
 
 ## Theming
 
-Colour is twelve `--lq-*` custom properties — the shadcn CLI writes them into
+Colour is fourteen `--lq-*` custom properties — the shadcn CLI writes them into
 your `globals.css`, and editing them there re-skins everything.
 
 The optics can't be custom properties: refraction is a canvas-generated
 displacement map and an SVG filter, so global defaults arrive through
-`LiquiThemeProvider` instead. Absolute dials (`frost`, `specular`, `dispersion`)
-fill in what a surface didn't set; geometry (`radiusScale`, `refractionScale`,
-`bezelScale`) multiplies what it did, so a scrollbar thumb and a drawer stay in
-proportion.
+`LiquiThemeProvider` instead. Absolute dials (`material`, `profile`, `finish`,
+`frost`, `specular`, `dispersion`, `saturation` and the lighting dials) fill in
+what a surface didn't set; geometry (`radiusScale`, `refractionScale`,
+`bezelScale`, `blurScale`) multiplies what it did, so a scrollbar thumb and a
+drawer stay in proportion.
 
-The [theme editor](https://liqui.design/theme) tunes both halves live over the
-whole site and hands back exactly the two snippets you need.
+`finish` chooses how the glass is lit: `classic`, lit along the top and bottom
+edges and frosted, or `prism`, one key light from the top left with a dark far
+rim and a clear interior. `prismGlassTheme` is the prism finish with the optics
+it is drawn for.
+
+The theme editor opens from **Theme** in the header of any page on the site, so
+the page you are reading is the preview; [liqui.design/theme](https://liqui.design/theme)
+is the full-page version. Either one tunes both halves live and exports exactly
+the CSS and the provider you need.
 See the [theming handbook](https://liqui.design/docs/handbook/theming).
 
 ## Components
@@ -110,24 +118,41 @@ See the [theming handbook](https://liqui.design/docs/handbook/theming).
 | --- | --- |
 | [Accordion](https://liqui.design/docs/components/accordion) | Each item is its own surface, resizing with its panel |
 | [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | Modal and un-dismissible, refracting a dimmed scrim |
+| [Autocomplete](https://liqui.design/docs/components/autocomplete) | Combobox's surfaces on a field whose value is the text you typed |
+| [Avatar](https://liqui.design/docs/components/avatar) | A lens with a picture set into it, inset by the width of its own bezel |
 | [Button](https://liqui.design/docs/components/button) | Glass by default; accent and danger are solid fills |
 | [Checkbox](https://liqui.design/docs/components/checkbox) | A flat control: hairline box at rest, solid accent when checked |
+| [Checkbox Group](https://liqui.design/docs/components/checkbox-group) | Shared state for a stack of checkboxes, with a parent that goes mixed |
+| [Collapsible](https://liqui.design/docs/components/collapsible) | A lens on the trigger, frost on the panel that grows |
+| [Combobox](https://liqui.design/docs/components/combobox) | A glass field and popup whose height snaps as you filter |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | Submenus, checkbox and radio items, keep-mounted popup |
 | [Dialog](https://liqui.design/docs/components/dialog) | The dismissible one; its corner close stays flat |
+| [Drawer](https://liqui.design/docs/components/drawer) | The largest surface in the library, dragged on one cached map |
 | [Field](https://liqui.design/docs/components/field) | Focus and invalid rings on the surface, not the input |
+| [Fieldset](https://liqui.design/docs/components/fieldset) | A legend and a gap; the container deliberately isn't a surface |
+| [Form](https://liqui.design/docs/components/form) | Server errors routed to the field they belong to |
+| [Input](https://liqui.design/docs/components/input) | A transparent input inside a glass surface, with slots on the same lens |
 | [Menu](https://liqui.design/docs/components/menu) | A dropdown, kept clear of the glass trigger it hangs from |
 | [Menubar](https://liqui.design/docs/components/menubar) | One strip, several menus, and triggers that flatten inside it |
+| [Meter](https://liqui.design/docs/components/meter) | A reading on a refracting track, with a wash that changes colour |
+| [Navigation Menu](https://liqui.design/docs/components/navigation-menu) | One panel that moves between triggers and snaps to size |
 | [Number Field](https://liqui.design/docs/components/number-field) | One group, one lens, and two steppers drawn as divisions of it |
+| [OTP Field](https://liqui.design/docs/components/otp-field) | Six identical surfaces that cost one, sharing a cached map |
 | [Popover](https://liqui.design/docs/components/popover) | A glass panel with a drawn tail, holding flattened controls |
+| [Preview Card](https://liqui.design/docs/components/preview-card) | Popover's surface with the frost turned up |
 | [Progress](https://liqui.design/docs/components/progress) | The track is the lens; the fill is a wash laid over it |
 | [Radio Group](https://liqui.design/docs/components/radio-group) | A list, not a strip, and every option is a flat control |
+| [Scroll Area](https://liqui.design/docs/components/scroll-area) | An overlay scrollbar whose thumb is the smallest lens in the library |
 | [Select](https://liqui.design/docs/components/select) | Glass trigger and glass popup, kept from overlapping |
+| [Separator](https://liqui.design/docs/components/separator) | A hairline groove cut into the surface |
 | [Slider](https://liqui.design/docs/components/slider) | The thumb is the lens; the rail is deliberately flat |
 | [Switch](https://liqui.design/docs/components/switch) | The track is the lens; the thumb is deliberately opaque |
+| [Tab Bar](https://liqui.design/docs/components/tab-bar) | The iOS floating tab bar, with a lens under your finger |
 | [Tabs](https://liqui.design/docs/components/tabs) | The indicator is the lens, sliding along a flat groove |
 | [Toast](https://liqui.design/docs/components/toast) | A column rather than a stack, so each one keeps the page behind it |
 | [Toggle](https://liqui.design/docs/components/toggle) | A latching button, flat in both states, accent while it is on |
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | One strip, one lens, and toggles that flatten inside it |
+| [Toolbar](https://liqui.design/docs/components/toolbar) | One strip of glass with flat controls on it |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | The smallest surface, frosted harder so it stays readable |
 
 ## Templates
