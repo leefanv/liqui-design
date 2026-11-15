@@ -84,16 +84,21 @@ export default function Page() {
 
 ## 主题
 
-颜色就是十二个 `--lq-*` 自定义属性 —— shadcn CLI 会把它们写进你的
+颜色就是十四个 `--lq-*` 自定义属性 —— shadcn CLI 会把它们写进你的
 `globals.css`，改那里就等于换掉整套皮肤。
 
 光学部分做不成自定义属性：折射是 canvas 生成的置换贴图加一个 SVG 滤镜，所以全局
-默认值走 `LiquiThemeProvider`。绝对量（`frost`、`specular`、`dispersion`）用来补上
-组件没设的值；几何量（`radiusScale`、`refractionScale`、`bezelScale`）则是乘在组件
-自己设的值上，这样滚动条滑块和抽屉之间的比例不会被拉垮。
+默认值走 `LiquiThemeProvider`。绝对量（`material`、`profile`、`finish`、`frost`、
+`specular`、`dispersion`、`saturation` 以及几个光照参数）用来补上组件没设的值；几何量
+（`radiusScale`、`refractionScale`、`bezelScale`、`blurScale`）则是乘在组件自己设的值上，
+这样滚动条滑块和抽屉之间的比例不会被拉垮。
 
-[主题编辑器](https://liqui.design/theme) 可以对整站实时调这两半，并直接给出你需要的
-两段代码。详见[主题手册](https://liqui.design/docs/handbook/theming)。
+`finish` 决定玻璃怎么打光：`classic` 是上下两条边受光、带磨砂；`prism` 是左上方一盏
+主光，远端一圈暗边，中间清透。`prismGlassTheme` 是 prism 加上它配套的光学参数。
+
+主题编辑器可以在站点任意页面的 header 里点 **Theme** 打开，正在看的页面就是预览；
+[liqui.design/theme](https://liqui.design/theme) 是整页版本。两者都能实时调这两半，并导出
+你需要的 CSS 和 provider 代码。详见[主题手册](https://liqui.design/docs/handbook/theming)。
 
 ## 组件
 
@@ -101,23 +106,41 @@ export default function Page() {
 | --- | --- |
 | [Accordion](https://liqui.design/docs/components/accordion) | 每一项都是独立的表面，随面板一起改变尺寸 |
 | [Alert Dialog](https://liqui.design/docs/components/alert-dialog) | 模态且不可随手关闭，折射一层压暗的遮罩 |
+| [Autocomplete](https://liqui.design/docs/components/autocomplete) | Combobox 的表面，配在一个以输入文字为值的字段上 |
+| [Avatar](https://liqui.design/docs/components/avatar) | 一枚透镜里嵌一张图，内缩距离等于它自己的 bezel 宽度 |
 | [Button](https://liqui.design/docs/components/button) | 默认是玻璃；强调色与危险色是实心填充 |
 | [Checkbox](https://liqui.design/docs/components/checkbox) | 扁平控件：静息是细描边方框，选中是实心强调色 |
+| [Checkbox Group](https://liqui.design/docs/components/checkbox-group) | 一组复选框共享状态，父级在部分选中时显示为混合态 |
+| [Collapsible](https://liqui.design/docs/components/collapsible) | 触发器是透镜，展开的面板用磨砂 |
+| [Combobox](https://liqui.design/docs/components/combobox) | 玻璃输入框加玻璃弹层，筛选时高度按档跳变 |
 | [Context Menu](https://liqui.design/docs/components/context-menu) | 支持子菜单、复选与单选项，弹层可保持挂载 |
 | [Dialog](https://liqui.design/docs/components/dialog) | 可关闭的那一个，角上的关闭按钮保持扁平 |
+| [Drawer](https://liqui.design/docs/components/drawer) | 库里最大的表面，拖动时只用一张缓存贴图 |
 | [Field](https://liqui.design/docs/components/field) | 聚焦环和错误环画在表面上，而不是 input 上 |
+| [Fieldset](https://liqui.design/docs/components/fieldset) | 一个图例加一段间距，容器刻意不做成表面 |
+| [Form](https://liqui.design/docs/components/form) | 把服务端错误分派到对应的字段上 |
+| [Input](https://liqui.design/docs/components/input) | 玻璃表面里的透明输入框，两侧插槽共用同一枚透镜 |
 | [Menu](https://liqui.design/docs/components/menu) | 下拉菜单，与作为触发器的玻璃按钮保持不重叠 |
 | [Menubar](https://liqui.design/docs/components/menubar) | 一条玻璃承载多个菜单，触发器在其中扁平化 |
+| [Meter](https://liqui.design/docs/components/meter) | 折射轨道上的读数，色晕会变色但不会滑动 |
+| [Navigation Menu](https://liqui.design/docs/components/navigation-menu) | 一块面板在各个触发器之间移动，并按档调整尺寸 |
 | [Number Field](https://liqui.design/docs/components/number-field) | 一块玻璃一个镜面，加减按钮只是它的分区 |
+| [OTP Field](https://liqui.design/docs/components/otp-field) | 六个相同的表面只花一份成本，共用同一张缓存贴图 |
 | [Popover](https://liqui.design/docs/components/popover) | 带指示尾巴的玻璃面板，内部承载扁平化的控件 |
+| [Preview Card](https://liqui.design/docs/components/preview-card) | Popover 的表面，磨砂调得更重 |
 | [Progress](https://liqui.design/docs/components/progress) | 轨道是透镜，填充只是覆在其上的一层色晕 |
 | [Radio Group](https://liqui.design/docs/components/radio-group) | 它是一份列表而非一条整块，每个选项都是扁平控件 |
+| [Scroll Area](https://liqui.design/docs/components/scroll-area) | 覆盖式滚动条，滑块是库里最小的透镜 |
 | [Select](https://liqui.design/docs/components/select) | 玻璃触发器配玻璃弹层，并避免两者重叠 |
+| [Separator](https://liqui.design/docs/components/separator) | 刻进表面的一道细槽 |
 | [Slider](https://liqui.design/docs/components/slider) | 滑块是那枚透镜，轨道刻意保持扁平 |
 | [Switch](https://liqui.design/docs/components/switch) | 轨道是透镜，滑块刻意保持不透明 |
+| [Tab Bar](https://liqui.design/docs/components/tab-bar) | iOS 风格的浮动标签栏，手指下面是一枚透镜 |
 | [Tabs](https://liqui.design/docs/components/tabs) | 指示器才是透镜，在扁平的凹槽里滑动 |
+| [Toast](https://liqui.design/docs/components/toast) | 通知排成一列，每个表面背后都留着页面 |
 | [Toggle](https://liqui.design/docs/components/toggle) | 会保持按下状态的按钮，两种状态都扁平，打开时填充强调色 |
 | [Toggle Group](https://liqui.design/docs/components/toggle-group) | 一条玻璃，一枚透镜，里面的按钮全部扁平化 |
+| [Toolbar](https://liqui.design/docs/components/toolbar) | 一条玻璃上放一排扁平控件 |
 | [Tooltip](https://liqui.design/docs/components/tooltip) | 最小的表面，磨砂更重以保证可读性 |
 
 ## 模板

@@ -1,6 +1,6 @@
 ---
 title: Theming
-description: Fourteen custom properties, four global optics defaults, and four multipliers — plus the editor that writes them for you.
+description: Fourteen custom properties, the global optics defaults, and four multipliers — plus the editor that writes them for you.
 ---
 
 liqui is themed along two axes, and they work nothing alike.
@@ -15,17 +15,19 @@ properties. They are props, and they arrive globally through a provider.
 
 ## The editor
 
-[The theme editor](/theme) turns both halves as dials and hands back exactly the
-snippets on this page. Three things about it are worth knowing before you open
-it:
+The theme editor turns both halves as dials and hands back exactly the snippets
+on this page. Open it from **Theme** in the header of any page: it docks beside
+the page, and the page you were reading becomes the preview. [/theme](/theme) is
+the same editor full-page, beside a fixed preview. Three things about it are
+worth knowing before you open it:
 
 - **It themes the whole site, not the panel next to it.** Walk back into the
   docs and every component page is wearing what you made. That is the only
   honest way to judge a theme — a swatch grid will not tell you whether your
   tint survives on a menu.
 - **It stays in your browser.** The theme is kept in `localStorage` and nothing
-  is sent anywhere. **Copy link** encodes it into the URL if you want to hand it
-  to someone.
+  is sent anywhere. **Export → Copy share link** encodes it into the URL if you
+  want to hand it to someone.
 - **It only ever emits what you changed.** Both snippets, and the stored value,
   are a diff against the shipped theme — so a later liqui release retuning a
   default you never touched still reaches you.
@@ -139,6 +141,9 @@ keeps them in proportion, which is what "make the glass thicker" actually means.
 
 ### Finish and lighting
 
+`finish` and the lighting dials need `@liqui-design/glass` 0.6 or later, and so
+do the Switch, Slider and Tab Bar sources that read them.
+
 `finish` picks the light model. `classic` is the shipped look: lit along the
 top and bottom edges, frosted. `prism` is one key light from the top left, a
 dark rim on the far edges, a hairline round the outline and a clear, brightened
@@ -205,7 +210,7 @@ contrast when a red is picked for how the button looks.
   <Card
     title="Theme editor"
     href="/theme"
-    description="Every dial on this page, live, over glass — and both snippets at the end."
+    description="Every dial on this page, live, beside a preview — and Export for the CSS and the provider."
   />
   <Card
     title="Glass"
