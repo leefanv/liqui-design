@@ -78,7 +78,7 @@
       "type": "registry:lib",
       "title": "Lens kernel",
       "description": "Refraction kernel for the small controls: glass profiles, displacement and specular maps, the SVG filter chain, and a spring integrator.",
-      "dependencies": [],
+      "dependencies": ["@liqui-design/glass"],
       "files": [
         {
           "path": "registry/liqui/lib/lens.tsx",

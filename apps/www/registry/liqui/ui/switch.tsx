@@ -10,6 +10,7 @@ import {
   LIP,
   lerp,
   resolveLens,
+  useLensLight,
   spring,
   supportsRefraction,
   type LensMaps,
@@ -160,6 +161,7 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
   const enabled = optics !== null;
   const curvature = optics?.curvature ?? 0;
   const dispersion = optics?.dispersion ?? 0;
+  const lightAngle = useLensLight();
   const filterId = `lq-switch-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
   const rootRef = React.useRef<HTMLSpanElement | null>(null);
@@ -186,10 +188,11 @@ export function Switch({ className, lens = true, onPointerDown, ...props }: Swit
         bezel: BEZEL,
         surface: LIP,
         curvature,
+        lightAngle,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       }),
     );
-  }, [enabled, curvature]);
+  }, [enabled, curvature, lightAngle]);
 
   const engine = React.useRef({
     /** Thumb position, 0…1. Overdamped (ζ ≈ 1.27): arrives, never overshoots. */

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { FINISH_LIGHTING, useGlassTheme } from '@liqui-design/glass';
 
 /**
  * The liqui lens kernel — refraction for a single small control.
@@ -157,8 +158,28 @@ export interface LensMaps {
   specular: string;
 }
 
-/** Direction the rim light comes from: upper right, falling off as cos². */
-const LIGHT_ANGLE = (-60 * Math.PI) / 180;
+/**
+ * Where a lens's rim light comes from when nothing says otherwise, in degrees
+ * clockwise from straight up — the `lightAngle` convention of
+ * `@liqui-design/glass`. Upper right: a thumb is lit like a bead, not like a
+ * pane, and 30° is where the catch-light reads as a highlight on a dome rather
+ * than a bar along its top.
+ */
+export const LENS_LIGHT_ANGLE = 30;
+
+/**
+ * The light a control's lens should use, read off the theme. An explicit theme
+ * angle wins. Otherwise the finish decides: `classic` keeps the lens's own
+ * upper-right light — the classic surface lights *both* ends of its axis, so
+ * its angle says nothing about which side a single highlight belongs on — and
+ * every other finish is a single key light the lens shares, so the thumb and
+ * the panel it sits on are lit from the same side.
+ */
+export function useLensLight(): number {
+  const theme = useGlassTheme();
+  if (theme.lightAngle !== undefined) return theme.lightAngle;
+  return theme.finish === 'classic' ? LENS_LIGHT_ANGLE : FINISH_LIGHTING[theme.finish].lightAngle;
+}
 
 const mapCache = new Map<string, LensMaps>();
 
@@ -181,6 +202,8 @@ export interface LensMapOptions {
    * pane. See `domeShift` for the shape.
    */
   curvature?: number;
+  /** Direction of the rim light, degrees clockwise from above. See `useLensLight`. */
+  lightAngle?: number;
 }
 
 /**
@@ -252,12 +275,26 @@ function domeShift(u: number): number {
  * gradient-built map would need.
  */
 export function buildLensMaps(options: LensMapOptions): LensMaps {
-  const { width, height, radius, bezel, surface, dpr, curvature = 0 } = options;
+  const {
+    width,
+    height,
+    radius,
+    bezel,
+    surface,
+    dpr,
+    curvature = 0,
+    lightAngle = LENS_LIGHT_ANGLE,
+  } = options;
   const key =
     `${surface.id}|${width}x${height}r${radius}b${bezel.toFixed(3)}` +
-    `c${curvature.toFixed(3)}@${dpr}`;
+    `c${curvature.toFixed(3)}l${Math.round(lightAngle)}@${dpr}`;
   const hit = mapCache.get(key);
   if (hit) return hit;
+
+  // The light as a bearing around the outward normal. Screen y points down,
+  // so "clockwise from up" is the atan2 of the glass package's light vector.
+  const lightRad = (lightAngle * Math.PI) / 180;
+  const light = Math.atan2(-Math.cos(lightRad), Math.sin(lightRad));
 
   const W = Math.round(width * dpr);
   const H = Math.round(height * dpr);
@@ -337,7 +374,7 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
       // This is also the mask for the saturation pass, so that arrives as a
       // vivid film over the entire lens.
       const theta = Math.atan2(ny, nx);
-      const lit = Math.cos(theta - LIGHT_ANGLE) ** 2;
+      const lit = Math.cos(theta - light) ** 2;
       const across = Math.abs(depth / dpr - 0.5);
       const rim = across >= 1 ? 0 : Math.cos((Math.PI / 2) * across);
       const value = lit * rim * aa;
