@@ -95,6 +95,15 @@ If you want a group of *glass* toggles instead — separate pills, each its own
 lens — do not use `ToggleGroup`; that is a row of standalone `Toggle`s, and it is
 what [the toggle page](/docs/components/toggle) shows.
 
+### Corners are concentric
+
+A one-row strip is a capsule: its radius is half its height. A toggle inside it
+takes the strip's radius less the 3px it is inset by, on the strip's own corner
+shape, so the pressed toggle's ends run parallel to the strip's. Pass
+`glass={{ radius }}` and the toggles follow it. That includes a radius small
+enough to turn the strip into a squircle, and a theme's `radiusScale`. Toolbar
+puts toggles in its own strip with a 5px inset and keeps their 11px corners.
+
 ### Orientation
 
 `orientation="vertical"` stacks the strip. `data-orientation` lands on the group

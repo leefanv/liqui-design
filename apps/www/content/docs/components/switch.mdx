@@ -104,7 +104,11 @@ boundary, turning the bowl into a smeared ring.
 ### A hairline, not an arc
 
 The specular is one axis of light falling off as `cos²` around the outward
-normal, laid on a rim about a pixel wide just inside the edge.
+normal, laid on a rim about a pixel wide just inside the edge. The axis is the
+theme's: the lens reads `lightAngle`, so under a `prism` theme it is lit from the
+same side as every other surface on the page. Under `classic`, which lights
+surfaces top and bottom rather than from one side, it keeps its own light from
+the upper right. Slider and Tab Bar do the same.
 
 It is tempting to model it as a lit surface instead, and it is wrong. A flat
 patch of glass faces the viewer, and a viewer-facing normal still scores well

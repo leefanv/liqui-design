@@ -49,6 +49,8 @@ without it you get the light-theme defaults only.
 | Prop | Default | |
 | --- | --- | --- |
 | `material` | `'auto'` | `auto` refracts where supported, frosts elsewhere. `frost` and `clear` force a tier. |
+| `profile` | `'squircle'` | Lens shape of the rim. `squircle` and `convex` are physical; `rim` is stylized. |
+| `finish` | `'classic'` | How the surface is lit. `classic` lights the top and bottom edges and frosts; `prism` is one key light from the top left, a dark far rim, a hairline and a clear interior. |
 | `frost` | `0.35` | Material density, 0–1. `0` ≈ Apple's *clear*, `1` ≈ *regular*. |
 | `refraction` | `140` | Displacement scale — how hard the rim bends. |
 | `bezel` | `26` | Width of the refracting rim in px. |
@@ -56,12 +58,16 @@ without it you get the light-theme defaults only.
 | `blur` | `1` | Base backdrop blur. `frost` adds up to 14px on top. |
 | `dispersion` | `0` | Chromatic aberration. Costs ~3× filter work. |
 | `specular` | `0.7` | Rim-light opacity. |
+| `saturation` | `1.7` | Saturation pushed through the glass. |
+| `lightAngle` | from `finish` | Where the light comes from, in degrees clockwise from above. |
+| `edgeShade`, `hairline`, `brightness`, `tintFloor` | from `finish` | Shade on the edges facing away from the light, outline opacity, brightness pushed through the glass, and the tint left at `frost: 0`. |
+| `elevated` | `false` | Raises the tint and adds the `--lq-shadow` drop. |
 | `elevated` | `false` | Raises the drop shadow. |
 | `contentClassName` | — | Classes for the content wrapper above every glass layer. |
 
 ## Theming
 
-Colour is twelve `--lq-*` custom properties, so a fixed theme belongs in your
+Colour is fourteen `--lq-*` custom properties, so a fixed theme belongs in your
 stylesheet. The optics cannot be: `refraction`, `bezel`, `radius` and `profile`
 feed a canvas-generated displacement map and an SVG filter, so they arrive
 through a provider.
@@ -74,18 +80,30 @@ import { LiquiThemeProvider } from '@liqui-design/glass';
 </LiquiThemeProvider>;
 ```
 
-`material`, `profile`, `frost`, `specular`, `dispersion` and `saturation` are
-**defaults** — a surface that passes the prop keeps its own value.
-`radiusScale`, `refractionScale`, `bezelScale` and `blurScale` are
-**multipliers**, because every component sets those for itself in proportion to
-its size (a scroll-area thumb asks for `bezel: 4`, a drawer for `34`) and
-replacing them wholesale would smear the small ones.
+`material`, `profile`, `finish`, `frost`, `specular`, `dispersion`,
+`saturation` and the lighting dials are **defaults** — a surface that passes the
+prop keeps its own value. `radiusScale`, `refractionScale`, `bezelScale` and
+`blurScale` are **multipliers**, because every component sets those for itself
+in proportion to its size (a scroll-area thumb asks for `bezel: 4`, a drawer for
+`34`) and replacing them wholesale would smear the small ones.
 
-`theme.light` and `theme.dark` take the twelve tokens too, written into a
+The lighting dials follow `finish` until something sets them, so switching the
+finish alone switches the whole look. `prismGlassTheme` is the prism finish with
+the optics it is drawn for — spread it and adjust:
+
+```tsx
+import { LiquiThemeProvider, prismGlassTheme } from '@liqui-design/glass';
+
+<LiquiThemeProvider theme={{ glass: { ...prismGlassTheme, dispersion: 0.1 } }}>
+```
+
+`theme.light` and `theme.dark` take the fourteen tokens too, written into a
 `<style>` at `:root` — that is for a theme that changes at runtime. An untouched
 theme emits nothing and changes no pixel.
 
-Tune one at <https://liqui.design/theme>.
+Tune one on <https://liqui.design>: **Theme** in the header of any page opens
+the editor beside the page, and <https://liqui.design/theme> is the full-page
+version.
 
 ## Two things worth knowing
 
