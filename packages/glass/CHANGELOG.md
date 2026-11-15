@@ -1,5 +1,24 @@
 # @liqui-design/glass
 
+## 0.6.0
+
+### Minor Changes
+
+- fc8e87c: Add the `prism` finish and the lighting dials. `finish` picks the light model: `classic` is the shipped look, lit along the top and bottom edges and frosted; `prism` is one key light from the top left, a dark far rim, a hairline round the outline and a clear, brightened interior — refracting glass type, as a surface. `lightAngle`, `edgeShade`, `hairline`, `brightness` and `tintFloor` can be set on the theme or on a surface and otherwise follow the finish, so switching the finish alone switches the whole look. `prismGlassTheme` is the prism finish with the optics it is drawn for. Classic output is unchanged.
+
+### Patch Changes
+
+- 914ed1e: Capsules and discs keep round corners. Since 0.5.0, every surface has been
+  drawn with `corner-shape: squircle`, and a superellipse cannot close into a
+  semicircle: at a radius of half the short side it draws a bulging rounded
+  rectangle instead. Pill-shaped and circular glass, such as avatars, meter and
+  progress tracks, scrollbar thumbs, tab bars and tooltips, read as slightly
+  square. A surface whose radius reaches half its short side now renders with
+  round corners, skips the squircle radius compensation, and generates its
+  displacement map and lighting on circular corners to match. Everything else
+  keeps its continuous corners. The flag is a non-inheriting custom property,
+  so glass nested inside a capsule is unaffected.
+
 ## 0.5.0
 
 ### Minor Changes
