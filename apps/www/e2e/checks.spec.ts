@@ -304,3 +304,62 @@ test.describe('the theme panel', () => {
     expect(errors.filter((e) => !/favicon|404/i.test(e))).toEqual([]);
   });
 });
+
+test.describe('the sponsored slot', () => {
+  // A partner link that loses its referral id, its `sponsored` rel or its
+  // events still looks exactly right — the only place it shows is the
+  // commission report a month later. So all three are asserted directly.
+  test('carries the referral link, and reports its impression and click', async ({
+    page,
+    context,
+  }) => {
+    await page.route('**://*.googletagmanager.com/**', (route) => route.abort());
+    // The click opens Mobbin in a new tab; nothing here should reach it.
+    await context.route('https://mobbin.com/**', (route) => route.abort());
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({ json: { stargazers_count: 0 } }),
+    );
+
+    const events = (name: string) =>
+      page.evaluate(
+        (name) =>
+          ((window as { dataLayer?: ArrayLike<unknown>[] }).dataLayer ?? [])
+            .map((entry) => Array.from(entry))
+            .filter((args) => args[0] === 'event' && args[1] === name),
+        name,
+      );
+
+    await page.goto('/docs/components/button');
+    const card = page.locator('a[data-sponsor="mobbin"]');
+    await expect(card).toHaveAttribute('href', 'https://mobbin.com/?via=liqui-design');
+    await expect(card).toHaveAttribute('rel', /\bsponsored\b/);
+    await expect(card).toContainText('Sponsored');
+
+    const docPage = '/docs/components/button';
+    await expect(async () => {
+      expect(await events('affiliate_impression')).toContainEqual([
+        'event',
+        'affiliate_impression',
+        { program: 'Mobbin', placement: 'docs_toc', creative: 'loop-light', doc_page: docPage },
+      ]);
+    }).toPass();
+    // Once per page, not once per frame it stays on screen.
+    expect(await events('affiliate_impression')).toHaveLength(1);
+
+    const popup = page.waitForEvent('popup');
+    await card.click();
+    await popup;
+    expect(await events('affiliate_click')).toContainEqual([
+      'event',
+      'affiliate_click',
+      {
+        program: 'Mobbin',
+        placement: 'docs_toc',
+        creative: 'loop-light',
+        doc_page: docPage,
+        value: 0.35,
+        currency: 'USD',
+      },
+    ]);
+  });
+});
