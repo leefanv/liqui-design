@@ -1,20 +1,25 @@
 'use client';
 
 import * as React from 'react';
+import { ChevronDown } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
 /**
- * The editor's own chrome.
+ * The editor's own chrome: a small, plain instrument set.
  *
- * Pointedly *not* glass, and coloured with the docs palette rather than the
- * `--lq-*` tokens. A control panel that restyles itself as you drag it is a
- * toy: turn frost to 1 and radius to 2.5× and a glass panel stops being a
- * usable instrument at exactly the moment you need it to keep reading. The
- * preview beside it is where the theme is allowed to land.
+ * Deliberately not the registry, and not glass. The panel is a solid column
+ * beside the page, so refraction in it bends nothing and only adds cost — a
+ * filter per control, and a map and a baked specular per control rebuilt each
+ * time a dial moves the geometry or the light, which measured as most of what
+ * a drag cost. These are native elements in the docs' own palette: hairline
+ * borders, one ink colour, nothing that changes as the theme does. The page
+ * beside the panel is the preview; the panel stays still and legible while
+ * you tune it.
  *
- * (This is why it does not reuse `glass-controls.tsx`, which is the optics
- * panel for a single surface and lives *on* glass in the home stage.)
+ * The range and colour-well styling lives in global.css under `.te-*`, since
+ * the parts it has to reach (`::-webkit-slider-thumb` and friends) are not
+ * worth spelling out as utilities.
  */
 
 export function Section({
@@ -30,14 +35,14 @@ export function Section({
 }) {
   return (
     <section className="border-t border-fd-border px-4 py-4 first:border-t-0">
-      <header className="mb-3 flex items-baseline justify-between gap-3">
-        <h3 className="text-[11px] font-semibold tracking-[0.1em] text-fd-muted-foreground uppercase">
+      <header className="mb-3 flex min-h-6 items-center justify-between gap-3">
+        <h3 className="text-[11px] font-medium tracking-[0.08em] text-fd-muted-foreground uppercase">
           {title}
         </h3>
         {action}
       </header>
-      {hint && <p className="mb-3 text-[11.5px] text-fd-muted-foreground">{hint}</p>}
-      <div className="flex flex-col gap-3">{children}</div>
+      {hint && <p className="-mt-1 mb-3 text-[11.5px] leading-snug text-fd-muted-foreground">{hint}</p>}
+      <div className="flex flex-col gap-3.5">{children}</div>
     </section>
   );
 }
@@ -63,9 +68,11 @@ export function Row({
       >
         <span>
           {label}
-          {hint && <em className="ml-1.5 text-[11px] not-italic opacity-55">{hint}</em>}
+          {hint && <span className="ml-1.5 text-[11px] text-fd-muted-foreground">{hint}</span>}
         </span>
-        {value && <span className="tabular-nums text-fd-muted-foreground">{value}</span>}
+        {value && (
+          <span className="font-mono text-[11px] tabular-nums text-fd-muted-foreground">{value}</span>
+        )}
       </label>
       {children}
     </div>
@@ -77,13 +84,14 @@ export function Row({
  *
  * Every commit re-renders every glass surface on the page, and a changed
  * radius, refraction or bezel re-generates each one's displacement map on a
- * canvas. A pointer drag fires `input` far more often than the compositor draws,
- * so without this the browser spends the drag rendering canvases for values
+ * canvas. A drag fires `input` far more often than the compositor draws, so
+ * without this the browser spends the drag rendering canvases for values
  * nobody ever saw. The thumb still tracks the pointer exactly — local state
  * moves immediately, only the commit waits for the frame.
  */
 export function Slider({
   id,
+  label,
   value,
   min,
   max,
@@ -91,6 +99,8 @@ export function Slider({
   onChange,
 }: {
   id?: string;
+  /** Accessible name; the visible label is the Row's. */
+  label?: string;
   value: number;
   min: number;
   max: number;
@@ -122,9 +132,12 @@ export function Slider({
     });
   };
 
+  const fill = max > min ? ((local - min) / (max - min)) * 100 : 0;
+
   return (
     <input
       id={id}
+      aria-label={label}
       type="range"
       min={min}
       max={max}
@@ -141,13 +154,21 @@ export function Slider({
         setLocal(next);
         commit(next);
       }}
-      className="h-4 w-full accent-fd-primary"
+      className="te-range"
+      style={{ '--te-fill': `${fill}%` } as React.CSSProperties}
     />
   );
 }
 
+const fieldClass =
+  'h-8 w-full min-w-0 rounded-md border border-fd-border bg-transparent px-2.5 text-[12px] text-fd-foreground outline-none transition-colors hover:border-fd-muted-foreground/40 focus:border-fd-foreground';
+
+export function TextField({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={cn(fieldClass, className)} />;
+}
+
 /**
- * Colour input paired with the hex it holds, editable as text — a picker alone
+ * A colour well and the hex it holds, editable as text — a picker alone
  * cannot take a value from a brand document, and a text field alone cannot be
  * explored.
  */
@@ -174,20 +195,19 @@ export function Swatch({
   return (
     <div className="flex items-center gap-2">
       <input
-        id={id}
         type="color"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="size-8 shrink-0 cursor-pointer rounded-md border border-fd-border bg-transparent p-0.5"
-        aria-label="Colour"
+        className="te-well"
+        aria-label="Pick a colour"
       />
-      <input
-        type="text"
+      <TextField
+        id={id}
         value={text}
         onChange={(event) => commitText(event.target.value)}
         onBlur={() => setText(value)}
         spellCheck={false}
-        className="w-full rounded-md border border-fd-border bg-fd-muted px-2 py-1.5 font-mono text-[12px] text-fd-foreground"
+        className="font-mono"
       />
     </div>
   );
@@ -205,18 +225,24 @@ export function Select<T extends string>({
   onChange: (next: T) => void;
 }) {
   return (
-    <select
-      id={id}
-      value={value}
-      onChange={(event) => onChange(event.target.value as T)}
-      className="w-full rounded-md border border-fd-border bg-fd-muted px-2 py-1.5 text-[12px] text-fd-foreground"
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+        className={cn(fieldClass, 'cursor-pointer appearance-none pr-8')}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-fd-muted-foreground"
+      />
+    </div>
   );
 }
 
@@ -232,11 +258,7 @@ export function SegmentedControl<T extends string>({
   label: string;
 }) {
   return (
-    <div
-      role="group"
-      aria-label={label}
-      className="flex gap-0.5 rounded-lg border border-fd-border bg-fd-muted p-0.5"
-    >
+    <div role="group" aria-label={label} className="inline-flex rounded-md border border-fd-border p-0.5">
       {options.map((option) => (
         <button
           key={option.value}
@@ -244,9 +266,9 @@ export function SegmentedControl<T extends string>({
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            'flex-1 rounded-[5px] px-2 py-1 text-[12px] transition',
+            'rounded-[4px] px-2.5 py-0.5 text-[11.5px] transition-colors',
             value === option.value
-              ? 'bg-fd-card text-fd-foreground shadow-sm'
+              ? 'bg-fd-foreground text-fd-background'
               : 'text-fd-muted-foreground hover:text-fd-foreground',
           )}
         >
@@ -257,69 +279,48 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-export function ActionButton({
-  onClick,
+export function Checkbox({
+  checked,
+  onChange,
   children,
-  variant = 'default',
-  disabled,
 }: {
-  onClick: () => void;
+  checked: boolean;
+  onChange: (next: boolean) => void;
   children: React.ReactNode;
-  variant?: 'default' | 'primary';
-  disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'rounded-lg px-3 py-1.5 text-[12px] font-medium transition disabled:opacity-40',
-        variant === 'primary'
-          ? 'bg-fd-primary text-fd-primary-foreground hover:opacity-90'
-          : 'border border-fd-border text-fd-foreground hover:bg-fd-muted',
-      )}
-    >
+    <label className="flex cursor-pointer items-center gap-2 text-[12px] text-fd-muted-foreground">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="size-3.5 cursor-pointer accent-[var(--color-fd-foreground)]"
+      />
       {children}
-    </button>
+    </label>
   );
 }
 
-/** Copy-to-clipboard with the usual two-second acknowledgement. */
-export function CopyButton({
-  text,
-  label = 'Copy',
-  onCopied,
-}: {
-  text: string;
-  label?: string;
-  /** Fires only on a write the clipboard actually accepted. */
-  onCopied?: () => void;
-}) {
-  const [copied, setCopied] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
+export function PlainButton({
+  variant = 'outline',
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'outline' | 'solid' | 'ghost' }) {
   return (
-    <ActionButton
-      onClick={() => {
-        navigator.clipboard.writeText(text).then(
-          () => {
-            setCopied(true);
-            onCopied?.();
-          },
-          // Clipboard writes are refused without a user gesture or permission.
-          // Failing quietly is wrong (nothing happened, and the label would say
-          // it did) but throwing into the console is not the user's problem.
-          () => setCopied(false),
-        );
-      }}
-    >
-      {copied ? 'Copied' : label}
-    </ActionButton>
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        'inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-[12px] font-medium whitespace-nowrap outline-none transition-colors',
+        'focus-visible:ring-2 focus-visible:ring-fd-ring disabled:cursor-not-allowed disabled:opacity-40',
+        variant === 'outline' &&
+          'border border-fd-border text-fd-foreground hover:not-disabled:bg-fd-accent',
+        variant === 'solid' &&
+          'bg-fd-foreground text-fd-background hover:not-disabled:opacity-85',
+        variant === 'ghost' &&
+          'text-fd-muted-foreground hover:not-disabled:bg-fd-accent hover:not-disabled:text-fd-foreground',
+        className,
+      )}
+    />
   );
 }

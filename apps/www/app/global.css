@@ -19,3 +19,121 @@ html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
+
+/* The theme panel (components/theme-panel.tsx) docks to the right edge, and
+   on a desk the page makes room for it rather than being covered: the body is
+   padded by the panel's width, so every layout — the home nav, the docs grid —
+   simply lays out in what is left. One reflow when it opens, one when it
+   closes; the width is never animated.
+
+   On a docs page the column it takes is the table of contents' — there is no
+   room for both beside the article — so the TOC steps aside while it is open.
+   `!important` because Fumadocs sets the width from inside its own grid with a
+   breakpoint utility, and this has to win at every breakpoint. */
+:root {
+  --lq-theme-panel-w: 22rem;
+}
+
+@media (min-width: 768px) {
+  html.theme-panel-open body {
+    padding-right: var(--lq-theme-panel-w);
+  }
+
+  html.theme-panel-open #nd-notebook-layout {
+    --fd-toc-width: 0px !important;
+  }
+
+  html.theme-panel-open #nd-toc {
+    display: none;
+  }
+}
+
+/* The theme editor's plain controls (components/theme-editor/controls.tsx).
+   A hairline track filled in ink up to the value, a small ring for a knob, and
+   a square colour well — the parts utilities cannot comfortably reach. */
+.te-range {
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.te-range::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-fd-foreground) var(--te-fill),
+    var(--color-fd-border) var(--te-fill)
+  );
+}
+
+.te-range::-moz-range-track {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-fd-border);
+}
+
+.te-range::-moz-range-progress {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-fd-foreground);
+}
+
+.te-range::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 1.5px solid var(--color-fd-foreground);
+  border-radius: 999px;
+  background: var(--color-fd-background);
+  appearance: none;
+  transition: transform 120ms;
+}
+
+.te-range::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--color-fd-foreground);
+  border-radius: 999px;
+  background: var(--color-fd-background);
+}
+
+.te-range:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.te-range:focus-visible {
+  outline: none;
+}
+
+.te-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-fd-ring) 40%, transparent);
+}
+
+.te-well {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.te-well::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.te-well::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.te-well::-moz-color-swatch {
+  border: none;
+  border-radius: 3px;
+}

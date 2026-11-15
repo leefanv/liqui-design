@@ -261,3 +261,46 @@ test.describe('install command tracking', () => {
     expect(await events()).toHaveLength(before);
   });
 });
+
+test.describe('the theme panel', () => {
+  // The editor docks beside any page: the page makes room rather than being
+  // covered, and it is mounted in the root layout so it outlives a navigation.
+  // Each of those is one rule away from regressing silently — a panel laid
+  // over the page still looks fine in a screenshot, it just hides the column
+  // you were reading.
+  test('docks beside a docs page, makes room, and survives navigation', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({ json: { stargazers_count: 0 } }),
+    );
+
+    await page.goto('/docs/components/button');
+    await waitForGlass(page);
+
+    const trigger = page.locator('#nd-subnav').getByRole('button', { name: 'Theme' });
+    const panel = page.getByRole('complementary', { name: 'Theme settings' });
+    // Retried: a click before hydration does nothing.
+    await expect(async () => {
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true', { timeout: 1000 });
+    }).toPass();
+    await expect(panel).toBeVisible();
+
+    // The panel is a lazy chunk; its first preset button is proof it arrived.
+    await expect(panel.getByRole('button', { name: 'Prism' })).toBeVisible();
+
+    // Docked: the article ends where the panel begins, it does not run under it.
+    const panelBox = await panel.boundingBox();
+    const articleBox = await page.locator('#nd-page').boundingBox();
+    expect(articleBox!.x + articleBox!.width).toBeLessThanOrEqual(panelBox!.x + 1);
+
+    // Mounted above the route: still out on the next page.
+    await page.locator('#nd-sidebar').getByRole('link', { name: 'Checkbox', exact: true }).click();
+    await expect(page).toHaveURL(/\/docs\/components\/checkbox$/);
+    await expect(panel).toBeVisible();
+
+    expect(errors.filter((e) => !/favicon|404/i.test(e))).toEqual([]);
+  });
+});
