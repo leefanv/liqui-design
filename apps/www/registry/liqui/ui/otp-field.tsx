@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 export const OTPField = BaseOTPField.Root;
 
 const SLOT_GLASS = {
-  radius: 12,
+  radius: 9,
   blur: 1,
   refraction: 55,
   bezel: 12,
@@ -60,11 +60,11 @@ export function OTPFieldSlot({
       className={cn(
         'h-12 w-11 flex-none transition-shadow duration-150',
         'has-[input[data-filled]]:[--lq-tint:color-mix(in_srgb,var(--lq-accent)_22%,var(--lq-tint))]',
-        'has-[input:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'has-[input:focus-visible]:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         'has-[input[data-disabled]]:opacity-55',
         className,
       )}
-      contentClassName="size-full rounded-[inherit]"
+      contentClassName="size-full"
     >
       <BaseOTPField.Input
         {...props}

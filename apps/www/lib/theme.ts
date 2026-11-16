@@ -58,11 +58,12 @@ export const defaultLiquiTheme: LiquiTheme = {
 /* -------------------------------------------------------------------------- */
 
 /**
- * The light↔dark relationship of the shipped brand colours, read off them
- * directly: `#2f6bff` → `#6f9dff` is the same hue at the same saturation with
- * lightness moved 31% of the way to white, and the shipped danger pair sits on
- * the same curve. Hue and saturation are left alone — a brand colour that
- * drifts hue between modes stops being one colour.
+ * How a custom brand colour is carried into the other mode: same hue, same
+ * saturation, lightness moved 31% of the way to white. Hue and saturation are
+ * left alone — a brand colour that drifts hue between modes stops being one
+ * colour. (The shipped pair is Apple's own, `#0088ff` → `#0091ff`, which barely
+ * moves; a saturated custom accent on a dark glass needs the lift to stay
+ * legible, so the curve is kept rather than read off the defaults.)
  */
 const DARK_LIFT = 0.31;
 
@@ -408,14 +409,14 @@ export const PRESETS: ThemePreset[] = [
     id: 'liqui',
     name: 'liqui',
     description: 'The shipped defaults.',
-    swatch: ['#2f6bff', '#e8ecf5', '#1e202e'],
+    swatch: ['#0088ff', '#e8ecf5', '#1e202e'],
     patch: {},
   },
   {
     id: 'prism',
     name: 'Prism',
     description: 'Cut, clear glass under one light from the top left — glass type, as a surface.',
-    swatch: ['#2f6bff', '#fbfbfd', '#15161d'],
+    swatch: ['#0088ff', '#fbfbfd', '#15161d'],
     patch: { glass: diffGlass(prismGlassTheme) },
   },
   {

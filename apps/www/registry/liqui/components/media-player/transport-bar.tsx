@@ -116,7 +116,7 @@ export function TransportBar({
         className={className}
         // Wraps into three centred rows on a narrow screen — transport, then
         // modes, then the scrubber — and collapses to one at `sm`.
-        contentClassName="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-[inherit] px-4 py-3 sm:flex-nowrap"
+        contentClassName="lq-nest [--lq-inset:12px] [--lq-item-h:30px] flex flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3 sm:flex-nowrap"
       >
         <div className="flex w-full shrink-0 items-center justify-center gap-1 sm:w-auto sm:justify-start">
           <IconButton label="Previous" onClick={onPrevious}>

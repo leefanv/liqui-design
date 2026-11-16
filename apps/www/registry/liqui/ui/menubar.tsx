@@ -62,7 +62,7 @@ export function Menubar({ glass, className, children, ...props }: MenubarProps) 
         <LiquiGlass
           {...BAR_GLASS}
           {...glass}
-          contentClassName="flex gap-0.5 rounded-[inherit] p-[3px] group-data-[orientation=vertical]:flex-col"
+          contentClassName="flex gap-0.5 p-[3px] lq-nest [--lq-inset:3px] [--lq-item-h:30px] group-data-[orientation=vertical]:flex-col"
         />
       }
     >
@@ -94,8 +94,8 @@ export function MenubarTrigger({ className, ...props }: BaseMenu.Trigger.Props) 
         // Keeps the native <button>: there is no glass anatomy to put inside it
         // here, so none of the reasons Button has to opt out apply.
         'inline-flex cursor-default select-none items-center justify-center gap-[7px]',
-        'rounded-[11px] border-none bg-transparent px-[11px] py-[7px]',
-        'font-[inherit] text-[13px] leading-tight font-semibold whitespace-nowrap',
+        'lq-corner rounded-[var(--lq-item-radius)] border-none bg-transparent px-[11px] py-[7px]',
+        'font-[inherit] text-[13px] leading-tight font-medium whitespace-nowrap',
         'text-[var(--lq-text)] outline-none transition-[background-color,color] duration-150',
         'hover:not-data-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)]',
         'data-[popup-open]:bg-[color-mix(in_srgb,var(--lq-accent)_80%,transparent)] data-[popup-open]:text-white',

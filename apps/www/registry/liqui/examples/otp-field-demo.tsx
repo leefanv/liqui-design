@@ -20,7 +20,7 @@ export default function OTPFieldDemo() {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <label htmlFor={id} className="text-[12.5px] font-semibold text-[var(--lq-text)]">
+      <label htmlFor={id} className="text-[13px] font-medium text-[var(--lq-text)]">
         Verification code
       </label>
       <OTPField id={id} length={LENGTH} defaultValue="42" className="flex items-center gap-2">

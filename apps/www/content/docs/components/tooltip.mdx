@@ -71,10 +71,12 @@ its own contrast.
 The optics are scaled down to match the box:
 
 ```ts
-{ radius: 11, blur: 1, refraction: 35, bezel: 9, frost: 0.7 }
+{ radius: 5, blur: 1, refraction: 30, bezel: 6, frost: 0.7 }
 ```
 
-A 28px-tall chip driven at a menu's `refraction: 150` is all bezel and no glass.
+The label is 11px, the size macOS sets its tooltips in, so the chip is 20px
+tall — and a rounded rectangle rather than a pill, as macOS draws it. A 20px
+chip driven at a menu's `refraction: 120` is all bezel and no glass.
 With [Checkbox](/docs/components/checkbox) and
 [Radio](/docs/components/radio-group) now flat, this is one of the smallest
 surfaces the lens is still asked to render, and it is a good place to check a

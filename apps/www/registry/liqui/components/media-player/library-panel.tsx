@@ -73,7 +73,7 @@ export function LibraryPanel({ track, onSelect, query, onQueryChange, className 
     <LiquiGlass
       {...PANEL_GLASS}
       className={cn('min-h-0', className)}
-      contentClassName="flex h-full flex-col rounded-[inherit] p-3.5"
+      contentClassName="flex h-full flex-col p-3.5"
     >
       <Tabs defaultValue="queue" className="flex min-h-0 flex-1 flex-col gap-3">
         {/* `w-auto` so the strip is as wide as its two labels. Stretched to the
@@ -157,7 +157,7 @@ function QueueTab({
       ) : (
         albums.map((album) => (
           <section key={album.name}>
-            <h3 className="px-2 pb-1 text-[10.5px] font-semibold tracking-[0.07em] text-[var(--lq-text-dim)] uppercase">
+            <h3 className="px-2 pb-1 text-[13px] font-bold text-[var(--lq-text-dim)]">
               {album.name}
             </h3>
             <ul className="flex flex-col gap-px">
@@ -201,7 +201,7 @@ function TrackRow({
               onClick={onSelect}
               aria-current={current ? 'true' : undefined}
               className={cn(
-                'flex w-full cursor-default items-center gap-2.5 rounded-[10px] px-2 py-[7px]',
+                'flex w-full cursor-default items-center gap-2.5 lq-squircle [--lq-r:10px] [--lq-h:30px] px-2 py-[7px]',
                 'border-none bg-transparent text-left font-[inherit] outline-none',
                 'transition-[background-color] duration-150',
                 'hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)]',

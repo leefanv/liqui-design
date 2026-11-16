@@ -30,7 +30,7 @@ export default function ComboboxDemo() {
   return (
     <Combobox items={PROFILES}>
       <div className="flex w-64 flex-col gap-1.5">
-        <label htmlFor={id} className="text-[12.5px] font-semibold text-[var(--lq-text)]">
+        <label htmlFor={id} className="text-[13px] font-medium text-[var(--lq-text)]">
           Surface profile
         </label>
         <ComboboxInputGroup>

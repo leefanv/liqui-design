@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
  */
 
 const CheckIcon = (
-  <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden>
+  <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden>
     <path
       d="M2 6.4 4.7 9.1 10 3.1"
       stroke="currentColor"
@@ -42,7 +42,7 @@ const CheckIcon = (
 );
 
 const IndeterminateIcon = (
-  <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden>
+  <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden>
     <path d="M2.5 6h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
@@ -54,7 +54,7 @@ export function Checkbox({ className, ...props }: CheckboxProps) {
     <BaseCheckbox.Root
       {...props}
       className={cn(
-        'inline-flex size-5 flex-none cursor-default items-center justify-center rounded-[7px]',
+        'inline-flex size-4 flex-none cursor-default items-center justify-center lq-squircle [--lq-r:5px] [--lq-h:16px]',
         'border-none p-0 outline-none',
         'transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.92]',
         // Off: the flat control surface. The hairline is an inset ring rather
@@ -105,7 +105,7 @@ export function CheckboxLabel({
     <label
       {...props}
       className={cn(
-        'flex cursor-default select-none items-center gap-2.5 text-[13.5px] font-medium text-[var(--lq-text)]',
+        'flex cursor-default select-none items-center gap-1.5 text-[13px] font-medium text-[var(--lq-text)]',
         'has-[[data-disabled]]:text-[var(--lq-text-dim)]',
         className,
       )}

@@ -35,9 +35,14 @@ import { coverArt, type Track } from '@/registry/liqui/lib/media-player-data';
  * match.
  */
 
+/**
+ * The plate's corner and the artwork's are one decision: the plate is inset
+ * 12px, so the artwork's corner is the plate's plus 12 (see the artwork's
+ * class below) and the two curves run parallel round the corner.
+ */
 const PLATE_GLASS = {
   elevated: true,
-  radius: 20,
+  radius: 17,
   blur: 1,
   refraction: 110,
   bezel: 22,
@@ -66,7 +71,10 @@ export function NowPlaying({
   return (
     <div
       className={cn(
-        'relative aspect-square overflow-hidden rounded-[26px]',
+        'relative aspect-square overflow-hidden',
+        // Concentric with the plate: its corner, compensated as the kernel
+        // compensates it, plus the 12px it is inset by.
+        'lq-squircle rounded-[calc(17px*var(--lq-corner-k)+12px)]',
         'shadow-[0_28px_64px_-24px_rgba(0,0,0,0.72)]',
         'transition-[background-image] duration-700',
         className,
@@ -117,7 +125,7 @@ export function NowPlaying({
       <LiquiGlass
         {...PLATE_GLASS}
         className="absolute inset-x-3 bottom-3"
-        contentClassName="flex items-center gap-3 rounded-[inherit] px-3.5 py-3"
+        contentClassName="flex items-center gap-3 px-3.5 py-3"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] leading-tight font-semibold text-[var(--lq-text)]">

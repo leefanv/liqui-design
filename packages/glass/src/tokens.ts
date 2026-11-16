@@ -42,8 +42,9 @@ export type LiquiTokens = Record<LiquiTokenName, string>;
 
 export const defaultTokens: { light: LiquiTokens; dark: LiquiTokens } = {
   light: {
-    text: 'rgba(28, 28, 40, 0.95)',
-    'text-dim': 'rgba(28, 28, 40, 0.55)',
+    // Apple's label colours (macOS 27 kit: Labels/Primary, Labels/Secondary).
+    text: 'rgba(0, 0, 0, 0.85)',
+    'text-dim': 'rgba(0, 0, 0, 0.5)',
     // Full-strength ("regular") tint; the frost prop scales layer opacity.
     tint: 'rgba(255, 255, 255, 0.48)',
     'tint-deep': 'rgba(255, 255, 255, 0.14)',
@@ -57,17 +58,18 @@ export const defaultTokens: { light: LiquiTokens; dark: LiquiTokens } = {
     // `control` in the token list above.
     control: 'rgba(255, 255, 255, 0.72)',
     'control-rim': 'rgba(28, 28, 40, 0.16)',
-    accent: '#2f6bff',
-    danger: '#e5484d',
+    // Accents/Blue and Accents/Red from the macOS 27 kit.
+    accent: '#0088ff',
+    danger: '#ff383c',
     // The darker variant, used where the red has to survive as *text* on a
     // light surface rather than as a fill with white on top of it.
-    'danger-text': '#c1272c',
+    'danger-text': '#e0262b',
     // Scrim behind modal surfaces.
     scrim: 'rgba(12, 14, 28, 0.32)',
   },
   dark: {
-    text: 'rgba(245, 246, 255, 0.96)',
-    'text-dim': 'rgba(245, 246, 255, 0.55)',
+    text: 'rgba(255, 255, 255, 0.85)',
+    'text-dim': 'rgba(255, 255, 255, 0.55)',
     tint: 'rgba(30, 32, 46, 0.62)',
     'tint-deep': 'rgba(18, 20, 32, 0.4)',
     'rim-hi': 'rgba(255, 255, 255, 0.5)',
@@ -76,9 +78,9 @@ export const defaultTokens: { light: LiquiTokens; dark: LiquiTokens } = {
     highlight: 'rgba(255, 255, 255, 0.18)',
     control: 'rgba(126, 128, 146, 0.3)',
     'control-rim': 'rgba(255, 255, 255, 0.22)',
-    accent: '#6f9dff',
-    danger: '#ff7076',
-    'danger-text': '#ff7076',
+    accent: '#0091ff',
+    danger: '#ff4245',
+    'danger-text': '#ff6467',
     scrim: 'rgba(0, 0, 6, 0.48)',
   },
 };

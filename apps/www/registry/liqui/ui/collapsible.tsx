@@ -61,7 +61,7 @@ export function CollapsibleTrigger({
       className={cn(
         'group flex w-full cursor-default select-none outline-none',
         'transition-[transform,box-shadow] duration-150 active:scale-[0.995]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
         className,
       )}
@@ -69,7 +69,7 @@ export function CollapsibleTrigger({
         <LiquiGlass
           {...TRIGGER_GLASS}
           {...glass}
-          contentClassName="flex w-full items-center gap-3 rounded-[inherit] px-4 py-[11px] text-[13.5px] leading-tight font-semibold text-[var(--lq-text)] group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_35%,transparent)] group-data-[panel-open]:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] group-data-[disabled]:bg-transparent"
+          contentClassName="flex w-full items-center gap-3 px-4 py-[11px] text-[13px] leading-tight font-semibold text-[var(--lq-text)] group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_35%,transparent)] group-data-[panel-open]:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] group-data-[disabled]:bg-transparent"
         />
       }
     >
@@ -124,7 +124,7 @@ export function CollapsiblePanel({
           // The panel clips its own height, so the content wrapper has to clip
           // to the same radius — otherwise the square corners of a mid-animation
           // box punch through the surface's rounded ones.
-          contentClassName="overflow-hidden rounded-[inherit]"
+          contentClassName="overflow-hidden"
         />
       }
     >

@@ -102,7 +102,8 @@ takes the strip's radius less the 3px it is inset by, on the strip's own corner
 shape, so the pressed toggle's ends run parallel to the strip's. Pass
 `glass={{ radius }}` and the toggles follow it. That includes a radius small
 enough to turn the strip into a squircle, and a theme's `radiusScale`. Toolbar
-puts toggles in its own strip with a 5px inset and keeps their 11px corners.
+does the same with its 5px inset. The mechanism is the library's, not this
+component's — see [Corners](/docs/handbook/glass#corners).
 
 ### Orientation
 

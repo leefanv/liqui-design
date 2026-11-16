@@ -73,24 +73,23 @@ export function NavigationMenuList({
   ...props
 }: BaseNavigationMenu.List.Props & { glass?: Partial<LiquiGlassProps> }) {
   return (
-    <BaseNavigationMenu.List
-      {...props}
-      className={cn('group inline-flex', className)}
-      render={
-        <LiquiGlass
-          {...BAR_GLASS}
-          {...glass}
-          contentClassName="relative flex gap-0.5 rounded-[inherit] p-[3px]"
-        />
-      }
-    >
-      {children}
-    </BaseNavigationMenu.List>
+    // The glass wraps the list rather than standing in for it. Rendered *as*
+    // the list, the surface turned the <ul> into a <div>, which left every
+    // <li> outside a list — invalid markup, and each item drew its disc marker
+    // beside the bar.
+    <LiquiGlass {...BAR_GLASS} {...glass} className={cn('inline-flex', className)}>
+      <BaseNavigationMenu.List
+        {...props}
+        className="relative m-0 flex list-none gap-0.5 p-[3px] lq-nest [--lq-inset:3px] [--lq-item-h:30px]"
+      >
+        {children}
+      </BaseNavigationMenu.List>
+    </LiquiGlass>
   );
 }
 
 const triggerClass =
-  'inline-flex cursor-default select-none items-center justify-center gap-1.5 rounded-[11px] border-none bg-transparent px-[11px] py-[7px] font-[inherit] text-[13px] leading-tight font-semibold whitespace-nowrap text-[var(--lq-text)] no-underline outline-none transition-[background-color,color] duration-150 hover:not-data-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50';
+  'inline-flex cursor-default select-none items-center justify-center gap-1.5 lq-corner rounded-[var(--lq-item-radius)] border-none bg-transparent px-[11px] py-[7px] font-[inherit] text-[13px] leading-tight font-medium whitespace-nowrap text-[var(--lq-text)] no-underline outline-none transition-[background-color,color] duration-150 hover:not-data-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50';
 
 export function NavigationMenuTrigger({
   children,
@@ -138,7 +137,7 @@ export function NavigationMenuContent({ className, ...props }: BaseNavigationMen
     <BaseNavigationMenu.Content
       {...props}
       className={cn(
-        'w-[calc(100vw-2rem)] max-w-[26rem] p-2 transition-[opacity,translate] duration-[var(--duration)] ease-[var(--easing)]',
+        'w-[calc(100vw-2rem)] max-w-[26rem] p-2 lq-nest [--lq-inset:8px] transition-[opacity,translate] duration-[var(--duration)] ease-[var(--easing)]',
         'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
         'data-[starting-style]:data-[activation-direction=left]:-translate-x-1/4',
         'data-[starting-style]:data-[activation-direction=right]:translate-x-1/4',
@@ -161,13 +160,13 @@ export function NavigationMenuLink({
     <BaseNavigationMenu.Link
       {...props}
       className={cn(
-        'block cursor-default rounded-xl p-2.5 no-underline outline-none',
+        'block cursor-default lq-corner rounded-[var(--lq-item-radius)] p-2.5 no-underline outline-none',
         'hover:bg-[var(--lq-highlight)] hover:shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_65%,transparent)]',
         'focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]',
         className,
       )}
     >
-      <span className="block text-[13.5px] leading-tight font-semibold text-[var(--lq-text)]">
+      <span className="block text-[13px] leading-tight font-semibold text-[var(--lq-text)]">
         {title}
       </span>
       {children ? (
@@ -271,12 +270,12 @@ export function NavigationMenuPopup({
               // content wrapper amputates it. The viewport below does the
               // clipping instead, which is also the element that needs it —
               // it is what the panel's contents slide through.
-              contentClassName="size-full rounded-[inherit]"
+              contentClassName="size-full"
             />
           }
         >
           {arrow ? <NavigationMenuArrow /> : null}
-          <BaseNavigationMenu.Viewport className="relative size-full overflow-hidden rounded-[inherit]" />
+          <BaseNavigationMenu.Viewport className="lq-corner relative size-full overflow-hidden rounded-[inherit]" />
         </BaseNavigationMenu.Popup>
       </BaseNavigationMenu.Positioner>
     </BaseNavigationMenu.Portal>

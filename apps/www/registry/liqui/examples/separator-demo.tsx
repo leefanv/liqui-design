@@ -21,7 +21,7 @@ export default function SeparatorDemo() {
       {['Duplicate', 'Rename', 'Move to…'].map((label, index) => (
         <div key={label}>
           {index > 0 ? <Separator className="mx-2.5 my-[5px]" /> : null}
-          <div className="rounded-xl px-3 py-[7px] text-[13.5px] font-[450] text-[var(--lq-text)]">
+          <div className="rounded-xl px-2 py-[3px] text-[13px] font-medium text-[var(--lq-text)]">
             {label}
           </div>
         </div>

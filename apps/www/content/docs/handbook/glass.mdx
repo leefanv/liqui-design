@@ -86,6 +86,55 @@ Each of these is a per-surface prop, and the components set the geometric ones
 (`radius`, `refraction`, `bezel`) to values scaled to their own size. To move
 them all at once — or to change the colours — see [Theming](/docs/handbook/theming).
 
+## Corners
+
+Every corner in liqui is a continuous one — the squircle Apple draws, where the
+curve eases out of the straight edge instead of meeting it at a seam — and every
+component draws it the same way.
+
+**A glass surface** gets it from the kernel. `radius` is the round-corner size
+you mean; where `corner-shape: squircle` renders (Chromium 139+), the kernel
+raises it 1.4× so the softer curve reads the same size, and draws the map and
+the lighting on that curve. A surface whose corners reach half its height is a
+capsule or a disc, and keeps a true semicircle — a superellipse cannot close
+into one.
+
+**Anything inside a surface** — a hover wash, a highlighted menu item, a
+pressed toggle — follows the surface. The surface publishes its corner as
+`--lq-radius` and its shape as `--lq-corner`, and a container states its inset
+once, next to its padding, with the height of what it holds:
+
+```tsx
+// The container: its padding, and its items' height.
+<div className="p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px]">
+  {/* The item: the surface's radius less the inset, on the surface's shape. */}
+  <div className="lq-corner rounded-[var(--lq-item-radius)]" />
+</div>
+```
+
+Same centre, parallel curves, an even gap all the way round — and a theme's
+`radiusScale` reaches the items through the surface, so they never drift out of
+step with it. Where the concentric radius comes out at half an item's height or
+more, the item is a capsule, and `lq-nest` gives it half its height on round
+corners — the rule the kernel applies to a surface. On a capsule strip the
+items come out capsules too.
+
+**Anything with a radius of its own** — a solid button, a checkbox, a chip —
+takes `lq-squircle`, with its radius as written and its height:
+
+```tsx
+<span className="lq-squircle [--lq-r:5px] [--lq-h:16px]" />
+```
+
+It gets exactly what a glass surface gets from the kernel: the radius 1.4×
+larger where the squircle renders, times the theme's `radiusScale`, and a true
+capsule once that reaches half the height. A box *around* a glass surface —
+the groove a tab indicator slides in — is the surface's corner plus the inset.
+Circles and pills stay `rounded-full`.
+
+Safari and Firefox do not draw `corner-shape` yet. There every corner is round
+at the radius as written — the same look liqui had before the squircle.
+
 ## Performance budget
 
 The expensive parts are the canvas-generated displacement map and the

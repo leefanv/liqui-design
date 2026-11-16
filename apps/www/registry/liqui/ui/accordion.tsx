@@ -45,7 +45,7 @@ export function AccordionItem({
         <LiquiGlass
           {...ITEM_GLASS}
           {...glass}
-          contentClassName="overflow-hidden rounded-[inherit]"
+          contentClassName="overflow-hidden"
         />
       }
     >
@@ -60,7 +60,7 @@ export function AccordionTrigger({ children, className, ...props }: BaseAccordio
       <BaseAccordion.Trigger
         {...props}
         className={cn(
-          'group flex w-full cursor-default items-center gap-3 border-none bg-transparent px-4 py-[13px] text-left font-[inherit] text-[13.5px] font-semibold text-[var(--lq-text)] outline-none',
+          'group flex w-full cursor-default items-center gap-3 border-none bg-transparent px-4 py-[13px] text-left font-[inherit] text-[13px] font-semibold text-[var(--lq-text)] outline-none',
           'hover:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)]',
           'focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]',
           className,

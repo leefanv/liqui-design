@@ -45,28 +45,31 @@ import { cn } from '@/lib/utils';
 /* -------------------------------------------------------------------------- */
 
 /**
- * Rail height — deliberately the same `h-3.5` that Meter and Progress use.
- * A slider read next to a meter should look like its sibling, and the rail is
- * the part that says so.
+ * Rail height. Thinner than the `h-3.5` Meter and Progress use, on purpose:
+ * those bars are the whole control, and this rail is the backdrop for a knob
+ * twice its height. Slim, it reads as a line the knob rides on rather
+ * than a second bar the knob is stuck to, and the lens has more page around
+ * the rail to bend.
  */
-const RAIL_H = 14;
+const RAIL_H = 8;
 
 /**
  * The lens's own box. **This is the size knob**, and it is separate from the
  * rail on purpose.
  *
- * These are two decisions, not one. The rail belongs to the Meter/Progress
- * family and is sized by them; the lens belongs to the optics and is sized by
- * how much glass the effect needs. Tying the lens to the rail — which is what
- * this did first — meant a slider that matched its siblings could only do so by
- * carrying a knob half again as tall as anything else on the page.
+ * These are two decisions, not one. The rail is a line for the knob to ride;
+ * the lens belongs to the optics and is sized by how much glass the effect
+ * needs. Tying the lens to the rail — which is what this did first — meant
+ * the knob could only change size by changing the rail with it.
  *
  * The 3:2 aspect is the reference's. The lens is drawn at `REST_SCALE` and only
- * reaches 1 while held, so at rest this is a 41×27 knob and under a finger it
- * is a 68×45 lens — still three times the rail it sits on, which is the whole
- * point. A lens the size of the thing it covers has nothing to show.
+ * reaches 1 while held, so at rest this is a 25×16 knob — the height of a line
+ * of small text, so a slider sits in a form row without making it taller — and
+ * under a finger it is a 41×27 lens, more than three times the rail it sits on,
+ * which is the whole point. A lens the size of the thing it covers has nothing
+ * to show.
  */
-const LENS_H = 45;
+const LENS_H = 27;
 const LENS_W = Math.round(LENS_H * (90 / 60));
 const LENS_R = LENS_H / 2;
 
@@ -157,7 +160,7 @@ export function SliderLabel({ className, ...props }: BaseSlider.Label.Props) {
   return (
     <BaseSlider.Label
       {...props}
-      className={cn('text-[12.5px] font-semibold text-[var(--lq-text)]', className)}
+      className={cn('text-[13px] font-medium text-[var(--lq-text)]', className)}
     />
   );
 }

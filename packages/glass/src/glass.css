@@ -23,15 +23,102 @@
    no Tailwind present the layer is created here and any unlayered consumer CSS
    beats it — which is what a default should do. The structural rules below stay
    unlayered: nothing outside should be overriding the surface anatomy. */
-/* Set inline by LiquiGlass on capsules and discs (see `capsule` there).
-   Registered as non-inheriting so a surface nested inside a capsule does not
-   pick up its round corners — it falls back to the squircle below. */
-@property --lq-corner-shape {
-  syntax: '*';
-  inherits: false;
-}
-
+/* Continuous corners — one mechanism for the whole library.
+ *
+ * Every LiquiGlass surface writes two custom properties inline:
+ *
+ *   --lq-radius   its corner radius, already compensated for the squircle
+ *                 (see SQUIRCLE_RADIUS_SCALE in LiquiGlass.tsx)
+ *   --lq-corner   its corner shape: `squircle`, or `round` on a capsule or a
+ *                 disc, where a superellipse cannot close into a semicircle
+ *
+ * Both inherit, so anything painted *inside* a surface — a hover wash, a
+ * highlighted menu item, a pressed toggle — can follow it without knowing
+ * what it is sitting in. The container states its inset once, next to its
+ * padding, and the height of the items in it:
+ *
+ *   <div class="p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:30px]">
+ *     <div class="lq-corner rounded-[var(--lq-item-radius)]" />
+ *
+ * `lq-nest` works out `--lq-item-radius`, the surface's radius less the
+ * inset, so the corners are concentric: same centre, parallel curves, an even
+ * gap all the way round. Where that comes out at half the item's height or
+ * more, the item is a capsule, and gets half its height on round corners —
+ * the same rule the kernel applies to a surface, for the same reason. Leave
+ * out `--lq-item-h` when the items are too tall for that to happen. Each
+ * surface resets both for what is nested in it, so nothing leaks a level.
+ *
+ * Something rounded with a radius of its own — a solid button, a checkbox, a
+ * chip — takes `lq-squircle` instead, with its radius as written and its
+ * height:
+ *
+ *   class="lq-squircle [--lq-r:5px] [--lq-h:16px]"
+ *
+ * It gets exactly what a glass surface gets from the kernel: the radius times
+ * `--lq-corner-k` — 1.4 where the squircle renders, 1 where it does not, times
+ * the theme's `radiusScale` — and, once that reaches half the height, half
+ * the height on round corners. A `rounded-*` class still wins over the radius
+ * for the rare box whose corner is derived from something else.
+ *
+ * The reverse also holds: a CSS box around a glass surface — the groove a
+ * tab indicator slides in — is concentric with it at the surface's radius
+ * plus the inset, `rounded-[calc(11px*var(--lq-corner-k)+3px)]`.
+ *
+ * Circles and pills stay `rounded-full` and take neither class: a fully
+ * rounded end is already the continuous curve it can be.
+ *
+ * Browsers without `corner-shape` (Safari, Firefox today) ignore it and draw
+ * round corners at the uncompensated radius — the same look as before. */
 @layer base {
+  /* `--lq-radius-scale` is the theme's `radiusScale`, written at :root by
+     LiquiThemeProvider when it is not 1, so CSS corners follow the same dial
+     the surfaces do. */
+  :root {
+    --lq-corner-k: var(--lq-radius-scale, 1);
+  }
+
+  @supports (corner-shape: squircle) {
+    :root {
+      --lq-corner-k: calc(1.4 * var(--lq-radius-scale, 1));
+    }
+  }
+
+  .lq-corner {
+    corner-shape: var(--lq-item-corner, var(--lq-corner, squircle));
+  }
+
+  /* `superellipse(1)` is round and `superellipse(2)` the squircle, so the
+     item's shape is a number: the surface's own (`--lq-corner-n`) while the
+     concentric radius fits the item, 1 once it is capped at half its height.
+     `sign()` is what turns that comparison of two lengths into the switch. */
+  .lq-nest {
+    --lq-item-span: calc(var(--lq-radius, 16px) - var(--lq-inset, 0px));
+    --lq-item-half: calc(var(--lq-item-h, 200vh) / 2);
+    --lq-item-radius: max(0px, min(var(--lq-item-span), var(--lq-item-half)));
+    --lq-item-corner: superellipse(
+      calc(
+        1 + (var(--lq-corner-n, 2) - 1) *
+          (0.5 + 0.5 * sign(var(--lq-item-half) - 0.5px - var(--lq-item-span)))
+      )
+    );
+  }
+
+  .lq-squircle {
+    --lq-drawn: calc(var(--lq-r, 0px) * var(--lq-corner-k, 1));
+    --lq-half: calc(var(--lq-h, 200vh) / 2);
+    border-radius: min(var(--lq-drawn), var(--lq-half));
+    corner-shape: superellipse(calc(1.5 + 0.5 * sign(var(--lq-half) - 0.5px - var(--lq-drawn))));
+  }
+
+  /* The content layer has the surface's corners, so a wash or a fill painted
+     on it (a button's hover, a progress bar's indicator) meets the edge on the
+     same curve instead of a round one inside a squircle. Layered, so a
+     `contentClassName` that asks for different corners still gets them. */
+  .liqui-glass__content {
+    border-radius: inherit;
+    corner-shape: inherit;
+  }
+
   .liqui-glass {
     position: relative;
     isolation: isolate;
@@ -43,7 +130,7 @@
        with `round` — a superellipse cannot close into a semicircle. Browsers
        without the property ignore the declaration and keep round corners —
        they are on the frost tier, which uses no generated map. */
-    corner-shape: var(--lq-corner-shape, squircle);
+    corner-shape: var(--lq-corner, squircle);
     color: var(--lq-text, inherit);
   }
 }

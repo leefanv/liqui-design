@@ -71,7 +71,7 @@ export function DialogDescription({ className, ...props }: BaseDialog.Descriptio
   return (
     <BaseDialog.Description
       {...props}
-      className={cn('mt-2 text-[13.5px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
+      className={cn('mt-2 text-[13px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
     />
   );
 }
@@ -104,7 +104,7 @@ export function DialogDismiss({ className, ...props }: BaseDialog.Close.Props) {
         'absolute top-3.5 right-3.5 inline-flex size-7 cursor-default items-center justify-center rounded-full',
         'text-[var(--lq-text-dim)] outline-none transition-[background-color,color] duration-150',
         'hover:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] hover:text-[var(--lq-text)]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
     >
