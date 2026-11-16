@@ -70,11 +70,23 @@ export function Avatar({ size = 40, glass, className, children, style, ...props 
           refraction={Math.round(size)}
           bezel={ring}
           {...glass}
-          contentClassName="size-full rounded-full"
+          contentClassName="size-full"
         />
       }
     >
-      <span className="block size-full" style={{ padding: ring }}>
+      {/* The picture is concentric with the disc: the surface's radius less
+          the ring. A disc at the shipped theme; at a smaller `radiusScale` the
+          avatar turns squircle, and the picture turns with it. */}
+      <span
+        className="lq-nest block size-full"
+        style={
+          {
+            padding: ring,
+            '--lq-inset': `${ring}px`,
+            '--lq-item-h': `${size - 2 * ring}px`,
+          } as React.CSSProperties
+        }
+      >
         {children}
       </span>
     </BaseAvatar.Root>
@@ -94,7 +106,7 @@ export function AvatarImage({ className, ...props }: BaseAvatar.Image.Props) {
   return (
     <BaseAvatar.Image
       {...props}
-      className={cn('m-0! size-full rounded-full object-cover', className)}
+      className={cn('m-0! lq-corner size-full rounded-[var(--lq-item-radius)] object-cover', className)}
     />
   );
 }
@@ -110,7 +122,7 @@ export function AvatarFallback({ className, ...props }: BaseAvatar.Fallback.Prop
     <BaseAvatar.Fallback
       {...props}
       className={cn(
-        'flex size-full items-center justify-center rounded-full text-[1em] leading-none font-semibold tracking-[0.02em] text-[var(--lq-text)] uppercase',
+        'lq-corner flex size-full items-center justify-center rounded-[var(--lq-item-radius)] text-[1em] leading-none font-semibold tracking-[0.02em] text-[var(--lq-text)] uppercase',
         className,
       )}
     />

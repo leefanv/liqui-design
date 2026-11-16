@@ -1,5 +1,6 @@
 'use client';
 
+import type * as React from 'react';
 import { Tabs as BaseTabs } from '@base-ui/react/tabs';
 import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 
@@ -27,8 +28,11 @@ import { cn } from '@/lib/utils';
  * interpolating through fifty sizes.
  */
 
+/** The indicator's corner, as written; see the groove below. */
+const INDICATOR_RADIUS = 11;
+
 const INDICATOR_GLASS = {
-  radius: 11,
+  radius: INDICATOR_RADIUS,
   blur: 1,
   refraction: 44,
   bezel: 11,
@@ -39,16 +43,37 @@ export function Tabs({ className, ...props }: BaseTabs.Root.Props) {
 }
 
 /**
+ * The groove's corners are concentric with the indicator's, and the indicator
+ * is glass: the kernel draws its 11px 1.4× larger as a squircle, or — once
+ * that reaches half the tab's height — as a true capsule (see "Continuous
+ * corners" in the kernel's glass.css). The groove is CSS and cannot measure,
+ * so it repeats that decision from the tab's height, which the classes below
+ * fix at 30px, the way `lq-squircle` does: the drawn radius, capped at half
+ * the height, on round corners from the point the cap bites
+ * (`superellipse(1)` is round, `superellipse(2)` the squircle). The groove
+ * adds the 3px inset; a tab's focus ring takes the indicator's corner as is.
+ */
+const TAB_H = 30;
+const CORNER_VARS = {
+  '--lq-tab-drawn': `calc(${INDICATOR_RADIUS}px * var(--lq-corner-k))`,
+  '--lq-tab-r': `min(var(--lq-tab-drawn), ${TAB_H / 2}px)`,
+  '--lq-tab-corner': `superellipse(calc(1.5 + 0.5 * sign(${TAB_H / 2 - 0.5}px - var(--lq-tab-drawn))))`,
+} as React.CSSProperties;
+
+/**
  * The groove. `isolate` keeps the indicator's stacking inside the strip; it is
  * safe next to `backdrop-filter` because isolation does not make an element a
  * backdrop root in Chromium — the indicator still samples the page through it.
  */
-export function TabsList({ className, ...props }: BaseTabs.List.Props) {
+export function TabsList({ className, style, ...props }: BaseTabs.List.Props) {
   return (
     <BaseTabs.List
       {...props}
+      style={{ ...CORNER_VARS, ...(style as React.CSSProperties) }}
       className={cn(
-        'relative isolate flex w-full rounded-[14px] p-[3px]',
+        'relative isolate flex w-full p-[3px]',
+        // The indicator's corner plus the 3px it is inset by.
+        'rounded-[calc(var(--lq-tab-r)+3px)] [corner-shape:var(--lq-tab-corner)]',
         'bg-[color-mix(in_srgb,var(--lq-text)_10%,transparent)]',
         'shadow-[inset_0_1px_2px_color-mix(in_srgb,var(--lq-text)_12%,transparent),inset_0_0_0_0.5px_var(--lq-rim-lo)]',
         'data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col',
@@ -65,8 +90,8 @@ export function TabsTab({ className, ...props }: BaseTabs.Tab.Props) {
       className={cn(
         // flex-1 is load-bearing — see the note at the top of the file.
         'relative z-1 flex flex-1 cursor-default select-none items-center justify-center gap-1.5',
-        'rounded-[11px] border-none bg-transparent px-3.5 py-[7px]',
-        'font-[inherit] text-[13px] leading-tight font-semibold whitespace-nowrap',
+        'rounded-[var(--lq-tab-r)] [corner-shape:var(--lq-tab-corner)] border-none bg-transparent px-3.5 py-[7px]',
+        'font-[inherit] text-[13px] leading-tight font-medium whitespace-nowrap',
         'text-[var(--lq-text-dim)] outline-none transition-colors duration-150',
         'hover:text-[var(--lq-text)] data-[active]:text-[var(--lq-text)]',
         'data-[orientation=vertical]:justify-start',
@@ -109,8 +134,8 @@ export function TabsPanel({ className, ...props }: BaseTabs.Panel.Props) {
     <BaseTabs.Panel
       {...props}
       className={cn(
-        'pt-4 text-[13.5px] leading-[1.55] text-[var(--lq-text)] outline-none',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'pt-4 text-[13px] leading-[1.55] text-[var(--lq-text)] outline-none',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
     />

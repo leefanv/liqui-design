@@ -45,33 +45,35 @@ import { cn } from '@/lib/utils';
 /* -------------------------------------------------------------------------- */
 
 /**
- * Track height. **The only number here you should change** — everything below
- * is a ratio off it, so the switch stays in proportion at any size, and the
+ * The track, **the two numbers here you should change** — everything below is
+ * derived from them, so the switch stays in proportion at any size, and the
  * maps regenerate to match.
  *
- * The ratios are not invented. They are measured off the reference this
- * component reproduces, where the track is 160×67 and the thumb is a 146×92
- * capsule drawn at 0.65. That proportion — a thumb far wider than the track is
- * tall, riding a track far longer than an iOS switch — is what gives the lens
- * enough glass to be worth looking through, and it is why 30 here buys a 72px
- * track rather than the 52px the old flat switch had.
+ * 40×18 is a compact control: it sits in a form row or a list cell at the
+ * height of the text beside it. 18 puts the resting thumb at 16px, the same
+ * as Slider's knob, so the two lens controls read as the same size object.
  *
- * 30 puts the resting thumb at 27px, which is what Slider's knob comes out at
- * and what this component was before it had a lens. The two controls should
- * read as the same size object; the tracks around them differ because a switch
- * contains its thumb and a rail does not.
+ * The thumb's ratios are measured off the reference this component reproduces,
+ * where the track is 160×67 and the thumb a 146×92 capsule drawn at 0.65. Its
+ * height and inset follow the track's height exactly. Its width is what gives:
+ * this track is shorter for its height than the reference's 2.39:1, so the
+ * thumb is narrowed until it travels the same share of the track, rather than
+ * kept wide and left with nowhere to go.
  */
-const TRACK_H = 30;
+const TRACK_H = 18;
+const TRACK_W = 40;
 const K = TRACK_H / 67;
-
-const TRACK_W = Math.round(160 * K);
-/** The thumb's *layout* box. It is drawn at `REST_SCALE`, never at 1. */
-const THUMB_W = Math.round(146 * K);
-const THUMB_H = Math.round(92 * K);
-const THUMB_R = THUMB_H / 2;
 
 const REST_SCALE = 0.65;
 const PRESS_SCALE = 0.9;
+
+/** The reference's travel, as a multiple of its track height (≈ 0.86). */
+const REF_TRAVEL = (160 - 67 - (146 - 92) * REST_SCALE) / 67;
+
+/** The thumb's *layout* box. It is drawn at `REST_SCALE`, never at 1. */
+const THUMB_H = Math.round(92 * K);
+const THUMB_W = Math.round(THUMB_H + (TRACK_W - TRACK_H - REF_TRAVEL * TRACK_H) / REST_SCALE);
+const THUMB_R = THUMB_H / 2;
 
 /** Straight run of the track, less the straight run of the drawn thumb. */
 const TRAVEL = TRACK_W - TRACK_H - (THUMB_W - THUMB_H) * REST_SCALE;
@@ -130,7 +132,7 @@ const OVERDRAG = 22;
 /* Precomputed, because the paint below runs on every frame of a drag and these
    two strings never change. The inset pair is a drag tell, not a press tell: it
    is the thumb reading as something pushed *along* rather than pushed down. */
-const SHADOW = '0 4px 22px rgba(0,0,0,0.1)';
+const SHADOW = `0 ${9 * K}px ${49 * K}px rgba(0,0,0,0.1)`;
 const SHADOW_DRAGGING =
   `${SHADOW}, inset ${2 * K}px ${7 * K}px ${24 * K}px rgba(0,0,0,0.09),` +
   ` inset ${-2 * K}px ${-7 * K}px ${24 * K}px rgba(255,255,255,0.09)`;
@@ -443,7 +445,7 @@ export function SwitchLabel({
     <label
       {...props}
       className={cn(
-        'flex cursor-default select-none items-center justify-between gap-5 text-[13.5px] font-medium text-[var(--lq-text)]',
+        'flex cursor-default select-none items-center justify-between gap-5 text-[13px] font-medium text-[var(--lq-text)]',
         'has-[[data-disabled]]:text-[var(--lq-text-dim)]',
         className,
       )}

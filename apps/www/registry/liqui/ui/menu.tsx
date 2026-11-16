@@ -28,6 +28,15 @@ import { cn } from '@/lib/utils';
  * Portals are `keepMounted`, as in ContextMenu: a closed popup stays in the DOM
  * so its filter and decoded displacement map survive close, and the next open
  * is instant rather than paying the feImage decode window again.
+ *
+ * **Filtering** (Base UI 1.9, preview) wraps the menu in `MenuFilterProvider`
+ * and puts a `MenuInput` above the items, which then go in a `MenuList`. The
+ * input is the search field macOS puts at the top of its Help menu: flat, in
+ * the popup's own corner, never a second lens inside the first. Base UI hides a
+ * group with nothing left in it but cannot know about the rule above it, so
+ * `MenuSection` is a group that carries its own separator, drawn only when a
+ * visible section comes before it — a filtered list never opens or ends on a
+ * stray line.
  */
 
 export const Menu = BaseMenu.Root;
@@ -35,13 +44,14 @@ export const MenuTrigger = BaseMenu.Trigger;
 export const MenuGroup = BaseMenu.Group;
 export const MenuRadioGroup = BaseMenu.RadioGroup;
 export const MenuSub = BaseMenu.SubmenuRoot;
+export const MenuFilterProvider = BaseMenu.FilterProvider;
 
 const POPUP_GLASS = {
   elevated: true,
-  radius: 18,
+  radius: 12,
   blur: 1,
-  refraction: 150,
-  bezel: 28,
+  refraction: 120,
+  bezel: 20,
 } satisfies Partial<LiquiGlassProps>;
 
 const positionerClass = 'z-100 outline-none';
@@ -50,11 +60,11 @@ const popupClass =
   'min-w-[max(var(--anchor-width),14.5rem)] [transform-origin:var(--transform-origin)] transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.2,1.1,0.3,1)] focus:outline-none focus-visible:outline-none data-[ending-style]:scale-85 data-[ending-style]:opacity-0 data-[starting-style]:scale-85 data-[starting-style]:opacity-0';
 
 const itemClass =
-  'flex cursor-default select-none items-center gap-2 rounded-xl px-3 py-[7px] text-[13.5px] leading-tight font-[450] text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-highlight)] data-[highlighted]:shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_65%,transparent)] data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
+  'flex cursor-default select-none items-center gap-2 lq-corner rounded-[var(--lq-item-radius)] min-h-6 px-2 py-[3px] text-[13px] leading-[18px] font-medium text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-accent)] data-[highlighted]:text-white data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
 
 // Checkbox and radio items reserve a 16px indicator gutter, so they start
 // closer to the edge than a plain item.
-const checkItemClass = `${itemClass} pl-2`;
+const checkItemClass = `${itemClass} pl-1.5`;
 
 export function MenuContent({
   children,
@@ -79,7 +89,7 @@ export function MenuContent({
           className={cn(popupClass, className)}
           render={<LiquiGlass {...POPUP_GLASS} {...glass} />}
         >
-          <div className="flex flex-col p-1.5">{children}</div>
+          <div className="flex flex-col p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px]">{children}</div>
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
     </BaseMenu.Portal>
@@ -94,15 +104,15 @@ export function MenuItem({
   return (
     <BaseMenu.Item
       {...props}
-      className={cn(itemClass, variant === 'danger' && 'text-[var(--lq-danger)]', className)}
+      className={cn(itemClass, variant === 'danger' && 'text-[var(--lq-danger)] data-[highlighted]:bg-[var(--lq-danger)]', className)}
     />
   );
 }
 
+const separatorClass = 'mx-2 my-[5px] h-px bg-[color-mix(in_srgb,var(--lq-text)_12%,transparent)]';
+
 export function MenuSeparator() {
-  return (
-    <BaseMenu.Separator className="mx-2.5 my-[5px] h-px bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]" />
-  );
+  return <BaseMenu.Separator className={separatorClass} />;
 }
 
 export function MenuGroupLabel({ className, ...props }: BaseMenu.GroupLabel.Props) {
@@ -110,7 +120,7 @@ export function MenuGroupLabel({ className, ...props }: BaseMenu.GroupLabel.Prop
     <BaseMenu.GroupLabel
       {...props}
       className={cn(
-        'px-3 pt-1.5 pb-0.5 text-[11px] font-semibold tracking-[0.06em] uppercase text-[var(--lq-text-dim)]',
+        'px-2 pt-[5px] pb-1 text-[13px] leading-4 font-bold text-[var(--lq-text-dim)]',
         className,
       )}
     />
@@ -119,7 +129,7 @@ export function MenuGroupLabel({ className, ...props }: BaseMenu.GroupLabel.Prop
 
 export function MenuShortcut({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-auto pl-5 text-xs tracking-[0.04em] tabular-nums text-[var(--lq-text-dim)]">
+    <span className="ml-auto pl-5 text-[13px] tabular-nums text-[color-mix(in_srgb,var(--lq-text-dim)_70%,transparent)] in-data-[highlighted]:text-white/75">
       {children}
     </span>
   );
@@ -138,7 +148,7 @@ const CheckIcon = (
 );
 
 const indicatorSlotClass =
-  'inline-flex w-4 items-center justify-center text-[var(--lq-accent)] group-data-[highlighted]:text-[var(--lq-text)]';
+  'inline-flex w-4 items-center justify-center text-[var(--lq-text)] group-data-[highlighted]:text-white';
 const indicatorMarkClass =
   'inline-flex transition-[opacity,transform] duration-100 data-[ending-style]:scale-[0.6] data-[ending-style]:opacity-0 data-[starting-style]:scale-[0.6] data-[starting-style]:opacity-0';
 
@@ -182,7 +192,7 @@ export function MenuSubTrigger({
       {...props}
       className={cn(
         itemClass,
-        'data-[popup-open]:bg-[color-mix(in_srgb,var(--lq-highlight)_55%,transparent)]',
+        'data-[popup-open]:not-data-[highlighted]:bg-[color-mix(in_srgb,var(--lq-text)_10%,transparent)]',
         className,
       )}
     >
@@ -228,9 +238,102 @@ export function MenuSubContent({
           // refraction — the popup defaults would over-bend at this width.
           render={<LiquiGlass {...POPUP_GLASS} refraction={110} bezel={20} {...glass} />}
         >
-          <div className="flex flex-col p-1.5">{children}</div>
+          <div className="flex flex-col p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px]">{children}</div>
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
     </BaseMenu.Portal>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Filtering                                                                  */
+/* -------------------------------------------------------------------------- */
+
+const SearchIcon = (
+  <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden>
+    <circle cx="6" cy="6" r="4.25" stroke="currentColor" strokeWidth="1.6" />
+    <path d="m9.2 9.2 3.3 3.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+const ClearIcon = (
+  <svg viewBox="0 0 10 10" width="7" height="7" fill="none" aria-hidden>
+    <path d="m2 2 6 6M8 2 2 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * The filter field. Sits in the popup's inset like an item, so it takes the
+ * item corner — concentric with the glass — and is a few px taller than a row,
+ * the way the field at the top of a macOS menu is.
+ *
+ * Base UI keeps DOM focus here while the arrow keys move a virtual highlight
+ * through the list, and reports `data-highlighted` only while the field itself
+ * is the active element; that is when the ring shows.
+ */
+export function MenuInput({ className, ...props }: BaseMenu.Input.Props) {
+  return (
+    <div className="relative mb-1 flex items-center text-[var(--lq-text-dim)]">
+      <span className="pointer-events-none absolute left-2 flex">{SearchIcon}</span>
+      <BaseMenu.Input
+        {...props}
+        className={cn(
+          'h-7 w-full min-w-0 border-none pr-7 pl-7 font-[inherit] text-[13px] leading-[18px] font-medium text-[var(--lq-text)] outline-none',
+          'lq-corner rounded-[var(--lq-item-radius)] bg-[color-mix(in_srgb,var(--lq-text)_7%,transparent)]',
+          'placeholder:text-[var(--lq-text-dim)]',
+          'transition-shadow duration-150 data-[highlighted]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
+          className,
+        )}
+      />
+      <BaseMenu.Clear
+        aria-label="Clear"
+        className="absolute right-1.5 inline-flex size-4 cursor-default items-center justify-center rounded-full border-none bg-[color-mix(in_srgb,var(--lq-text)_28%,transparent)] p-0 text-[var(--lq-control)] outline-none hover:bg-[color-mix(in_srgb,var(--lq-text)_45%,transparent)]"
+      >
+        {ClearIcon}
+      </BaseMenu.Clear>
+    </div>
+  );
+}
+
+/**
+ * The items of a filterable menu. It scrolls on its own so the field above it
+ * stays put, and it is where a section's separator learns whether a visible
+ * section precedes it (see `MenuSection`).
+ */
+export function MenuList({ className, ...props }: BaseMenu.List.Props) {
+  return (
+    <BaseMenu.List
+      {...props}
+      className={cn(
+        'flex max-h-[min(20rem,var(--available-height))] flex-col overflow-y-auto overscroll-contain',
+        '[&>[data-filter-section]:not([hidden])~[data-filter-section]:not([hidden])>[data-filter-separator]]:block',
+        className,
+      )}
+    />
+  );
+}
+
+/**
+ * A group that brings its own leading separator, shown only after another
+ * visible section. Use it in place of `MenuGroup` + `MenuSeparator` inside a
+ * `MenuList`: when the query empties a section, Base UI hides the group and its
+ * rule goes with it.
+ */
+export function MenuSection({ children, ...props }: BaseMenu.Group.Props) {
+  return (
+    <BaseMenu.Group {...props} data-filter-section="">
+      <BaseMenu.Separator data-filter-separator="" className={cn(separatorClass, 'hidden')} />
+      {children}
+    </BaseMenu.Group>
+  );
+}
+
+/** Shown, and announced, when the query matches nothing. */
+export function MenuEmpty({ className, ...props }: BaseMenu.Empty.Props) {
+  return (
+    <BaseMenu.Empty
+      {...props}
+      className={cn('px-2 py-[5px] text-[13px] leading-[18px] text-[var(--lq-text-dim)]', className)}
+    />
   );
 }

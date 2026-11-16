@@ -6,7 +6,7 @@ import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 import { cn } from '@/lib/utils';
 
 /**
- * liqui Progress — the track is the lens, the fill is a wash over it.
+ * liqui Progress — the track is the lens, the fill is paint over it.
  *
  * Slider answers "which of these two boxes refracts" with the thumb, because
  * the thumb is what moves. A progress bar has something that moves too, and it
@@ -17,22 +17,22 @@ import { cn } from '@/lib/utils';
  * other surface's map on the way past. An unrelated popup would then pay to
  * regenerate the next time it opened, because a download finished.
  *
- * So the fixed box keeps the lens. The fill is a translucent accent wash laid
- * over glass that is already refracting — the dialog's corner dismiss again —
- * which is why the bar bends the background along its whole length rather than
- * only in the empty part.
+ * So the fixed box keeps the lens, and the fill is the accent, solid — the
+ * same paint as Slider's fill and a checked Switch. It was a 78% wash once, so
+ * the glass would show through it, and what showed through was the tint: the
+ * bar came out a paler, greyer cousin of the accent, and on a dark theme a
+ * different colour altogether. A themed accent has to arrive as itself.
  *
- * The wash sits in the content layer, above the specular arc. On a bar filled
- * to 100% the shine therefore reads a little softer than on an empty one. That
- * is the cost of the fill not being a surface, and at this size it is cheaper
- * than the alternative.
+ * The fill sits in the content layer, above the specular arc, so the filled
+ * part is paint and the lens shows in the part still to go.
  */
 
+// Apple's medium linear progress bar: a 10px capsule.
 const TRACK_GLASS = {
-  radius: 7,
+  radius: 5,
   blur: 1,
-  refraction: 22,
-  bezel: 5,
+  refraction: 18,
+  bezel: 4,
 } satisfies Partial<LiquiGlassProps>;
 
 export function Progress({ className, ...props }: BaseProgress.Root.Props) {
@@ -43,7 +43,7 @@ export function ProgressLabel({ className, ...props }: BaseProgress.Label.Props)
   return (
     <BaseProgress.Label
       {...props}
-      className={cn('text-[12.5px] font-semibold text-[var(--lq-text)]', className)}
+      className={cn('text-[13px] font-medium text-[var(--lq-text)]', className)}
     />
   );
 }
@@ -52,7 +52,7 @@ export function ProgressValue({ className, ...props }: BaseProgress.Value.Props)
   return (
     <BaseProgress.Value
       {...props}
-      className={cn('text-[12.5px] tabular-nums text-[var(--lq-text-dim)]', className)}
+      className={cn('text-[13px] tabular-nums text-[var(--lq-text-dim)]', className)}
     />
   );
 }
@@ -69,19 +69,19 @@ export function ProgressTrack({
   return (
     <BaseProgress.Track
       {...props}
-      className={cn('h-3.5 w-full select-none', className)}
+      className={cn('h-2.5 w-full select-none', className)}
       render={
         <LiquiGlass
           {...TRACK_GLASS}
           {...glass}
-          contentClassName="relative size-full overflow-hidden rounded-[inherit]"
+          contentClassName="relative size-full overflow-hidden"
         />
       }
     >
       <BaseProgress.Indicator
         className={cn(
-          'absolute top-0 rounded-[inherit] bg-[color-mix(in_srgb,var(--lq-accent)_78%,transparent)]',
-          // A hairline of the rim along the top edge, so the wash reads as
+          'lq-corner absolute top-0 rounded-[inherit] bg-[var(--lq-accent)]',
+          // A hairline of the rim along the top edge, so the fill reads as
           // sitting *in* the groove rather than printed on it.
           'shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_60%,transparent)]',
           'transition-[width] duration-500 ease-[cubic-bezier(0.2,0.8,0.3,1)]',

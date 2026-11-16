@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
  */
 
 const CONTROL_GLASS = {
-  radius: 12,
+  radius: 9,
   blur: 1,
   refraction: 60,
   bezel: 12,
@@ -32,7 +32,7 @@ export function FieldLabel({ className, ...props }: BaseField.Label.Props) {
   return (
     <BaseField.Label
       {...props}
-      className={cn('text-[12.5px] font-semibold text-[var(--lq-text)]', className)}
+      className={cn('text-[13px] font-medium text-[var(--lq-text)]', className)}
     />
   );
 }
@@ -66,14 +66,14 @@ export function FieldControl({
       {...glass}
       className={cn(
         'transition-shadow duration-150',
-        'has-[input:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'has-[input:focus-visible]:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         'has-[input[data-invalid][data-touched]]:shadow-[0_0_0_2px_color-mix(in_srgb,var(--lq-danger)_55%,transparent)]',
       )}
     >
       <BaseField.Control
         {...props}
         className={cn(
-          'block w-full border-none bg-transparent px-3 py-[9px] font-[inherit] text-[13.5px] text-[var(--lq-text)] outline-none',
+          'block w-full border-none bg-transparent px-3 py-[9px] font-[inherit] text-[13px] leading-[18px] text-[var(--lq-text)] outline-none',
           'placeholder:text-[var(--lq-text-dim)]',
           'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-55',
           className,

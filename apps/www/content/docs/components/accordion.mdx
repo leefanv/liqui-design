@@ -70,10 +70,11 @@ data-[ending-style]:h-0
 ### Why the content wrapper is clipped
 
 The panel animates by clipping, so the glass content wrapper carries
-`overflow-hidden rounded-[inherit]`:
+`overflow-hidden` — the wrapper already has the surface's corners, so the clip
+follows the same continuous curve:
 
 ```tsx
-<LiquiGlass contentClassName="overflow-hidden rounded-[inherit]" />
+<LiquiGlass contentClassName="overflow-hidden" />
 ```
 
 Without it the panel's square corners punch through the surface's rounded ones

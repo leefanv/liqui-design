@@ -31,10 +31,12 @@ export const TooltipTrigger = BaseTooltip.Trigger;
 
 const POPUP_GLASS = {
   elevated: true,
-  radius: 11,
+  // A rounded rectangle, as macOS draws its tooltips — not a pill. 5 × the
+  // squircle factor stays under half of the 20px popup.
+  radius: 5,
   blur: 1,
-  refraction: 35,
-  bezel: 9,
+  refraction: 30,
+  bezel: 6,
   frost: 0.7,
 } satisfies Partial<LiquiGlassProps>;
 
@@ -67,7 +69,7 @@ export function TooltipContent({
             <LiquiGlass
               {...POPUP_GLASS}
               {...glass}
-              contentClassName="px-2.5 py-[5px] text-[12.5px] leading-[1.4] font-medium text-[var(--lq-text)]"
+              contentClassName="px-2 py-[3px] text-[11px] leading-[14px] font-medium text-[var(--lq-text)]"
             />
           }
         >

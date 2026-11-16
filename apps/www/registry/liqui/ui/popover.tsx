@@ -155,7 +155,7 @@ export function PopoverTitle({ className, ...props }: BasePopover.Title.Props) {
     <BasePopover.Title
       {...props}
       className={cn(
-        'text-[13.5px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
+        'text-[13px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
         className,
       )}
     />

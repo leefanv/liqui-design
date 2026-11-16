@@ -20,9 +20,10 @@ export const AlertDialog = BaseAlertDialog.Root;
 export const AlertDialogTrigger = BaseAlertDialog.Trigger;
 export const AlertDialogClose = BaseAlertDialog.Close;
 
+// macOS draws alerts noticeably rounder than its windows and sheets.
 const POPUP_GLASS = {
   elevated: true,
-  radius: 22,
+  radius: 26,
   blur: 1,
   refraction: 130,
   bezel: 30,
@@ -69,7 +70,7 @@ export function AlertDialogDescription({
   return (
     <BaseAlertDialog.Description
       {...props}
-      className={cn('mt-2 text-[13.5px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
+      className={cn('mt-2 text-[13px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
     />
   );
 }

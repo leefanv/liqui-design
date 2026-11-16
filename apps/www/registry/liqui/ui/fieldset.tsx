@@ -56,7 +56,7 @@ export function FieldsetLegend({ className, ...props }: BaseFieldset.Legend.Prop
     <BaseFieldset.Legend
       {...props}
       className={cn(
-        'text-[13.5px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
+        'text-[13px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
         'data-[disabled]:text-[var(--lq-text-dim)]',
         className,
       )}

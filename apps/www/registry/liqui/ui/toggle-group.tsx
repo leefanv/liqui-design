@@ -58,7 +58,7 @@ export function ToggleGroup({ glass, className, children, ...props }: ToggleGrou
             // row (`w-full`) needs the wrapper to stretch with it, or the
             // toggles bunch up at the start of a wide empty capsule.
             contentClassName={cn(
-              'flex gap-0.5 rounded-[inherit] [corner-shape:inherit] p-[3px] group-data-[orientation=vertical]:flex-col',
+              'flex gap-0.5 p-[3px] lq-nest [--lq-inset:3px] [--lq-item-h:30px] group-data-[orientation=vertical]:flex-col',
               glass?.contentClassName,
             )}
           />

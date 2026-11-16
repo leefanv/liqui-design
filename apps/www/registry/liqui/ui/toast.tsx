@@ -78,7 +78,7 @@ export function Toast({
         // Bridges the gap to the toast below, so moving the pointer up the
         // column never leaves the viewport and restarts the dismiss timers.
         "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
       render={<LiquiGlass {...TOAST_GLASS} {...glass} />}
@@ -93,7 +93,7 @@ export function ToastTitle({ className, ...props }: BaseToast.Title.Props) {
     <BaseToast.Title
       {...props}
       className={cn(
-        'text-[13.5px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
+        'text-[13px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
         className,
       )}
     />
@@ -119,11 +119,11 @@ export function ToastAction({ className, ...props }: BaseToast.Action.Props) {
     <BaseToast.Action
       {...props}
       className={cn(
-        'mt-2.5 inline-flex cursor-default items-center justify-center rounded-lg px-2.5 py-1.5',
+        'mt-2.5 inline-flex cursor-default items-center justify-center lq-squircle [--lq-r:8px] [--lq-h:27px] px-2.5 py-1.5',
         'text-xs font-semibold text-[var(--lq-accent)] outline-none',
         'transition-[background-color] duration-150',
         'hover:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
     />
@@ -149,7 +149,7 @@ export function ToastClose({ className, ...props }: BaseToast.Close.Props) {
         'ml-auto inline-flex size-6 flex-none cursor-default items-center justify-center rounded-full',
         'text-[var(--lq-text-dim)] outline-none transition-[background-color,color] duration-150',
         'hover:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] hover:text-[var(--lq-text)]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
     >

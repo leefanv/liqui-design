@@ -69,9 +69,9 @@ export function PreviewCardTrigger({ className, ...props }: BasePreviewCard.Trig
     <BasePreviewCard.Trigger
       {...props}
       className={cn(
-        'cursor-default rounded-sm font-medium text-[var(--lq-text)] underline decoration-[color-mix(in_srgb,var(--lq-text)_45%,transparent)] decoration-1 underline-offset-2 outline-none',
+        'cursor-default lq-squircle [--lq-r:4px] [--lq-h:20px] font-medium text-[var(--lq-text)] underline decoration-[color-mix(in_srgb,var(--lq-text)_45%,transparent)] decoration-1 underline-offset-2 outline-none',
         'hover:decoration-[var(--lq-text)] data-[popup-open]:decoration-[var(--lq-text)]',
-        'focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         className,
       )}
     />
@@ -164,7 +164,7 @@ export function PreviewCardTitle({
     <p
       {...props}
       className={cn(
-        'm-0 text-[13.5px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
+        'm-0 text-[13px] font-bold tracking-[-0.005em] text-[var(--lq-text)]',
         className,
       )}
     />

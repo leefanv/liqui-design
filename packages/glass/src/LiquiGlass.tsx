@@ -619,17 +619,28 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     const localRef = React.useRef<HTMLDivElement | null>(null);
     const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
 
-    // A capsule or a disc — corners already reaching half the short side —
-    // keeps round corners. A superellipse cannot close into a semicircle: at
-    // that radius it draws a bulging rounded rectangle, which on a pill
-    // button or a circular control reads as a mistake rather than as a
-    // continuous corner. So those surfaces skip both the squircle and its
-    // radius compensation, and the map is drawn with circular corners to
-    // match. Known once the surface is measured; until then the declared
-    // shape stands.
-    const capsule = size !== null && baseRadius >= Math.min(size.w, size.h) / 2 - 0.5;
-    const radius =
-      squircleActive && !capsule ? Math.round(baseRadius * SQUIRCLE_RADIUS_SCALE) : baseRadius;
+    // A capsule or a disc — corners reaching half the short side — is drawn
+    // with round corners at exactly half that side. A superellipse cannot
+    // close into a semicircle: at that radius it draws a bulging rounded
+    // rectangle, which on a pill button or a circular control reads as a
+    // mistake rather than as a continuous corner.
+    //
+    // The test is on the radius as it would be *drawn*: compensated where the
+    // squircle renders. A 12px corner on a 27px button is a rounded rectangle
+    // as written, but 1.4× takes it past half the height, the browser clamps
+    // it, and the squircle comes out as exactly that bulge. Past that point
+    // the only honest shape is the capsule it was about to become.
+    //
+    // The radius published as `--lq-radius` is the one drawn, so what is
+    // nested inside can be concentric with it. Known once the surface is
+    // measured; until then the declared shape stands.
+    // Compared before rounding, so the threshold is the one CSS corners use
+    // (see `--lq-corner-k` in glass.css) and a solid button and a glass one of
+    // the same size land on the same side of it.
+    const drawn = squircleActive ? baseRadius * SQUIRCLE_RADIUS_SCALE : baseRadius;
+    const half = size === null ? Infinity : Math.min(size.w, size.h) / 2;
+    const capsule = drawn >= half - 0.5;
+    const radius = capsule ? half : Math.round(drawn);
 
     // The empty dependency array is load-bearing. Without it this runs on every
     // render, and each run detaches the previous handle before attaching the
@@ -771,8 +782,16 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           .trim()}
         style={{
           ...style,
+          // Both inherit, so what is painted inside can follow the surface —
+          // see "Continuous corners" in glass.css.
           ['--lq-radius' as string]: `${radius}px`,
-          ...(capsule ? { ['--lq-corner-shape' as string]: 'round' } : null),
+          ['--lq-corner' as string]: capsule ? 'round' : 'squircle',
+          // The same shape as a superellipse exponent, for `lq-nest` to
+          // compute with; and the nesting a container above set up is not
+          // this surface's to inherit.
+          ['--lq-corner-n' as string]: capsule ? 1 : 2,
+          ['--lq-item-radius' as string]: 'initial',
+          ['--lq-item-corner' as string]: 'initial',
         }}
       >
         {backdropFilter && (

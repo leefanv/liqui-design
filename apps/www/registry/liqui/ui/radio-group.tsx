@@ -41,7 +41,7 @@ export function Radio({ className, ...props }: RadioProps) {
         // one shape declaration instead of two. `rounded-full` used to have to
         // agree with a `radius` the displacement map was generated for, and
         // disagreeing gave you a circle lit like a square.
-        'inline-flex size-5 flex-none cursor-default items-center justify-center rounded-full',
+        'inline-flex size-4 flex-none cursor-default items-center justify-center rounded-full',
         'border-none p-0 outline-none',
         'transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.92]',
         'bg-[var(--lq-control)] shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
@@ -56,7 +56,7 @@ export function Radio({ className, ...props }: RadioProps) {
     >
       <BaseRadio.Indicator
         className={cn(
-          'block size-[7px] rounded-full bg-white',
+          'block size-1.5 rounded-full bg-white',
           'transition-[opacity,transform] duration-100',
           'data-[ending-style]:scale-[0.4] data-[ending-style]:opacity-0',
           'data-[starting-style]:scale-[0.4] data-[starting-style]:opacity-0',
@@ -80,7 +80,7 @@ export function RadioLabel({
     <label
       {...props}
       className={cn(
-        'flex cursor-default select-none items-center gap-2.5 text-[13.5px] font-medium text-[var(--lq-text)]',
+        'flex cursor-default select-none items-center gap-1.5 text-[13px] font-medium text-[var(--lq-text)]',
         'has-[[data-disabled]]:text-[var(--lq-text-dim)]',
         className,
       )}
