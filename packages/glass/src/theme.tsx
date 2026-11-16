@@ -193,13 +193,20 @@ export function LiquiThemeProvider({
     [theme?.glass],
   );
 
+  const radiusScale = glass.radiusScale ?? 1;
   const css = React.useMemo(() => {
     if (!injectTokens) return '';
-    return themeCss({
+    const tokens = themeCss({
       light: { ...defaultTokens.light, ...theme?.light },
       dark: { ...defaultTokens.dark, ...theme?.dark },
     });
-  }, [injectTokens, theme?.light, theme?.dark]);
+    // The one optical dial CSS needs to see. A surface's corners are scaled in
+    // JS, but a corner drawn in CSS — a checkbox, a solid button, a tab strip —
+    // reads this through `--lq-corner-k` (see glass.css), so a theme that
+    // rounds the glass rounds everything else with it.
+    const scale = radiusScale === 1 ? '' : `:root {\n  --lq-radius-scale: ${radiusScale};\n}\n`;
+    return tokens + scale;
+  }, [injectTokens, theme?.light, theme?.dark, radiusScale]);
 
   return (
     <GlassThemeContext.Provider value={glass}>
