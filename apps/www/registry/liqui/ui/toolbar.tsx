@@ -33,7 +33,7 @@ const STRIP_GLASS = {
 
 /** Shared by every pressable thing on the strip. */
 const itemClass =
-  'inline-flex cursor-default select-none items-center justify-center gap-[7px] rounded-[11px] border-none bg-transparent px-[11px] py-[7px] font-[inherit] text-[13px] leading-tight font-semibold whitespace-nowrap text-[var(--lq-text)] no-underline outline-none transition-[background-color,color] duration-150 hover:not-data-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50';
+  'inline-flex cursor-default select-none items-center justify-center gap-[7px] lq-corner rounded-[var(--lq-item-radius)] border-none bg-transparent px-[11px] py-[7px] font-[inherit] text-[13px] leading-tight font-medium whitespace-nowrap text-[var(--lq-text)] no-underline outline-none transition-[background-color,color] duration-150 hover:not-data-disabled:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50';
 
 export function Toolbar({
   glass,
@@ -52,7 +52,7 @@ export function Toolbar({
             {...glass}
             // `data-orientation` lands on the root, not on the wrapper the items
             // actually sit in, so the wrapper reads it off the group.
-            contentClassName="flex items-center gap-1 rounded-[inherit] p-[5px] group-data-[orientation=vertical]:flex-col group-data-[orientation=vertical]:items-stretch"
+            contentClassName="flex items-center gap-1 p-[5px] lq-nest [--lq-inset:5px] [--lq-item-h:30px] group-data-[orientation=vertical]:flex-col group-data-[orientation=vertical]:items-stretch"
           />
         }
       >
@@ -123,7 +123,7 @@ export function ToolbarInput({ className, ...props }: BaseToolbar.Input.Props) {
     <BaseToolbar.Input
       {...props}
       className={cn(
-        'min-w-0 rounded-[11px] border-none px-2.5 py-[7px] font-[inherit] text-[13px] leading-tight text-[var(--lq-text)] outline-none',
+        'min-w-0 lq-corner rounded-[var(--lq-item-radius)] border-none px-2.5 py-[7px] font-[inherit] text-[13px] leading-tight text-[var(--lq-text)] outline-none',
         'bg-[color-mix(in_srgb,var(--lq-scrim)_30%,transparent)]',
         'shadow-[inset_0_1px_1px_color-mix(in_srgb,var(--lq-scrim)_35%,transparent),0_1px_0_color-mix(in_srgb,var(--lq-rim-hi)_45%,transparent)]',
         'placeholder:text-[var(--lq-text-dim)]',

@@ -122,7 +122,7 @@ export function DrawerContent({
             <LiquiGlass
               {...SHEET_GLASS}
               {...glass}
-              contentClassName="flex size-full flex-col overflow-hidden rounded-[inherit]"
+              contentClassName="flex size-full flex-col overflow-hidden"
             />
           }
         >
@@ -172,7 +172,7 @@ export function DrawerDescription({ className, ...props }: BaseDrawer.Descriptio
   return (
     <BaseDrawer.Description
       {...props}
-      className={cn('mt-2 text-[13.5px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
+      className={cn('mt-2 text-[13px] leading-[1.55] text-[var(--lq-text-dim)]', className)}
     />
   );
 }

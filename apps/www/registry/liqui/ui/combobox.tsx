@@ -45,7 +45,7 @@ export const ComboboxGroup = BaseCombobox.Group;
 export const ComboboxValue = BaseCombobox.Value;
 
 const FIELD_GLASS = {
-  radius: 12,
+  radius: 9,
   blur: 1,
   refraction: 60,
   bezel: 12,
@@ -53,10 +53,10 @@ const FIELD_GLASS = {
 
 const POPUP_GLASS = {
   elevated: true,
-  radius: 18,
+  radius: 12,
   blur: 1,
-  refraction: 150,
-  bezel: 28,
+  refraction: 120,
+  bezel: 20,
 } satisfies Partial<LiquiGlassProps>;
 
 const ChevronIcon = (
@@ -109,7 +109,7 @@ export function ComboboxInputGroup({
       {...props}
       className={cn(
         'w-full transition-shadow duration-150',
-        'focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'focus-within:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         'has-[input[data-disabled]]:opacity-55',
         className,
       )}
@@ -117,7 +117,7 @@ export function ComboboxInputGroup({
         <LiquiGlass
           {...FIELD_GLASS}
           {...glass}
-          contentClassName="flex w-full flex-wrap items-center gap-1.5 rounded-[inherit] px-2.5 py-[5px]"
+          contentClassName="flex w-full flex-wrap items-center gap-1.5 px-2.5 py-[5px]"
         />
       }
     >
@@ -131,7 +131,7 @@ export function ComboboxInput({ className, ...props }: BaseCombobox.Input.Props)
     <BaseCombobox.Input
       {...props}
       className={cn(
-        'min-w-0 flex-1 border-none bg-transparent py-1 font-[inherit] text-[13.5px] text-[var(--lq-text)] outline-none',
+        'min-w-0 flex-1 border-none bg-transparent py-1 font-[inherit] text-[13px] leading-[18px] text-[var(--lq-text)] outline-none',
         'placeholder:text-[var(--lq-text-dim)]',
         'data-[disabled]:cursor-not-allowed',
         className,
@@ -142,7 +142,7 @@ export function ComboboxInput({ className, ...props }: BaseCombobox.Input.Props)
 
 /** Flat, like everything else standing on a surface that already refracts. */
 const affordanceClass =
-  'inline-flex size-5 flex-none cursor-default items-center justify-center rounded-md border-none bg-transparent p-0 text-[var(--lq-text-dim)] outline-none transition-[background-color,color] duration-150 hover:text-[var(--lq-text)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]';
+  'inline-flex size-5 flex-none cursor-default items-center justify-center lq-squircle [--lq-r:6px] [--lq-h:20px] border-none bg-transparent p-0 text-[var(--lq-text-dim)] outline-none transition-[background-color,color] duration-150 hover:text-[var(--lq-text)] focus-visible:shadow-[inset_0_0_0_2px_var(--lq-accent)]';
 
 export function ComboboxClear({ className, children, ...props }: BaseCombobox.Clear.Props) {
   return (
@@ -187,7 +187,7 @@ export function ComboboxChip({ className, children, ...props }: BaseCombobox.Chi
     <BaseCombobox.Chip
       {...props}
       className={cn(
-        'inline-flex cursor-default items-center gap-1 rounded-lg px-2 py-[3px] text-[12.5px] font-medium text-[var(--lq-text)]',
+        'inline-flex cursor-default items-center gap-1 lq-squircle [--lq-r:8px] [--lq-h:24px] px-2 py-[3px] text-[12.5px] font-medium text-[var(--lq-text)]',
         'bg-[color-mix(in_srgb,var(--lq-highlight)_60%,transparent)]',
         'shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_60%,transparent)]',
         'data-[highlighted]:bg-[color-mix(in_srgb,var(--lq-accent)_80%,transparent)] data-[highlighted]:text-white',
@@ -250,7 +250,7 @@ export function ComboboxContent({
             <LiquiGlass
               {...POPUP_GLASS}
               {...glass}
-              contentClassName="overflow-hidden rounded-[inherit]"
+              contentClassName="overflow-hidden"
             />
           }
         >
@@ -266,7 +266,7 @@ export function ComboboxList({ className, ...props }: BaseCombobox.List.Props) {
     <BaseCombobox.List
       {...props}
       className={cn(
-        'max-h-[min(20rem,var(--available-height))] scroll-py-1.5 overflow-y-auto overscroll-contain p-1.5 outline-none',
+        'max-h-[min(20rem,var(--available-height))] scroll-py-1.5 overflow-y-auto overscroll-contain p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px] outline-none',
         'data-[empty]:p-0',
         className,
       )}
@@ -275,12 +275,12 @@ export function ComboboxList({ className, ...props }: BaseCombobox.List.Props) {
 }
 
 const itemClass =
-  'group flex cursor-default select-none items-center gap-2 rounded-xl py-[7px] pr-3 pl-2 text-[13.5px] leading-tight font-[450] text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-highlight)] data-[highlighted]:shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_65%,transparent)] data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
+  'group flex cursor-default select-none items-center gap-2 lq-corner rounded-[var(--lq-item-radius)] min-h-6 py-[3px] pr-2 pl-1.5 text-[13px] leading-[18px] font-medium text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-accent)] data-[highlighted]:text-white data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
 
 export function ComboboxItem({ children, className, ...props }: BaseCombobox.Item.Props) {
   return (
     <BaseCombobox.Item {...props} className={cn(itemClass, className)}>
-      <span className="inline-flex w-4 flex-none items-center justify-center text-[var(--lq-accent)] group-data-[highlighted]:text-[var(--lq-text)]">
+      <span className="inline-flex w-4 flex-none items-center justify-center text-[var(--lq-text)] group-data-[highlighted]:text-white">
         <BaseCombobox.ItemIndicator className="inline-flex">
           {CheckIcon}
         </BaseCombobox.ItemIndicator>
@@ -295,7 +295,7 @@ export function ComboboxGroupLabel({ className, ...props }: BaseCombobox.GroupLa
     <BaseCombobox.GroupLabel
       {...props}
       className={cn(
-        'px-3 pt-1.5 pb-0.5 text-[11px] font-semibold tracking-[0.06em] uppercase text-[var(--lq-text-dim)]',
+        'px-2 pt-[5px] pb-1 text-[13px] leading-4 font-bold text-[var(--lq-text-dim)]',
         className,
       )}
     />

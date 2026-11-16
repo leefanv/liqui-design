@@ -60,6 +60,56 @@ the right-click trigger: `MenuGroup`, `MenuGroupLabel`, `MenuCheckboxItem`,
 `MenuRadioGroup`, `MenuRadioItem`, `MenuSub`, `MenuSubTrigger` and
 `MenuSubContent` all behave identically.
 
+## Filtering
+
+<ComponentPreview name="menu-filter" />
+
+Wrap the menu in `MenuFilterProvider`, put `MenuInput` at the top of the
+content, and the items in `MenuList`. Type to narrow them; the arrow keys move
+through what is left while focus stays in the field.
+
+```tsx
+<MenuFilterProvider>
+  <Menu>
+    <MenuTrigger nativeButton={false} render={<Button />}>
+      Actions
+    </MenuTrigger>
+    <MenuContent>
+      <MenuInput aria-label="Search actions" placeholder="Search" />
+      <MenuEmpty>No matching actions.</MenuEmpty>
+      <MenuList>
+        <MenuSection>
+          <MenuGroupLabel>File</MenuGroupLabel>
+          <MenuItem>New Window</MenuItem>
+          <MenuItem>Rename…</MenuItem>
+        </MenuSection>
+        <MenuSection>
+          <MenuGroupLabel>View</MenuGroupLabel>
+          <MenuItem>Enter Full Screen</MenuItem>
+        </MenuSection>
+      </MenuList>
+    </MenuContent>
+  </Menu>
+</MenuFilterProvider>
+```
+
+This is Base UI's menu filtering, which it ships as a **preview** in 1.9 — the
+API may still move.
+
+Items match on their text. Give one a `label` when what it shows is not what a
+person would type: `<MenuItem label="Move to folder">Move</MenuItem>`.
+
+`MenuSection` is the one part Base UI does not have. It is a group with its own
+separator in front of it, drawn only after another section that is still
+visible. Base UI hides a group when the query leaves nothing in it, but a plain
+`MenuSeparator` between two groups does not know that, so a filtered list ends
+up opening or closing on a stray rule. Inside a `MenuList`, use sections instead
+of groups and separators.
+
+A submenu can be filtered on its own: wrap its `MenuSub` in a
+`MenuFilterProvider` of its own and give its `MenuSubContent` an input and a
+list.
+
 ## Notes
 
 ### The trigger has to opt out of the native button

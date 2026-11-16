@@ -22,8 +22,8 @@
           "lq-radius": "16px"
         },
         "light": {
-          "lq-text": "rgba(28, 28, 40, 0.95)",
-          "lq-text-dim": "rgba(28, 28, 40, 0.55)",
+          "lq-text": "rgba(0, 0, 0, 0.85)",
+          "lq-text-dim": "rgba(0, 0, 0, 0.5)",
           "lq-tint": "rgba(255, 255, 255, 0.48)",
           "lq-tint-deep": "rgba(255, 255, 255, 0.14)",
           "lq-rim-hi": "rgba(255, 255, 255, 0.85)",
@@ -32,14 +32,14 @@
           "lq-highlight": "rgba(255, 255, 255, 0.5)",
           "lq-control": "rgba(255, 255, 255, 0.72)",
           "lq-control-rim": "rgba(28, 28, 40, 0.16)",
-          "lq-accent": "#2f6bff",
-          "lq-danger": "#e5484d",
-          "lq-danger-text": "#c1272c",
+          "lq-accent": "#0088ff",
+          "lq-danger": "#ff383c",
+          "lq-danger-text": "#e0262b",
           "lq-scrim": "rgba(12, 14, 28, 0.32)"
         },
         "dark": {
-          "lq-text": "rgba(245, 246, 255, 0.96)",
-          "lq-text-dim": "rgba(245, 246, 255, 0.55)",
+          "lq-text": "rgba(255, 255, 255, 0.85)",
+          "lq-text-dim": "rgba(255, 255, 255, 0.55)",
           "lq-tint": "rgba(30, 32, 46, 0.62)",
           "lq-tint-deep": "rgba(18, 20, 32, 0.4)",
           "lq-rim-hi": "rgba(255, 255, 255, 0.5)",
@@ -48,9 +48,9 @@
           "lq-highlight": "rgba(255, 255, 255, 0.18)",
           "lq-control": "rgba(126, 128, 146, 0.3)",
           "lq-control-rim": "rgba(255, 255, 255, 0.22)",
-          "lq-accent": "#6f9dff",
-          "lq-danger": "#ff7076",
-          "lq-danger-text": "#ff7076",
+          "lq-accent": "#0091ff",
+          "lq-danger": "#ff4245",
+          "lq-danger-text": "#ff6467",
           "lq-scrim": "rgba(0, 0, 6, 0.48)"
         }
       },
@@ -476,12 +476,12 @@
       "name": "menu",
       "type": "registry:ui",
       "title": "Glass Menu",
-      "description": "A dropdown menu with submenus, checkbox and radio items, on a keep-mounted glass popup.",
+      "description": "A dropdown menu with submenus, checkbox and radio items, and type-to-filter, on a keep-mounted glass popup.",
       "meta": {
         "added": "2026-08-20"
       },
       "dependencies": [
-        "@base-ui/react",
+        "@base-ui/react@^1.9.0",
         "@liqui-design/glass"
       ],
       "registryDependencies": [
@@ -1379,6 +1379,22 @@
       "files": [
         {
           "path": "registry/liqui/examples/menu-demo.tsx",
+          "type": "registry:example"
+        }
+      ]
+    },
+    {
+      "name": "menu-filter",
+      "type": "registry:example",
+      "title": "Menu — Filtering",
+      "description": "A search field at the top of the popup that narrows the items as you type, sections and all.",
+      "registryDependencies": [
+        "https://liqui.design/r/menu.json",
+        "https://liqui.design/r/button.json"
+      ],
+      "files": [
+        {
+          "path": "registry/liqui/examples/menu-filter.tsx",
           "type": "registry:example"
         }
       ]

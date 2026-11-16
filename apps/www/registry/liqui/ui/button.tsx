@@ -1,5 +1,6 @@
 'use client';
 
+import type * as React from 'react';
 import { Button as BaseButton } from '@base-ui/react/button';
 import { LiquiGlass, type LiquiGlassProps } from '@liqui-design/glass';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -35,16 +36,16 @@ import { cn } from '@/lib/utils';
  */
 
 const glassButtonVariants = cva(
-  'group inline-flex cursor-default select-none outline-none transition-[transform,box-shadow] duration-150 data-[pressed]:scale-[0.97] active:scale-[0.97] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]',
+  'group inline-flex cursor-default select-none outline-none transition-[transform,box-shadow] duration-150 data-[pressed]:scale-[0.97] active:scale-[0.97] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
 );
 
 const glassButtonContentVariants = cva(
-  'inline-flex items-center justify-center rounded-[inherit] font-semibold leading-tight whitespace-nowrap group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)] group-data-[disabled]:bg-transparent',
+  'inline-flex items-center justify-center font-medium leading-tight whitespace-nowrap group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)] group-data-[disabled]:bg-transparent',
   {
     variants: {
       size: {
-        sm: 'gap-1.5 px-3 py-1.5 text-xs',
-        md: 'gap-[7px] px-4 py-[9px] text-[13.5px]',
+        sm: 'gap-1.5 px-3.5 py-1.5 text-[13px]',
+        md: 'gap-[7px] px-[18px] py-[10px] text-[13px]',
       },
     },
     defaultVariants: { size: 'md' },
@@ -53,12 +54,12 @@ const glassButtonContentVariants = cva(
 
 const solidButtonVariants = cva(
   cn(
-    'inline-flex cursor-default select-none items-center justify-center',
+    'lq-squircle inline-flex cursor-default select-none items-center justify-center',
     // `leading-tight` lives with each size below, not here. tailwind-merge
     // drops an earlier `leading-*` when a later `text-{size}` could have
     // carried one (Tailwind's `text-sm/6` syntax), so a line height written
     // before the font size silently loses and the label inherits the page's.
-    'border-none font-semibold whitespace-nowrap text-white',
+    'border-none font-medium whitespace-nowrap text-white',
     'outline-none transition-[background-color,transform] duration-150',
     'data-[pressed]:scale-[0.97] active:scale-[0.97]',
     // An outline rather than a box-shadow ring: `outline-offset` leaves the gap
@@ -86,16 +87,29 @@ const solidButtonVariants = cva(
         ),
       },
       size: {
-        sm: 'gap-1.5 px-3 py-1.5 text-xs leading-tight',
-        md: 'gap-[7px] px-4 py-[9px] text-[13.5px] leading-tight',
+        sm: 'gap-1.5 px-3.5 py-1.5 text-[13px] leading-tight',
+        md: 'gap-[7px] px-[18px] py-[10px] text-[13px] leading-tight',
       },
     },
     defaultVariants: { variant: 'accent', size: 'md' },
   },
 );
 
+/**
+ * Heights the size classes below draw a solid button at — `lq-squircle` needs
+ * one to know where the corner turns into a capsule, which the kernel measures
+ * for on the glass variant.
+ */
+const SOLID_HEIGHT = { sm: 28, md: 36 } as const;
+
+/**
+ * Apple draws its Large (28) and Extra Large (36) buttons as capsules, and
+ * those are the two sizes here. 14 × the squircle factor clears half of 36,
+ * so the kernel rounds both into a pill; an icon-only button, square, becomes
+ * a circle — which is also what Apple draws.
+ */
 const BUTTON_GLASS = {
-  radius: 12,
+  radius: 14,
   blur: 1,
   refraction: 45,
   bezel: 11,
@@ -127,7 +141,13 @@ export function Button({
     return (
       <BaseButton
         {...props}
-        style={{ borderRadius: glass?.radius ?? BUTTON_GLASS.radius, ...style }}
+        // The glass variant's corner, drawn in CSS: see `lq-squircle` in the
+        // kernel's glass.css.
+        style={{
+          ['--lq-r' as string]: `${glass?.radius ?? BUTTON_GLASS.radius}px`,
+          ['--lq-h' as string]: `${SOLID_HEIGHT[size ?? 'md']}px`,
+          ...(style as React.CSSProperties),
+        }}
         className={cn(solidButtonVariants({ variant, size }), className)}
       />
     );

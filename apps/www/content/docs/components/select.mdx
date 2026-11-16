@@ -111,6 +111,6 @@ console warning.
 ### Scrolling clips to the radius
 
 `Select.List` carries `max-h-[var(--available-height)]` and scrolls. The glass
-content wrapper therefore gets `overflow-hidden rounded-[inherit]`, otherwise a
-row scrolled to the top square off the popup's corners while the surface behind
-it stays round.
+content wrapper therefore gets `overflow-hidden` — it already has the surface's
+corners, shape included — otherwise a row scrolled to the top would square off
+the popup's corners while the surface behind it stays round.

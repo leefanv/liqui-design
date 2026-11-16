@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * liqui Meter — a reading, on the same track [Progress](/docs/components/progress)
- * uses and for the same reason: the fixed box is the lens, the fill is a wash
- * over it. A growing fill would ask the map cache for a new entry on every
+ * uses and for the same reason: the fixed box is the lens, the fill is solid
+ * accent over it. A growing fill would ask the map cache for a new entry on every
  * frame and evict every other surface's map on the way past; the full argument
  * is on the progress page and it applies here unchanged.
  *
@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
  * that never happened. So the fill here jumps, and `value` is required: there is
  * no indeterminate reading.
  *
- * The wash is `--lq-accent`, which is a token rather than a prop. A meter that
+ * The fill is `--lq-accent`, which is a token rather than a prop. A meter that
  * should turn red past a threshold overrides the token on the root, and the fill
  * follows — the same move `data-[checked]` makes on Checkbox, and the reason
  * this component has no `tone` prop.
@@ -29,11 +29,12 @@ import { cn } from '@/lib/utils';
  * as Menu and ContextMenu are.
  */
 
+// Apple's medium linear progress bar: a 10px capsule.
 const TRACK_GLASS = {
-  radius: 7,
+  radius: 5,
   blur: 1,
-  refraction: 22,
-  bezel: 5,
+  refraction: 18,
+  bezel: 4,
 } satisfies Partial<LiquiGlassProps>;
 
 export function Meter({ className, ...props }: BaseMeter.Root.Props) {
@@ -44,7 +45,7 @@ export function MeterLabel({ className, ...props }: BaseMeter.Label.Props) {
   return (
     <BaseMeter.Label
       {...props}
-      className={cn('text-[12.5px] font-semibold text-[var(--lq-text)]', className)}
+      className={cn('text-[13px] font-medium text-[var(--lq-text)]', className)}
     />
   );
 }
@@ -53,7 +54,7 @@ export function MeterValue({ className, ...props }: BaseMeter.Value.Props) {
   return (
     <BaseMeter.Value
       {...props}
-      className={cn('text-[12.5px] tabular-nums text-[var(--lq-text-dim)]', className)}
+      className={cn('text-[13px] tabular-nums text-[var(--lq-text-dim)]', className)}
     />
   );
 }
@@ -74,12 +75,12 @@ export function MeterTrack({
   return (
     <BaseMeter.Track
       {...props}
-      className={cn('h-3.5 w-full select-none', className)}
+      className={cn('h-2.5 w-full select-none', className)}
       render={
         <LiquiGlass
           {...TRACK_GLASS}
           {...glass}
-          contentClassName="relative size-full overflow-hidden rounded-[inherit]"
+          contentClassName="relative size-full overflow-hidden"
         />
       }
     >
@@ -93,8 +94,8 @@ export function MeterIndicator({ className, ...props }: BaseMeter.Indicator.Prop
     <BaseMeter.Indicator
       {...props}
       className={cn(
-        'absolute top-0 rounded-[inherit] bg-[color-mix(in_srgb,var(--lq-accent)_78%,transparent)]',
-        // A hairline of the rim along the top edge, so the wash reads as sitting
+        'lq-corner absolute top-0 rounded-[inherit] bg-[var(--lq-accent)]',
+        // A hairline of the rim along the top edge, so the fill reads as sitting
         // *in* the groove rather than printed on it.
         'shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_60%,transparent)]',
         // Only the colour transitions. The width is a reading, and a reading

@@ -195,21 +195,25 @@ the press keeps its swell but gives up the reveal.
 ### Sizing
 
 ```tsx
-const TRACK_H = 30;
+const TRACK_H = 18;
+const TRACK_W = 40;
 ```
 
-That is the only number to change. Everything else — track width, thumb box,
-radius, travel, band width, peak displacement — is a ratio off it, and the maps
+Those are the two numbers to change. Everything else — thumb box, radius,
+travel, band width, peak displacement — is derived from them, and the maps
 regenerate to match.
 
-The ratios are not invented, and they are not iOS's. The track is 2.39× as long
-as it is tall and the thumb is a capsule far wider than the track is tall,
-because that is what gives the lens enough glass to be worth looking through —
-which is why 30 buys a 72px track where the old flat switch was 52px wide.
+40×18 is a compact control: it sits in a form row or a list cell at the height
+of the text beside it, and it puts the resting thumb at 16px, the same as
+[Slider](/docs/components/slider)'s knob, so the two lens controls read as the
+same size object.
 
-30 puts the resting thumb at 27px: what [Slider](/docs/components/slider)'s knob
-comes out at, and what this component was before it had a lens. The two should
-read as the same size object. Their tracks differ because a switch contains its
-thumb and a rail does not.
+The thumb's ratios are not invented, and they are not iOS's. They are measured
+off a reference where the thumb is a capsule far wider than the track is tall,
+because that is what gives the lens enough glass to be worth looking through.
+Its height and inset follow the track's height exactly; its width is what
+gives. This track is shorter for its height than the reference's 2.39:1, so the
+thumb is narrowed until it travels the same share of the track, rather than
+kept wide and left with nowhere to go.
 Two colours are exposed: `--lq-switch-off` for the track, `--lq-accent` for the
 checked fill.

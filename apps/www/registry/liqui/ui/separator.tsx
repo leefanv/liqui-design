@@ -37,7 +37,9 @@ export function Separator({ className, ...props }: BaseSeparator.Props) {
         // the token flips with the theme, so the groove stays a groove on a
         // dark backdrop instead of turning into a bright scratch.
         'flex-none bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]',
-        'data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full',
+        // Stretch, not `w-full`: a full width plus the inset margins a separator
+        // nearly always has would run the rule out past the panel's edge.
+        'data-[orientation=horizontal]:h-px data-[orientation=horizontal]:self-stretch',
         'data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px',
         // The lit wall, cast one pixel past the cut, away from the key light.
         'data-[orientation=horizontal]:shadow-[0_1px_0_color-mix(in_srgb,var(--lq-rim-hi)_55%,transparent)]',

@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
  */
 
 const CONTROL_GLASS = {
-  radius: 12,
+  radius: 9,
   blur: 1,
   refraction: 60,
   bezel: 12,
@@ -68,7 +68,7 @@ export function Input({ glass, className, inputClassName, start, end, ...props }
       {...glass}
       className={cn(
         'w-full transition-shadow duration-150',
-        'has-[input:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_35%,transparent)]',
+        'has-[input:focus-visible]:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
         // `data-touched` as well as `data-invalid`: an empty required field is
         // invalid from the moment it mounts, and a form that greets you in red
         // is telling you off for nothing yet.
@@ -76,13 +76,13 @@ export function Input({ glass, className, inputClassName, start, end, ...props }
         'has-[input[data-disabled]]:opacity-55',
         className,
       )}
-      contentClassName="flex w-full items-center gap-2 rounded-[inherit] px-3 text-[13.5px] text-[var(--lq-text-dim)]"
+      contentClassName="flex w-full items-center gap-2 px-3 text-[13px] text-[var(--lq-text-dim)]"
     >
       {start ? <span className="flex flex-none items-center">{start}</span> : null}
       <BaseInput
         {...props}
         className={cn(
-          'min-w-0 flex-1 border-none bg-transparent py-[9px] font-[inherit] text-[13.5px] text-[var(--lq-text)] outline-none',
+          'min-w-0 flex-1 border-none bg-transparent py-[9px] font-[inherit] text-[13px] leading-[18px] text-[var(--lq-text)] outline-none',
           'placeholder:text-[var(--lq-text-dim)]',
           'data-[disabled]:cursor-not-allowed',
           inputClassName,

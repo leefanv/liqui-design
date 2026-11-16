@@ -28,10 +28,10 @@ export const ContextMenuSub = BaseContextMenu.SubmenuRoot;
 
 const POPUP_GLASS = {
   elevated: true,
-  radius: 18,
+  radius: 12,
   blur: 1,
-  refraction: 150,
-  bezel: 28,
+  refraction: 120,
+  bezel: 20,
 } satisfies Partial<LiquiGlassProps>;
 
 const positionerClass = 'z-100 outline-none';
@@ -40,11 +40,11 @@ const popupClass =
   'min-w-58 [transform-origin:var(--transform-origin)] transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.2,1.1,0.3,1)] focus:outline-none focus-visible:outline-none data-[ending-style]:scale-85 data-[ending-style]:opacity-0 data-[starting-style]:scale-85 data-[starting-style]:opacity-0';
 
 const itemClass =
-  'flex cursor-default select-none items-center gap-2 rounded-xl px-3 py-[7px] text-[13.5px] leading-tight font-[450] text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-highlight)] data-[highlighted]:shadow-[inset_0_0.5px_0_color-mix(in_srgb,var(--lq-rim-hi)_65%,transparent)] data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
+  'flex cursor-default select-none items-center gap-2 lq-corner rounded-[var(--lq-item-radius)] min-h-6 px-2 py-[3px] text-[13px] leading-[18px] font-medium text-[var(--lq-text)] outline-none data-[highlighted]:bg-[var(--lq-accent)] data-[highlighted]:text-white data-[disabled]:text-[var(--lq-text-dim)] data-[disabled]:opacity-60';
 
 // Checkbox and radio items reserve a 16px indicator gutter, so they start
 // closer to the edge than a plain item.
-const checkItemClass = `${itemClass} pl-2`;
+const checkItemClass = `${itemClass} pl-1.5`;
 
 export function ContextMenuContent({
   children,
@@ -64,7 +64,7 @@ export function ContextMenuContent({
           className={cn(popupClass, className)}
           render={<LiquiGlass {...POPUP_GLASS} {...glass} />}
         >
-          <div className="flex flex-col p-1.5">{children}</div>
+          <div className="flex flex-col p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px]">{children}</div>
         </BaseContextMenu.Popup>
       </BaseContextMenu.Positioner>
     </BaseContextMenu.Portal>
@@ -79,14 +79,14 @@ export function ContextMenuItem({
   return (
     <BaseContextMenu.Item
       {...props}
-      className={cn(itemClass, variant === 'danger' && 'text-[var(--lq-danger)]', className)}
+      className={cn(itemClass, variant === 'danger' && 'text-[var(--lq-danger)] data-[highlighted]:bg-[var(--lq-danger)]', className)}
     />
   );
 }
 
 export function ContextMenuSeparator() {
   return (
-    <BaseContextMenu.Separator className="mx-2.5 my-[5px] h-px bg-[color-mix(in_srgb,var(--lq-text)_14%,transparent)]" />
+    <BaseContextMenu.Separator className="mx-2 my-[5px] h-px bg-[color-mix(in_srgb,var(--lq-text)_12%,transparent)]" />
   );
 }
 
@@ -95,7 +95,7 @@ export function ContextMenuGroupLabel({ className, ...props }: BaseContextMenu.G
     <BaseContextMenu.GroupLabel
       {...props}
       className={cn(
-        'px-3 pt-1.5 pb-0.5 text-[11px] font-semibold tracking-[0.06em] uppercase text-[var(--lq-text-dim)]',
+        'px-2 pt-[5px] pb-1 text-[13px] leading-4 font-bold text-[var(--lq-text-dim)]',
         className,
       )}
     />
@@ -104,7 +104,7 @@ export function ContextMenuGroupLabel({ className, ...props }: BaseContextMenu.G
 
 export function ContextMenuShortcut({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-auto pl-5 text-xs tracking-[0.04em] tabular-nums text-[var(--lq-text-dim)]">
+    <span className="ml-auto pl-5 text-[13px] tabular-nums text-[color-mix(in_srgb,var(--lq-text-dim)_70%,transparent)] in-data-[highlighted]:text-white/75">
       {children}
     </span>
   );
@@ -123,7 +123,7 @@ const CheckIcon = (
 );
 
 const indicatorSlotClass =
-  'inline-flex w-4 items-center justify-center text-[var(--lq-accent)] group-data-[highlighted]:text-[var(--lq-text)]';
+  'inline-flex w-4 items-center justify-center text-[var(--lq-text)] group-data-[highlighted]:text-white';
 const indicatorMarkClass =
   'inline-flex transition-[opacity,transform] duration-100 data-[ending-style]:scale-[0.6] data-[ending-style]:opacity-0 data-[starting-style]:scale-[0.6] data-[starting-style]:opacity-0';
 
@@ -171,7 +171,7 @@ export function ContextMenuSubTrigger({
       {...props}
       className={cn(
         itemClass,
-        'data-[popup-open]:bg-[color-mix(in_srgb,var(--lq-highlight)_55%,transparent)]',
+        'data-[popup-open]:not-data-[highlighted]:bg-[color-mix(in_srgb,var(--lq-text)_10%,transparent)]',
         className,
       )}
     >
@@ -217,7 +217,7 @@ export function ContextMenuSubContent({
           // refraction — the popup defaults would over-bend at this width.
           render={<LiquiGlass {...POPUP_GLASS} refraction={110} bezel={20} {...glass} />}
         >
-          <div className="flex flex-col p-1.5">{children}</div>
+          <div className="flex flex-col p-1.5 lq-nest [--lq-inset:6px] [--lq-item-h:24px]">{children}</div>
         </BaseContextMenu.Popup>
       </BaseContextMenu.Positioner>
     </BaseContextMenu.Portal>

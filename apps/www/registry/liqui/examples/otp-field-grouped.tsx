@@ -16,7 +16,7 @@ export default function OTPFieldGrouped() {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <label htmlFor={id} className="text-[12.5px] font-semibold text-[var(--lq-text)]">
+      <label htmlFor={id} className="text-[13px] font-medium text-[var(--lq-text)]">
         Recovery code
       </label>
       <OTPField id={id} length={6} mask className="flex items-center">

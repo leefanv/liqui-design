@@ -42,7 +42,7 @@ const toggleVariants = cn(
   // `leading-tight` goes with the font size in each branch below, never here:
   // tailwind-merge drops an earlier `leading-*` when a later `text-{size}`
   // could have carried one, and the label would inherit the page's line height.
-  'border-none font-semibold whitespace-nowrap',
+  'border-none font-medium whitespace-nowrap',
   'text-[var(--lq-text)] outline-none transition-[background-color,box-shadow,transform] duration-150',
   // On: a solid accent fill in both surfaces, so a toggle means the same thing
   // whether or not it is in a group.
@@ -62,7 +62,7 @@ export function Toggle({ className, children, ...props }: ToggleProps) {
         toggleVariants,
         ownsSurface
           ? cn(
-              'rounded-[12px] px-[13px] py-[9px] text-[13.5px] leading-tight active:scale-[0.97]',
+              'lq-squircle [--lq-r:14px] [--lq-h:36px] px-[18px] py-[10px] text-[13px] leading-tight active:scale-[0.97]',
               'bg-[var(--lq-control)] shadow-[inset_0_0_0_1px_var(--lq-control-rim)]',
               'hover:not-data-disabled:not-data-pressed:bg-[color-mix(in_srgb,white_35%,var(--lq-control))]',
               'data-[pressed]:shadow-none',
@@ -73,13 +73,12 @@ export function Toggle({ className, children, ...props }: ToggleProps) {
               'focus-visible:outline-[color-mix(in_srgb,var(--lq-accent)_70%,transparent)]',
             )
           : cn(
-              'rounded-[11px] bg-transparent px-[11px] py-[7px] text-[13px] leading-tight',
-              // In a ToggleGroup, concentric with the strip: its radius less
-              // the 3px it is inset by, on the strip's own corner shape —
-              // round on a capsule, squircle otherwise. Toolbar and the
-              // transport bar inset by more and keep the 11px above.
-              'in-data-[slot=toggle-group]:rounded-[calc(var(--lq-radius,14px)-3px)]',
-              'in-data-[slot=toggle-group]:[corner-shape:inherit]',
+              'bg-transparent px-[11px] py-[7px] text-[13px] leading-tight',
+              // Concentric with the strip it sits in: ToggleGroup and Toolbar
+              // are `lq-nest` containers and publish `--lq-item-radius`, their
+              // radius less their inset, capped to a capsule. Anywhere else,
+              // an 11px corner of its own.
+              'lq-corner rounded-[var(--lq-item-radius,calc(11px*var(--lq-corner-k)))]',
               'hover:not-data-disabled:not-data-pressed:bg-[color-mix(in_srgb,var(--lq-highlight)_45%,transparent)]',
               // Inside the strip the ring is inset: an offset outline would sit
               // on top of the neighbouring toggle.

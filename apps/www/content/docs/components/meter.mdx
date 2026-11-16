@@ -1,6 +1,6 @@
 ---
 title: Meter
-description: A reading on a refracting track, with a wash that changes colour but never slides.
+description: A reading on a refracting track, with a fill that changes colour but never slides.
 ---
 
 <ComponentPreview name="meter-demo" />
@@ -63,10 +63,10 @@ units, or a render function for a reading that is not a number:
 ### It is Progress, on purpose
 
 The optics are [Progress](/docs/components/progress)'s, unchanged: the fixed
-track is the lens and the fill is a translucent wash over it, because a
+track is the lens and the fill is solid accent over it, because a
 refracting fill would ask the map cache for a new entry on every frame and evict
 every other surface's map on the way past. That argument is written out in full
-on the [progress page](/docs/components/progress#the-fill-is-a-wash-not-a-lens)
+on the [progress page](/docs/components/progress#the-fill-is-paint-not-a-lens)
 and none of it is different here.
 
 The two components stay separate files because Base UI keeps them as separate
@@ -96,10 +96,10 @@ have is not a reading.
 
 ### A threshold is a token, not a prop
 
-The wash is one colour expression:
+The fill is one colour expression:
 
 ```tsx
-'bg-[color-mix(in_srgb,var(--lq-accent)_78%,transparent)]';
+'bg-[var(--lq-accent)]';
 ```
 
 So a meter that should go amber past 70 and red past 90 overrides the token on
@@ -111,13 +111,13 @@ the root, and the fill follows:
 
 This is the same mechanism as [Checkbox](/docs/components/checkbox)'s
 `data-[checked]` retint, and the reason this component ships no `tone` prop.
-Retinting keeps the lens working *through* the colour; a prop that painted a
-background would cover the refraction, which is one of the
-[rules that are specific to glass](https://github.com/leefanv/liqui-design/blob/main/CONTRIBUTING.md).
+Retinting through the token keeps the meter on the same accent as the rest of
+the page until a rule says otherwise, and keeps the colour in CSS, where a
+theme can reach it.
 
-It is also the reason the colour *is* allowed to transition. A wash changing hue
-is the same reading looked at against a different rule; a wash changing width is
-a different reading.
+It is also the reason the colour *is* allowed to transition. A fill changing hue
+is the same reading looked at against a different rule; a fill changing width
+is a different reading.
 
 ### The indicator is yours to place
 

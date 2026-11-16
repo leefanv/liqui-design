@@ -132,16 +132,16 @@ Chromium-only.
 ### Sizing
 
 ```tsx
-const RAIL_H = 14;   // matches Meter and Progress
-const LENS_H = 45;   // the lens; everything optical is a ratio off it
+const RAIL_H = 8;    // a line for the knob to ride
+const LENS_H = 27;   // the lens; everything optical is a ratio off it
 ```
 
-Two knobs, because they are two decisions. The rail belongs to the
-Meter/Progress family and is sized by them — it is the same `h-3.5` they use, so
-a slider read next to a meter looks like its sibling. The lens belongs to the
+Two knobs, because they are two decisions. The rail is thinner than the
+`h-3.5` Meter and Progress use, on purpose: those bars are the whole control,
+and this one is the backdrop for a knob — slim, it reads as a line the knob
+rides on rather than a second bar the knob is stuck to. The lens belongs to the
 optics and is sized by how much glass the effect needs. Tying one to the other
-means a slider that matches its siblings can only do so by carrying a knob half
-again as tall as anything else on the page.
+means the knob can only change size by changing the rail with it.
 
 Everything else follows: the lens box is `LENS_H` at the reference's 3:2, its
 radius is half of it, the resting knob is 60% of it, and the band and peak
@@ -154,10 +154,10 @@ still wins. The lens is the exception — its box is inline and not overridable,
 because the maps are baked for exactly that size. For a smaller knob on a panel,
 that is what `lens={false}` is for.
 
-At rest the knob is 41×27, the same size as [Switch](/docs/components/switch)'s.
-Held, it is a 68×45 lens over a 14px rail — still more than three times the
-thing it sits on, which is the point. A lens the size of what it covers has
-nothing to show.
+At rest the knob is 25×16 — the height of a line of small text, so a slider
+sits in a form row without making it taller. Held, it is a 41×27 lens over an
+8px rail — more than three times the thing it sits on, which is the point. A
+lens the size of what it covers has nothing to show.
 
 ## Range
 
