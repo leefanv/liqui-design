@@ -415,7 +415,7 @@ export const PRESETS: ThemePreset[] = [
   {
     id: 'prism',
     name: 'Prism',
-    description: 'Cut, clear glass under one light from the top left — glass type, as a surface.',
+    description: 'Cut glass under one key light, with a hairline and a colour fringe at the edge — glass type, as a surface.',
     swatch: ['#0088ff', '#fbfbfd', '#15161d'],
     patch: { glass: diffGlass(prismGlassTheme) },
   },
