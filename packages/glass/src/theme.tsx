@@ -76,12 +76,18 @@ export interface LiquiGlassTheme extends Partial<GlassLighting> {
   blurScale: number;
 }
 
+/**
+ * The classic look, tuned by eye on the home stage against the system's own
+ * control center: frosted enough for white type to stand on, with the rim at
+ * most of its strength. Geometry is the reference surface's (see the site's
+ * `opticsToTheme`), so every multiplier here is 1.
+ */
 export const defaultGlassTheme: LiquiGlassTheme = {
   material: 'auto',
   profile: 'squircle',
   finish: 'classic',
-  frost: 0.35,
-  specular: 0.7,
+  frost: 0.54,
+  specular: 0.85,
   dispersion: 0,
   saturation: 1.7,
   radiusScale: 1,
@@ -92,19 +98,26 @@ export const defaultGlassTheme: LiquiGlassTheme = {
 
 /**
  * The prism look as a theme: lighting from `finish: 'prism'`, plus the optics
- * it is drawn for — a bezel about half as wide, refraction a quarter stronger,
- * a little dispersion, almost no frost. Geometry is scaled, not set, so every
- * component keeps its own proportions (see the notes above).
+ * it is drawn for — a narrower bezel and a gentler bend than classic, a
+ * heavier base blur under lighter frost, and a visible colour fringe at the
+ * edge. Geometry is scaled, not set, so every component keeps its own
+ * proportions (see the notes above).
+ *
+ * Tuned by eye on the home stage. The multipliers are the stage panel's
+ * readings over its reference surface (refraction 150, bezel 28, blur 2 —
+ * see `opticsToTheme` in the site), kept as fractions so they read back as
+ * the same numbers.
  */
 export const prismGlassTheme: LiquiGlassTheme = {
   ...defaultGlassTheme,
   finish: 'prism',
-  frost: 0.06,
-  specular: 1,
-  dispersion: 0.17,
+  frost: 0.26,
+  specular: 0.75,
+  dispersion: 0.35,
   saturation: 1.35,
-  bezelScale: 0.55,
-  refractionScale: 1.25,
+  bezelScale: 19 / 28,
+  refractionScale: 88 / 150,
+  blurScale: 4.5 / 2,
 };
 
 /* -------------------------------------------------------------------------- */

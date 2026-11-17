@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { ensureFilter, prewarmImage } from './filterRegistry';
+import { BackdropContext, NestedGlassContext } from './backdrop';
 import { useGlassTheme } from './theme';
 import './glass.css';
 
@@ -35,12 +36,12 @@ export type GlassProfile = 'squircle' | 'convex' | 'rim';
  * - 'classic' — light from above and below: the top and bottom arcs catch a
  *   highlight, the flanks fall into a thin shade, and a frosted tint carries
  *   legibility.
- * - 'prism' — the look of glass type: one light from the top left, so the
- *   up-left edges catch a crisp highlight and the down-right edges a dark rim;
- *   a hairline outline around the whole outline; a brightened, barely tinted
- *   interior. Reads as a cut, clear slab rather than a frosted pane, and wants
- *   a narrow bezel with strong refraction and a little dispersion (see
- *   `prismGlassTheme`).
+ * - 'prism' — the look of glass type: one key light (from above by default,
+ *   see `lightAngle`), so the edges facing it catch a crisp highlight and
+ *   the edges facing away a dark rim; a hairline around the whole outline;
+ *   a brightened, lightly tinted interior. Reads as a cut slab rather than a
+ *   frosted pane, and wants a narrow bezel, a soft bend and a colour fringe
+ *   at the edge (see `prismGlassTheme`).
  */
 export type GlassFinish = 'classic' | 'prism';
 
@@ -73,8 +74,12 @@ export interface GlassLighting {
 }
 
 export const FINISH_LIGHTING: Record<GlassFinish, GlassLighting> = {
-  classic: { lightAngle: 0, edgeShade: 0.48, hairline: 0, brightness: 1, tintFloor: 0.25 },
-  prism: { lightAngle: -33, edgeShade: 0.42, hairline: 0.3, brightness: 1.14, tintFloor: 0.08 },
+  // Edge shade is the opacity of a one-device-pixel line, before `specular`:
+  // classic's 0.8 at the default specular 0.85 darkens the flank by about
+  // two thirds, a little past the system's ~55% — both finishes were settled
+  // by eye on the home stage, this one at that specular.
+  classic: { lightAngle: 0, edgeShade: 0.8, hairline: 0, brightness: 1, tintFloor: 0.25 },
+  prism: { lightAngle: 1, edgeShade: 0.48, hairline: 0.35, brightness: 1.14, tintFloor: 0.08 },
 };
 
 /** Shade is stronger in the dark appearance, where a dim rim reads weaker. */
@@ -154,15 +159,27 @@ function surfaceLUTs(profile: GlassProfile): SurfaceLUTs {
  * Rim lighting is derived from the surface normal: a directional light from
  * above and its counterpart from below catch the top and bottom arcs — a
  * straight edge lights evenly along its whole run — while the left/right
- * flanks fall into a thin shade. What keeps this from reading as a bevelled
- * button is the shaping: the highlight lives in a ~1px stroke hugging the
- * boundary plus a few px of diffuse glow, not a wide band across the bezel.
+ * flanks keep a crisp dark line. What keeps this from reading as a bevelled
+ * button is the shaping: the highlight lives in a ~1pt line hugging the
+ * boundary plus a few px of glow, and the shade in a single device pixel,
+ * not wide bands across the bezel.
  * (The earlier positional-azimuth model lit straight edges unevenly, which is
  * the single most visible tell against real glass.)
  */
 const LIGHT_SPREAD = 1.08; // radians off vertical the top/bottom highlight reaches
 const DIFFUSE_SPREAD = LIGHT_SPREAD * 0.65;
-const SIDE_SPREAD = 0.98; // radians off horizontal the side shade reaches
+/** CSS px: depth of the solid highlight line — the system's is about 1pt. */
+const HIGHLIGHT_DEPTH = 1;
+/** CSS px: how far the glow under the highlight reaches, at most. */
+const GLOW_REACH = 4;
+/** Glow opacity just under the highlight line, classic — measured ~0.6. */
+const CLASSIC_GLOW = 0.6;
+/**
+ * Prism's highlight gain, from the glass-type study it is drawn from
+ * (titles.html 09): the lit edge runs past full strength and clips, so it
+ * reads as a cut edge catching the light rather than a gradient.
+ */
+const PRISM_HIGHLIGHT = 1.2;
 
 const sat = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
@@ -181,7 +198,7 @@ interface SurfaceField {
  * first-order estimate (field / |gradient|): exact at the curve, drifting
  * only well inside, where nothing reads absolute distance anymore.
  *
- * `round` swaps in circular corners, for capsules and discs — see
+ * `round` swaps in circular corners, for capsules, discs and `corner: 'round'` — see
  * `isCapsule`. Exact distance there, since a circle has one.
  */
 function surfaceField(
@@ -275,11 +292,14 @@ function glassImages(
   round: boolean,
   finish: GlassFinish,
   lighting: Pick<GlassLighting, 'lightAngle' | 'edgeShade' | 'hairline'>,
+  /** False on a tier with no filter to feed — the frost tier wants the rim alone. */
+  needMap: boolean,
 ) {
   const { lightAngle, edgeShade, hairline: hairlineOpacity } = lighting;
   const key =
     `${fullW}x${fullH}r${fullRadius}b${fullBezel}${profile}${round ? 'o' : 's'}` +
-    `${finish}a${lightAngle}e${edgeShade}h${hairlineOpacity}`;
+    `${finish}a${lightAngle}e${edgeShade}h${hairlineOpacity}` +
+    `@${Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)))}${needMap ? '' : 'n'}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 
@@ -303,7 +323,7 @@ function glassImages(
   const bx = w / 2 - r;
   const by = h / 2 - r;
 
-  for (let y = 0; y < h; y++) {
+  for (let y = 0; y < (needMap ? h : 0); y++) {
     for (let x = 0; x < w; x++) {
       const px = x + 0.5 - w / 2;
       const py = y + 0.5 - h / 2;
@@ -325,24 +345,34 @@ function glassImages(
   ctx.putImageData(image, 0, 0);
 
   /**
-   * Specular overlay, one image per appearance. Unpremultiplied compose of
-   * two features, both driven by the outline normal and distance:
+   * Specular overlay, one image per appearance, drawn from the outline's
+   * normal and signed distance. Measured off the system's own control center
+   * (macOS 26, 2× captures, light and dark):
    *
-   * - highlight — a crisp stroke hugging the boundary where the normal faces
-   *   up or down (times a soft compression so it never clips), plus a wider
-   *   diffuse glow fading over a few px into the surface;
-   * - shade — a hairline just inside the left/right flanks, the dark
-   *   contact edge that makes the bright arcs read as a lit rim rather than
-   *   a painted-on white line.
+   * - highlight — a solid white line about 1pt deep on the edges that face
+   *   the light, and inside it a glow fading out over about 4pt;
+   * - edge line — a crisp dark line one *device* pixel wide, right at the
+   *   boundary, wherever the highlight is not: the flanks in classic, the far
+   *   edges in prism. Light appearance darkens by about half there, dark
+   *   almost to black. Not a soft band: a wide grey falloff is what made the
+   *   edge read as a bevel rather than the cut edge of a sheet.
+   * - hairline — the same one-device-pixel line all the way round, at its own
+   *   opacity; dark on the light appearance, a faint light line on the dark,
+   *   where a dark one vanishes into the backdrop.
+   *
+   * The image is baked at the device pixel ratio (up to 2×) for that reason:
+   * at CSS-pixel resolution the narrowest line it can hold is a CSS pixel,
+   * which the screen then draws two device pixels wide and soft.
    *
    * Dark appearance dims the highlight and deepens the shade; the two PNGs
    * are swapped by CSS (see glass.css) so the appearance change needs no JS.
    */
-  const specW = fullW;
-  const specH = fullH;
-  const specR = Math.min(fullRadius, specW / 2, specH / 2);
-  const specBx = specW / 2 - specR;
-  const specBy = specH / 2 - specR;
+  const dpr = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+  const specW = fullW * dpr;
+  const specH = fullH * dpr;
+  const specR = Math.min(fullRadius, fullW / 2, fullH / 2);
+  const specBx = fullW / 2 - specR;
+  const specBy = fullH / 2 - specR;
 
   const makeSpecCanvas = () => {
     const c = document.createElement('canvas');
@@ -359,10 +389,15 @@ function glassImages(
 
   const cosLight = Math.cos(LIGHT_SPREAD);
   const cosDiffuse = Math.cos(DIFFUSE_SPREAD);
-  const cosSide = Math.cos(SIDE_SPREAD);
-  // The diffuse glow reaches a few px into the surface, growing gently with
-  // the bezel so wide rims keep a visible inner falloff.
-  const reach = 4.5 + fullBezel * 0.15;
+  // The glow under the highlight: about 4pt on a module the size of the
+  // system's, less on a small control so it doesn't fill a button.
+  const reach = Math.min(GLOW_REACH, Math.max(1.5, Math.min(fullW, fullH) * 0.035));
+  // Half a device pixel, in CSS pixels: each sample covers ±px of distance.
+  const half = 0.5 / dpr;
+  const device = 1 / dpr;
+  /** How much of this sample's pixel lies in the band `[-depth, 0]` of distance. */
+  const band = (sd: number, depth: number) =>
+    Math.max(0, Math.min(sd + half, 0) - Math.max(sd - half, -depth)) / device;
 
   // The light axis (toward the light) and its perpendicular, from the angle.
   const rad = (lightAngle * Math.PI) / 180;
@@ -381,10 +416,11 @@ function glassImages(
     glint = 0,
   ) => {
     const highlight = sat(specAmount * specScale + diffuse * diffuseScale + glint);
-    const shade = shadeBase * shadeStrength;
+    const shade = sat(shadeBase * shadeStrength);
     const alpha = highlight + shade * (1 - highlight);
     if (alpha <= 0) return;
-    // Light over a dark rim, unpremultiplied for the PNG encoder.
+    // Light over a dark rim, unpremultiplied for the PNG encoder. The scale
+    // greys the light as well as thinning it, for the dark appearance.
     const value = Math.min((specScale * highlight) / alpha, 1);
     const v = Math.round(value * 255);
     out[i] = v;
@@ -395,32 +431,32 @@ function glassImages(
 
   for (let y = 0; y < specH; y++) {
     for (let x = 0; x < specW; x++) {
-      const px = x + 0.5 - specW / 2;
-      const py = y + 0.5 - specH / 2;
+      const px = (x + 0.5) / dpr - fullW / 2;
+      const py = (y + 0.5) / dpr - fullH / 2;
       surfaceField(px, py, specBx, specBy, specR, round, field);
       const sd = field.sd;
       // Everything lives within a hair of the boundary; skip the bulk early.
-      if (sd > 1 || sd < -(reach + 1)) continue;
+      if (sd > half || sd < -(reach + HIGHLIGHT_DEPTH + 1)) continue;
 
-      const coverage = sat(0.5 - sd);
       const i = (y * specW + x) * 4;
-      const stroke = sat(sd + 1.4) * sat(0.5 - sd);
-      // The outline line: ~0.6px just inside the boundary, all the way round.
-      const hairline = hairlineOpacity > 0 ? sat(1 - Math.abs(sd + 0.35) / 0.6) * hairlineOpacity : 0;
+      const highlightBand = band(sd, HIGHLIGHT_DEPTH);
+      const line = band(sd, device);
+      // Under the highlight line, fading to nothing over `reach`.
+      const inner = -sd - HIGHLIGHT_DEPTH;
+      const glow = inner <= 0 ? 0 : Math.pow(sat(1 - inner / reach), 1.4);
+      const hairline = line * hairlineOpacity;
       const darkShade = Math.min(1, edgeShade * DARK_SHADE);
 
       if (finish === 'prism') {
-        // One key light. The crisp stroke and its glow follow how squarely the
-        // outward normal faces the light; the opposite edges get the shade.
+        // One key light. The highlight follows how squarely the outward normal
+        // faces it; the far edges get the line.
         const lit = field.nx * lx + field.ny * ly;
         const facing = sat(lit);
         const away = sat(-lit);
-        let specAmount = Math.pow(facing, 1.1) * stroke;
-        specAmount = specAmount / (1 + 0.5 * (1 - specAmount));
-        const glow = 1 - sat(-sd / reach);
-        const diffuse = Math.pow(facing, 2) * 0.24 * glow * glow * coverage;
-        const rim = Math.pow(away, 1.2) * stroke;
-        // Light appearance: the hairline is dark, merged with the shade.
+        const specAmount = sat(Math.pow(facing, 1.1) * PRISM_HIGHLIGHT) * highlightBand;
+        const diffuse = Math.pow(facing, 2) * 0.12 * glow;
+        const rim = Math.pow(away, 1.2) * line;
+        // Light appearance: the hairline is dark, merged with the rim.
         // Dark: a dark line on dark glass over a dark backdrop vanishes —
         // the down-right edge and with it the outline disappeared — so there
         // it turns into a faint light line instead.
@@ -432,26 +468,21 @@ function glassImages(
       const vertical = Math.abs(field.nx * lx + field.ny * ly);
       const directional = Math.pow(sat((vertical - cosLight) / (1 - cosLight)), 1.25);
       const diffuseDir = Math.pow(sat((vertical - cosDiffuse) / (1 - cosDiffuse)), 1.25);
-      let specAmount = directional * stroke;
-      specAmount = specAmount / (1 + 0.5 * (1 - specAmount));
-      const glow = 1 - sat(-sd / reach);
-      const diffuse = diffuseDir * 0.18 * glow * glow * coverage;
+      const specAmount = directional * highlightBand;
+      const diffuse = diffuseDir * CLASSIC_GLOW * glow;
 
-      // Side shade: same band, weighted toward normals across the light axis.
-      const across = field.nx * -ly + field.ny * lx;
-      const wL = sat((across - cosSide) / (1 - cosSide)) * stroke;
-      const wR = sat((-across - cosSide) / (1 - cosSide)) * stroke;
-      const shadeBase = wL / (1 + 0.4 * (1 - wL)) + wR / (1 + 0.4 * (1 - wR));
-
-      compose(lightImage.data, i, specAmount, diffuse, Math.max(shadeBase * edgeShade, hairline), 1, 1, 1);
-      compose(darkImage.data, i, specAmount, diffuse, shadeBase * darkShade, 0.82, 0.4, 1, hairline * 0.75);
+      // The edge line runs all the way round; the highlight is composited
+      // over it, so it shows where the highlight does not — the flanks, and
+      // fading in round the corners as the highlight fades out.
+      compose(lightImage.data, i, specAmount, diffuse, Math.max(line * edgeShade, hairline), 1, 1, 1);
+      compose(darkImage.data, i, specAmount, diffuse, line * darkShade, 0.82, 0.55, 1, hairline * 0.75);
     }
   }
   lightCtx.putImageData(lightImage, 0, 0);
   darkCtx.putImageData(darkImage, 0, 0);
 
   const result = {
-    map: canvas.toDataURL(),
+    map: needMap ? canvas.toDataURL() : '',
     specular: lightCanvas.toDataURL(),
     specularDark: darkCanvas.toDataURL(),
   };
@@ -490,6 +521,16 @@ export interface LiquiGlassProps extends React.HTMLAttributes<HTMLDivElement> {
    * replacing them. See `LiquiThemeProvider`.
    */
   radius?: number;
+  /**
+   * The corner's shape. `'squircle'` (the default) is the continuous corner
+   * every surface gets: drawn at 1.4× the radius where `corner-shape`
+   * renders, so it reads as large as a round one. `'round'` draws a plain
+   * circular arc at exactly `radius`, map and lighting included — for the
+   * surfaces the system itself draws that way, like the control center's
+   * wide slider modules, whose ends are a quarter circle and a short straight
+   * run that no squircle fits. A capsule or a disc is round either way.
+   */
+  corner?: 'squircle' | 'round';
   /** Backdrop blur in px (refraction tier; frost uses 4×). */
   blur?: number;
   /** Strength of the edge refraction in px (feDisplacementMap scale). */
@@ -551,7 +592,8 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       brightness: ownBrightness,
       tintFloor: ownTintFloor,
       radius: ownRadius = 16,
-      blur: ownBlur = 1,
+      corner = 'squircle',
+      blur: ownBlur = 2,
       refraction: ownRefraction = 140,
       bezel: ownBezel = 26,
       dispersion = theme.dispersion,
@@ -607,17 +649,34 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // turning the whole surface into NaN displacement — a fully smeared box.
     const bezel = Math.max(1, Math.round(ownBezel * theme.bezelScale));
 
-    const tier: 'refract' | 'frost' | 'clear' =
+    const localRef = React.useRef<HTMLDivElement | null>(null);
+    const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
+
+    // Copy refraction, for the browsers that cannot filter the page behind an
+    // element: where a `LiquiBackdrop` says what is behind this surface, it
+    // refracts a copy of that instead (see backdrop.tsx). Decided in a layout
+    // effect like `refractionAllowed`, for the same hydration reason, and only
+    // for a surface the box actually contains — a popup portalled out of it
+    // is over something else — that is not itself on another surface.
+    const backdropHandle = React.useContext(BackdropContext);
+    const nested = React.useContext(NestedGlassContext);
+    const [copyAllowed, setCopyAllowed] = React.useState(false);
+    React.useLayoutEffect(() => {
+      const el = localRef.current;
+      const box = backdropHandle?.element.current;
+      setCopyAllowed(!supportsRefraction && !nested && !!el && !!box && box.contains(el));
+    }, [backdropHandle, nested]);
+
+    const tier: 'refract' | 'copy' | 'frost' | 'clear' =
       material === 'clear'
         ? 'clear'
         : material === 'frost'
           ? 'frost'
           : refractionAllowed
             ? 'refract'
-            : 'frost';
-
-    const localRef = React.useRef<HTMLDivElement | null>(null);
-    const [size, setSize] = React.useState<{ w: number; h: number } | null>(null);
+            : copyAllowed
+              ? 'copy'
+              : 'frost';
 
     // A capsule or a disc — corners reaching half the short side — is drawn
     // with round corners at exactly half that side. A superellipse cannot
@@ -637,10 +696,15 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // Compared before rounding, so the threshold is the one CSS corners use
     // (see `--lq-corner-k` in glass.css) and a solid button and a glass one of
     // the same size land on the same side of it.
-    const drawn = squircleActive ? baseRadius * SQUIRCLE_RADIUS_SCALE : baseRadius;
+    //
+    // `corner: 'round'` opts out of the squircle: no compensation, and the
+    // map, the lighting and the clip all take circular corners.
+    const drawn =
+      squircleActive && corner !== 'round' ? baseRadius * SQUIRCLE_RADIUS_SCALE : baseRadius;
     const half = size === null ? Infinity : Math.min(size.w, size.h) / 2;
     const capsule = drawn >= half - 0.5;
     const radius = capsule ? half : Math.round(drawn);
+    const roundCorners = capsule || corner === 'round';
 
     // The empty dependency array is load-bearing. Without it this runs on every
     // render, and each run detaches the previous handle before attaching the
@@ -660,9 +724,10 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     React.useImperativeHandle(forwardedRef, () => localRef.current as HTMLDivElement, []);
 
     React.useLayoutEffect(() => {
-      // Measured for the map in the refraction tier, and wherever corner-shape
-      // renders, for the capsule check above.
-      if ((tier !== 'refract' && !squircleActive) || !localRef.current) return;
+      // Measured for the map on the refraction and copy tiers, for the baked
+      // rim on frost, and wherever corner-shape renders, for the capsule check
+      // above. Only clear glass without a squircle has no use for its size.
+      if ((tier === 'clear' && !squircleActive) || !localRef.current) return;
       const el = localRef.current;
       const apply = (w: number, h: number) => {
         if (w > 0 && h > 0) {
@@ -683,7 +748,78 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       return () => observer.disconnect();
     }, [tier, squircleActive]);
 
-    const refractionReady = tier === 'refract' && size !== null;
+    // Where the copy sits: the surface's offset in the backdrop's box, and the
+    // box's size, so the copy inside is the box's picture shifted to line up.
+    // Measured with bounding rects on purpose, against the handbook's advice:
+    // the offset *should* include a transform, because a dragged surface is
+    // where the drag put it. (The map still takes layout sizes above.) Scroll
+    // is listened for in capture, so a scrolling container between the box
+    // and the surface counts; a transform fires nothing, which is what
+    // `revision` is for.
+    const [copyBox, setCopyBox] = React.useState<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    } | null>(null);
+    const revision = backdropHandle?.revision;
+    React.useLayoutEffect(() => {
+      const el = localRef.current;
+      const box = backdropHandle?.element.current;
+      if (tier !== 'copy' || !el || !box) return;
+      const measure = () => {
+        const r = el.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        // Against the box's padding edge, which is where an `inset: 0`
+        // backdrop is painted — a bordered box is a border's width off
+        // otherwise — and at the padding box's size, for the same reason.
+        const next = {
+          x: Math.round(r.left - b.left - box.clientLeft),
+          y: Math.round(r.top - b.top - box.clientTop),
+          w: box.clientWidth,
+          h: box.clientHeight,
+        };
+        setCopyBox((prev) =>
+          prev && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h
+            ? prev
+            : next,
+        );
+      };
+      measure();
+      // Neither observer sees a surface *moved* by a reflow above it — a web
+      // font arriving, an image getting its height — while its own size and
+      // the box's stay put. The document's height does change then, so the
+      // root is watched too, and the two moments that cause most of it are
+      // listened for by name.
+      const observer = new ResizeObserver(measure);
+      observer.observe(box);
+      observer.observe(el);
+      observer.observe(document.documentElement);
+      window.addEventListener('resize', measure);
+      window.addEventListener('load', measure);
+      window.addEventListener('scroll', measure, true);
+      let fonts: Promise<unknown> | undefined;
+      if (typeof document.fonts?.ready?.then === 'function') {
+        fonts = document.fonts.ready.then(measure);
+      }
+      return () => {
+        void fonts;
+        observer.disconnect();
+        window.removeEventListener('resize', measure);
+        window.removeEventListener('load', measure);
+        window.removeEventListener('scroll', measure, true);
+      };
+    }, [tier, backdropHandle, revision]);
+
+    // frost interpolates toward Apple's "regular" variant: more blur + tint.
+    const effectiveBlur = Math.round((blur + frost * 14) * 100) / 100;
+
+    const filtered = tier === 'refract' || tier === 'copy';
+    const measured = size !== null && tier !== 'clear';
+    // The baked rim is a pair of images, not a filter, so every tier but clear
+    // wears it — Safari and Firefox included, where it is the one part of the
+    // lighting that survives the loss of backdrop-filter.
+    const lit = measured && specular > 0;
     // Tone response of the material: lift the darkest backdrop tones and roll
     // off the brightest, so refracted content sits in a narrower band and the
     // foreground keeps contrast against it. Clear glass (frost 0) needs the
@@ -695,15 +831,42 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     const toneRoll = Math.round(140 * (1 - 0.45 * frost)) / 1000;
     // Filters live in a global, never-unmounted registry so a remounted
     // popup references an already-decoded filter (see filterRegistry.ts).
+    // Corners are baked as the browser will clip them: the squircle where it
+    // renders, a circle everywhere else.
+    const bakeRound = roundCorners || !squircleActive;
+    const images = React.useMemo(() => {
+      if (!measured || !(lit || filtered)) return null;
+      const next = glassImages(
+        size!.w,
+        size!.h,
+        radius,
+        bezel,
+        profile,
+        bakeRound,
+        finish,
+        { lightAngle, edgeShade, hairline },
+        filtered,
+      );
+      prewarmImage(next.specular);
+      prewarmImage(next.specularDark);
+      return next;
+    }, [
+      measured,
+      lit,
+      filtered,
+      size,
+      radius,
+      bakeRound,
+      bezel,
+      profile,
+      finish,
+      lightAngle,
+      edgeShade,
+      hairline,
+    ]);
+
     const glassRefs = React.useMemo(() => {
-      if (!refractionReady) return null;
-      const images = glassImages(size!.w, size!.h, radius, bezel, profile, capsule, finish, {
-        lightAngle,
-        edgeShade,
-        hairline,
-      });
-      prewarmImage(images.specular);
-      prewarmImage(images.specularDark);
+      if (!images || !filtered) return null;
       const { id: filterId, cold } = ensureFilter({
         w: size!.w,
         h: size!.h,
@@ -713,23 +876,8 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         toneLift,
         toneRoll,
       });
-      return { images, filterId, cold };
-    }, [
-      refractionReady,
-      size,
-      radius,
-      capsule,
-      bezel,
-      profile,
-      finish,
-      lightAngle,
-      edgeShade,
-      hairline,
-      refraction,
-      dispersion,
-      toneLift,
-      toneRoll,
-    ]);
+      return { filterId, cold };
+    }, [images, filtered, size, refraction, dispersion, toneLift, toneRoll]);
 
     // The masking fade-in is only for a cold filter (feImage still decoding).
     // It must also be REMOVED after it plays: under keepMounted a closed
@@ -743,8 +891,6 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
       return () => clearTimeout(timer);
     }, [glassRefs?.cold, fadeDone]);
 
-    // frost interpolates toward Apple's "regular" variant: more blur + tint.
-    const effectiveBlur = blur + frost * 14;
     // Blur and refraction live on SEPARATE backdrop layers. While feImage
     // decodes its data URL, Chromium treats the whole
     // `url(#f) blur() saturate()` chain as inert — putting them on one layer
@@ -755,14 +901,24 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
     // over an already-frosted surface.
     // Brightening what the glass shows makes a clear slab read as lit from
     // within rather than tinted (prism's default; classic leaves it at 1).
+    // On the copy tier the copy carries blur, saturation and brightness as a
+    // CSS filter of its own, so the layer is only there until the copy is —
+    // the frame or two before it is measured and its filter is warm.
     const tone = brightness !== 1 ? ` brightness(${brightness})` : '';
+    const copyReady = tier === 'copy' && glassRefs !== null && copyBox !== null;
     const backdropFilter =
-      tier === 'clear'
+      tier === 'clear' || copyReady
         ? undefined
-        : tier === 'frost'
+        : tier === 'frost' || tier === 'copy'
           ? `blur(${Math.max(effectiveBlur * 2, 10)}px) saturate(${saturation})${tone}`
           : `blur(${effectiveBlur}px) saturate(${saturation})${tone}`;
-    const refractFilter = glassRefs ? `url(#${glassRefs.filterId})` : undefined;
+    // The copy is blurred by a CSS filter on a box a little larger than the
+    // surface, so the blur at the surface's edge reads the picture past it
+    // rather than fading into nothing; the SVG filter, which the browser
+    // runs in software, is left with the displacement alone.
+    const copyPad = Math.ceil(effectiveBlur * 3) + 2;
+    const refractFilter =
+      tier === 'refract' && glassRefs ? `url(#${glassRefs.filterId})` : undefined;
     // frost 0 sits at the floor, frost 1 at full tint. Classic's floor of 0.25
     // reproduces its original `0.25 + 0.75 × frost`; prism's is nearly clear.
     const tintOpacity = tier === 'clear' ? 1 : tintFloor + (1 - tintFloor) * frost;
@@ -774,6 +930,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
         className={[
           'liqui-glass',
           `liqui-glass--${tier}`,
+          lit ? 'liqui-glass--lit' : '',
           finish === 'prism' ? 'liqui-glass--prism' : '',
           elevated ? 'liqui-glass--elevated' : '',
           className ?? '',
@@ -785,11 +942,14 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
           // Both inherit, so what is painted inside can follow the surface —
           // see "Continuous corners" in glass.css.
           ['--lq-radius' as string]: `${radius}px`,
-          ['--lq-corner' as string]: capsule ? 'round' : 'squircle',
+          ['--lq-corner' as string]: roundCorners ? 'round' : 'squircle',
           // The same shape as a superellipse exponent, for `lq-nest` to
           // compute with; and the nesting a container above set up is not
           // this surface's to inherit.
-          ['--lq-corner-n' as string]: capsule ? 1 : 2,
+          ['--lq-corner-n' as string]: roundCorners ? 1 : 2,
+          // Toward the light, for the CSS rim the frost and clear tiers draw.
+          ['--lq-light-x' as string]: Math.round(Math.sin((lightAngle * Math.PI) / 180) * 100) / 100,
+          ['--lq-light-y' as string]: Math.round(-Math.cos((lightAngle * Math.PI) / 180) * 100) / 100,
           ['--lq-item-radius' as string]: 'initial',
           ['--lq-item-corner' as string]: 'initial',
         }}
@@ -810,8 +970,49 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
             style={{ backdropFilter: refractFilter, WebkitBackdropFilter: refractFilter }}
           />
         )}
+        {copyReady && backdropHandle && (
+          // The backdrop again, shifted so the part under this surface is the
+          // part that is actually under it, and refracted as this surface's
+          // own content. Nested glass in a backdrop would copy the backdrop
+          // into itself without end, so the copy is marked as a surface.
+          <span className="liqui-glass__copy" aria-hidden>
+            <span
+              className={
+                needsFade
+                  ? 'liqui-glass__copy-lens liqui-glass__refract--fade'
+                  : 'liqui-glass__copy-lens'
+              }
+              style={{ filter: `url(#${glassRefs!.filterId})` }}
+            >
+              <span
+                className="liqui-glass__copy-blur"
+                style={{
+                  left: -copyPad,
+                  top: -copyPad,
+                  width: size!.w + 2 * copyPad,
+                  height: size!.h + 2 * copyPad,
+                  filter: `blur(${effectiveBlur}px) saturate(${saturation})${tone}`,
+                }}
+              >
+                <span
+                  className="liqui-glass__copy-inner"
+                  style={{
+                    left: copyPad - copyBox!.x,
+                    top: copyPad - copyBox!.y,
+                    width: copyBox!.w,
+                    height: copyBox!.h,
+                  }}
+                >
+                  <NestedGlassContext.Provider value={true}>
+                    {backdropHandle.backdrop}
+                  </NestedGlassContext.Provider>
+                </span>
+              </span>
+            </span>
+          </span>
+        )}
         <span className="liqui-glass__tint" style={{ opacity: tintOpacity }} />
-        {glassRefs && specular > 0 && (
+        {images && lit && (
           <>
             {/* One image per appearance; CSS shows the matching one, so a
                 light/dark switch changes the lighting without JS. */}
@@ -823,7 +1024,7 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
                 .join(' ')
                 .trim()}
               style={{
-                backgroundImage: `url(${glassRefs.images.specular})`,
+                backgroundImage: `url(${images.specular})`,
                 opacity: specular,
               }}
             />
@@ -835,16 +1036,18 @@ export const LiquiGlass = React.forwardRef<HTMLDivElement, LiquiGlassProps>(
                 .join(' ')
                 .trim()}
               style={{
-                backgroundImage: `url(${glassRefs.images.specularDark})`,
+                backgroundImage: `url(${images.specularDark})`,
                 opacity: specular,
               }}
             />
           </>
         )}
         <span className="liqui-glass__shine" />
-        <div className={['liqui-glass__content', contentClassName ?? ''].join(' ').trim()}>
-          {children}
-        </div>
+        <NestedGlassContext.Provider value={true}>
+          <div className={['liqui-glass__content', contentClassName ?? ''].join(' ').trim()}>
+            {children}
+          </div>
+        </NestedGlassContext.Provider>
       </div>
     );
   },

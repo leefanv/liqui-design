@@ -8,6 +8,7 @@ export {
   FINISH_LIGHTING,
 } from './LiquiGlass';
 export { ensureFilter, prewarmImage } from './filterRegistry';
+export { LiquiBackdrop, type LiquiBackdropProps } from './backdrop';
 export {
   LiquiThemeProvider,
   type LiquiThemeProviderProps,

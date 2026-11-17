@@ -23,9 +23,11 @@ npm i @liqui-design/glass
 - **A document-wide SVG filter registry** — filters are hoisted into one
   persistent hidden `<svg>` and LRU-capped, so a remounted surface references an
   already-decoded filter and refracts on its first frame.
-- **Browser detection and fallback** — refraction renders in Chromium; Safari
-  and Firefox drop `backdrop-filter` entirely when it references an SVG filter,
-  and fall back to frosted blur automatically.
+- **Browser detection and fallback** — `backdrop-filter` refraction renders in
+  Chromium; Safari and Firefox drop it when it references an SVG filter. There
+  a surface inside a `LiquiBackdrop` refracts a copy of the backdrop with the
+  same filter on its own content, and a surface with no backdrop to copy falls
+  back to frosted blur, keeping the baked rim.
 - **`LiquiThemeProvider`** — global defaults for the optics, and runtime
   overrides for the `--lq-*` tokens.
 
@@ -50,14 +52,14 @@ without it you get the light-theme defaults only.
 | --- | --- | --- |
 | `material` | `'auto'` | `auto` refracts where supported, frosts elsewhere. `frost` and `clear` force a tier. |
 | `profile` | `'squircle'` | Lens shape of the rim. `squircle` and `convex` are physical; `rim` is stylized. |
-| `finish` | `'classic'` | How the surface is lit. `classic` lights the top and bottom edges and frosts; `prism` is one key light from the top left, a dark far rim, a hairline and a clear interior. |
-| `frost` | `0.35` | Material density, 0–1. `0` ≈ Apple's *clear*, `1` ≈ *regular*. |
+| `finish` | `'classic'` | How the surface is lit. `classic` lights the top and bottom edges and frosts; `prism` is one key light, a dark far rim, a hairline and a colour fringe at the edge. |
+| `frost` | `0.54` | Material density, 0–1. `0` ≈ Apple's *clear*, `1` ≈ *regular*. |
 | `refraction` | `140` | Displacement scale — how hard the rim bends. |
 | `bezel` | `26` | Width of the refracting rim in px. |
 | `radius` | `16` | Corner radius; also shapes the displacement map. |
-| `blur` | `1` | Base backdrop blur. `frost` adds up to 14px on top. |
+| `blur` | `2` | Base backdrop blur. `frost` adds up to 14px on top. |
 | `dispersion` | `0` | Chromatic aberration. Costs ~3× filter work. |
-| `specular` | `0.7` | Rim-light opacity. |
+| `specular` | `0.85` | Rim-light opacity. |
 | `saturation` | `1.7` | Saturation pushed through the glass. |
 | `lightAngle` | from `finish` | Where the light comes from, in degrees clockwise from above. |
 | `edgeShade`, `hairline`, `brightness`, `tintFloor` | from `finish` | Shade on the edges facing away from the light, outline opacity, brightness pushed through the glass, and the tint left at `frost: 0`. |
