@@ -70,16 +70,17 @@ transparency for a backdrop to leak through in the first place.
 
 | Prop | Range | What it controls |
 | --- | --- | --- |
-| `frost` | 0–1 | Material density. `0` ≈ Apple's *clear* (needs a busy backdrop and its own dimming), `1` ≈ *regular* (adaptive frosted, safe anywhere). Default `0.35`. |
+| `frost` | 0–1 | Material density. `0` ≈ Apple's *clear* (needs a busy backdrop and its own dimming), `1` ≈ *regular* (adaptive frosted, safe anywhere). Default `0.54`. |
 | `refraction` | px | `feDisplacementMap` scale — how hard the rim bends. |
 | `bezel` | px | How wide the refracting rim is. Menus want ~28, buttons ~11. |
 | `blur` | px | Base blur. `frost` adds up to 14px on top. |
 | `dispersion` | 0+ | Chromatic aberration. Costs ~3× filter work — leave at `0` unless it's a hero surface. |
 | `specular` | 0–1 | Rim light opacity. |
 | `radius` | px | Corner radius. Also drives the displacement map's shape. |
-| `material` | `auto` \| `frost` \| `clear` | Rendering tier. `auto` refracts where supported and frosts elsewhere. |
-| `finish` | `classic` \| `prism` | How the surface is lit. `classic` lights the top and bottom edges and frosts the pane. `prism` is one key light from the top left, a dark far rim, a hairline round the outline and a clear, brightened interior — glass type, as a surface. Wants a narrow bezel, strong refraction and a little dispersion; `prismGlassTheme` is that tuning. |
-| `lightAngle` | ° | Where the light comes from, clockwise from above. Unset, the finish's own: `0` for classic, `-33` for prism. |
+| `corner` | `squircle` \| `round` | Corner shape. `squircle` (default) is the continuous corner, drawn 1.4× where `corner-shape` renders so it reads as large as a round one. `round` is a plain circular arc at exactly `radius`, map and lighting included. A capsule or a disc is round either way. |
+| `material` | `auto` \| `frost` \| `clear` | Rendering tier. `auto` refracts where the browser can, copies a `LiquiBackdrop` where it cannot, and frosts elsewhere. |
+| `finish` | `classic` \| `prism` | How the surface is lit. `classic` lights the top and bottom edges and frosts the pane. `prism` is one key light, a dark far rim, a hairline round the outline and a brightened, lightly tinted interior — glass type, as a surface. Wants a narrow bezel, a soft bend and a colour fringe; `prismGlassTheme` is that tuning. |
+| `lightAngle` | ° | Where the light comes from, clockwise from above. Unset, the finish's own: `0` for classic, `1` for prism. |
 | `edgeShade`, `hairline`, `brightness`, `tintFloor` | 0–1 | The rest of the lighting: shade on the edges facing away from the light, opacity of the outline, brightness pushed through the glass, and the tint left at `frost: 0`. Each follows the finish unless set. |
 
 Each of these is a per-surface prop, and the components set the geometric ones
@@ -97,7 +98,8 @@ you mean; where `corner-shape: squircle` renders (Chromium 139+), the kernel
 raises it 1.4× so the softer curve reads the same size, and draws the map and
 the lighting on that curve. A surface whose corners reach half its height is a
 capsule or a disc, and keeps a true semicircle — a superellipse cannot close
-into one.
+into one. `corner="round"` opts a surface out: a plain circular arc at exactly
+`radius`, for the few shapes the system itself draws that way.
 
 **Anything inside a surface** — a hover wash, a highlighted menu item, a
 pressed toggle — follows the surface. The surface publishes its corner as
@@ -150,19 +152,70 @@ The expensive parts are the canvas-generated displacement map and the
 - Stacking many large `backdrop-filter` surfaces is the one thing that will
   actually cost you frames. Prefer one large surface over a dozen small ones.
 
-## Degradation
+## Safari and Firefox
 
-| Browser | Behaviour |
-| --- | --- |
-| **Chromium** | Full refraction. |
-| **Safari** | Drops `backdrop-filter` entirely when it references an SVG filter. Falls back to frosted blur automatically. WebKit bug 245510 has an implementation in review. |
-| **Firefox** | Same fallback. |
+Refraction is `backdrop-filter: url(#svg)`: the page behind the surface, run
+through the displacement filter. Chromium draws that. Safari drops the whole
+`backdrop-filter` value when it references an SVG filter, and Firefox ignores
+it (WebKit bug 245510 has an implementation in review). What both *do* draw is
+the same SVG filter on an element's own content — so a surface that knows what
+is behind it can refract a copy of that instead.
 
-The fallback is automatic — `material="auto"` detects support at module load.
-There is nothing to configure, but there *is* something to check: **look at your
-UI in Safari.** A design tuned to `frost: 0` can be unreadable once refraction
-is gone, because in the refraction tier the lens was doing the work the tint
-would otherwise have to do.
+`LiquiBackdrop` is how it knows. It is a positioned box that paints `backdrop`
+behind its children, and every `LiquiGlass` inside it copies that backdrop when
+the page cannot be refracted, offset by its own position in the box:
+
+```tsx
+import { LiquiBackdrop, LiquiGlass } from '@liqui-design/glass';
+
+<LiquiBackdrop backdrop={<img src="/wallpaper.jpg" className="absolute inset-0 size-full object-cover" />}>
+  <LiquiGlass radius={20}>…</LiquiGlass>
+</LiquiBackdrop>
+```
+
+The home stage and every preview on this site are one, which is why they
+refract in Safari. The copy is only ever the backdrop, so two kinds of surface
+stay on frost: one nested in another surface (what is behind a button on a
+panel is the panel), and one portalled out of the box (a popup). Both keep the
+rim. If something inside the box moves by a transform — a drag — pass a
+`revision` that changes with it, since no observer sees a transform.
+
+### Rendering tiers
+
+Each surface picks a tier when it mounts, by feature detection, best first.
+There is nothing to configure.
+
+| Tier | What it draws | Chromium | Safari, Firefox |
+| --- | --- | --- | --- |
+| **Backdrop refraction** | The page behind the surface, displaced | Every surface | — |
+| **Copy refraction** | A copy of the known backdrop, displaced | — | Inside a `LiquiBackdrop` |
+| **Frost** | Blur, tint and the baked rim | `material="frost"` | Everywhere else |
+| **Clear** | Tint and rim, no backdrop filter | `material="clear"` | `material="clear"` |
+
+The baked rim — highlight, edge line, hairline — is a pair of images, not a
+filter, so it is the same on every tier but clear, in every browser.
+
+### Capabilities
+
+| Capability | Chromium¹ | Safari | Firefox |
+| --- | :---: | :---: | :---: |
+| Refraction over any content | ✅ | —² | —² |
+| Refraction over a known backdrop | ✅ | ✅³ | ✅³ |
+| Chromatic dispersion | ✅ | ✅³ | ✅³ |
+| Baked rim lighting | ✅ | ✅ | ✅ |
+| Frosted fallback | ✅ | ✅ | ✅ |
+| Continuous corners | ✅⁴ | —⁵ | —⁵ |
+
+- ¹ Chrome, Edge, Arc, Opera and other Blink browsers.
+- ² No SVG filter in `backdrop-filter` yet (WebKit bug 245510). The surface frosts.
+- ³ Inside a `LiquiBackdrop`.
+- ⁴ Chromium 139+, through `corner-shape: squircle`.
+- ⁵ Round corners at the declared radius — see [Corners](#corners).
+
+There *is* something to check: **look at your UI in Safari.** A design tuned to
+`frost: 0` can be unreadable on a surface with no backdrop to copy, because in
+the refraction tiers the lens was doing the work the tint would otherwise have
+to do.
 
 Also honour user preference — a surface that ignores
 `prefers-reduced-transparency` is an accessibility bug, not a style choice:

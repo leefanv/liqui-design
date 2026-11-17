@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { LiquiBackdrop } from '@liqui-design/glass';
 
 import { cn } from '@/lib/utils';
 import { Wallpaper } from '@/components/wallpaper';
@@ -23,8 +26,15 @@ export function PreviewBackdrop({
   className?: string;
   children: React.ReactNode;
 }) {
+  // A LiquiBackdrop rather than a div: the preview knows what is behind its
+  // component, so in Safari and Firefox the component refracts a copy of it
+  // (see backdrop.tsx in the kernel). `flat` has nothing to copy and refracts
+  // nothing anywhere, which is the point of it.
+  const scene =
+    variant === 'wallpaper' ? <Wallpaper /> : variant === 'gradient' ? <GradientField /> : null;
   return (
-    <div
+    <LiquiBackdrop
+      backdrop={scene}
       // Stable hook for the visual regression suite. Selecting these by class
       // would break on any restyle, which is exactly when the screenshots need
       // to still be pointing at the right element.
@@ -49,10 +59,8 @@ export function PreviewBackdrop({
         className,
       )}
     >
-      {variant === 'wallpaper' && <Wallpaper />}
-      {variant === 'gradient' && <GradientField />}
       {children}
-    </div>
+    </LiquiBackdrop>
   );
 }
 

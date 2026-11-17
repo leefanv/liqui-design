@@ -257,19 +257,71 @@
     inset -1px -1px 1px var(--lq-rim-lo, rgba(255, 255, 255, 0.28));
 }
 
-/* Prism finish (see GlassFinish). Where refraction renders, the baked
-   specular already draws the key-lit edge, dark rim and hairline, so the
-   fallback shine would only add a second, differently lit rim. On the frost
-   and clear tiers the shine is all there is, so it is relit the prism way:
-   the catch-light top left, a dark edge bottom right, a hairline round. */
-.liqui-glass--prism.liqui-glass--refract > .liqui-glass__shine {
+/* Where the baked specular is drawn — every tier but clear, now that it is
+   images rather than a filter — it already draws the whole rim: highlight,
+   edge line, hairline. The fallback shine would only add a second,
+   differently lit one; under classic that second rim is what hid the flank
+   line, its bright left inset sitting right on top of the dark edge the
+   specular draws there. A filtered surface with `specular: 0` asked for no
+   rim at all. The shine is left to clear glass, and to a surface not yet
+   measured. */
+.liqui-glass--lit > .liqui-glass__shine,
+.liqui-glass--refract > .liqui-glass__shine,
+.liqui-glass--copy > .liqui-glass__shine {
   display: none;
 }
 
+/* Copy refraction (see backdrop.tsx): the box's backdrop again, inside the
+   surface, in four spans. The outer clips to the surface's corners. The lens
+   carries the SVG filter — displacement only, which the browser runs in
+   software. Under it, a box a blur's reach larger than the surface carries
+   the blur, saturation and brightness as a CSS filter, which runs on the
+   GPU, and clips its content so the blur is bounded; the pad is what keeps
+   the fade at its edge away from the surface's. The inner span is the
+   backdrop at the box's size, shifted by the surface's offset in the box.
+
+   The lens and the blur are on layers of their own, so a repaint of the
+   content above them — a hover, a slider's fill — does not run the filters
+   again; only a move of the copy does. */
+.liqui-glass__copy {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  corner-shape: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.liqui-glass__copy-lens {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.liqui-glass__copy-blur {
+  position: absolute;
+  display: block;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.liqui-glass__copy-inner {
+  position: absolute;
+  display: block;
+}
+
+/* Prism finish (see GlassFinish), frost and clear tiers: the shine is relit
+   the prism way — the catch-light on the edges facing the light, a dark edge
+   on the ones facing away, a hairline round. `--lq-light-x` / `-y` are the
+   unit vector toward the light, written by the surface from `lightAngle`;
+   the fallbacks are the top-left light this used to be fixed to. */
 .liqui-glass--prism > .liqui-glass__shine {
   box-shadow:
-    inset 1px 1px 1px var(--lq-rim-hi, rgba(255, 255, 255, 0.85)),
-    inset -1px -1px 1px rgba(0, 0, 0, 0.16),
+    inset calc(var(--lq-light-x, -0.55) * -1.3px) calc(var(--lq-light-y, -0.83) * -1.3px) 1px
+      var(--lq-rim-hi, rgba(255, 255, 255, 0.85)),
+    inset calc(var(--lq-light-x, -0.55) * 1.3px) calc(var(--lq-light-y, -0.83) * 1.3px) 1px
+      rgba(0, 0, 0, 0.16),
     inset 0 0 0 0.5px rgba(0, 0, 0, 0.22);
 }
 

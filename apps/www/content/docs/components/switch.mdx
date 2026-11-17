@@ -188,8 +188,9 @@ another glass surface — inside a popover, a drawer, a media-player panel.
 switch on a frosted panel is the panel's own tint: a flat wash with nothing in
 it to bend.
 
-Safari and Firefox take this path on their own — `backdrop-filter: url(#…)` is
-Chromium-only. Either way the thumb stays a white pill with a cast shadow, and
+Safari and Firefox take this path on their own — the thumb's lens is a
+`backdrop-filter: url(#…)`, which they do not draw, and unlike a glass surface it
+has no backdrop copy to fall back on. Either way the thumb stays a white pill with a cast shadow, and
 the press keeps its swell but gives up the reveal.
 
 ### Sizing
