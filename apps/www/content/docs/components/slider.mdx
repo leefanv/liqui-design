@@ -126,8 +126,9 @@ thumb on a frosted panel is the panel's own tint: a flat wash with nothing in
 it to bend. Without the lens the thumb takes its size from `className`, so a
 panel can ask for a small knob.
 
-Safari and Firefox take this path on their own — `backdrop-filter: url(#…)` is
-Chromium-only.
+Safari and Firefox take this path on their own — the thumb's lens is a
+`backdrop-filter: url(#…)`, which they do not draw, and unlike a glass surface it
+has no backdrop copy to fall back on.
 
 ### Sizing
 

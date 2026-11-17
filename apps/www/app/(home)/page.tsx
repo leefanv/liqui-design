@@ -10,15 +10,11 @@ export default function HomePage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">
       <section className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Glass that actually refracts
+          Liquid glass for React. No WebGL.
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-fd-muted-foreground">
-          Liquid glass components for React, built on{' '}
-          <a href="https://base-ui.com" className="underline underline-offset-4">
-            Base UI
-          </a>
-          . A canvas-generated displacement map driving an SVG filter — not a blur with a white
-          overlay.
+          38 components on one refraction kernel — a canvas-baked displacement map and an SVG filter.
+          Nothing renders per frame, and it refracts in Safari and Firefox too.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -50,17 +46,19 @@ export default function HomePage() {
 
       <section className="mt-14 grid gap-6 sm:grid-cols-3">
         <Feature title="You own the code">
-          Components arrive as source in your project through the shadcn CLI. Only the refraction
-          kernel — the maths and the browser workarounds — stays a dependency.
+          Components arrive as source in your project through the shadcn CLI, so your existing{' '}
+          <code>components.json</code>, <code>cn()</code> and Tailwind tokens carry over. Only the
+          refraction kernel — the maths and the browser workarounds — stays a dependency.
         </Feature>
-        <Feature title="Built on Base UI">
-          The same base shadcn/ui uses, so your existing <code>components.json</code>,{' '}
-          <code>cn()</code> and Tailwind tokens carry over. Accessibility comes from the primitives,
-          not from us.
+        <Feature title="No WebGL, no render loop">
+          Each surface is one SVG filter over a displacement map baked once per size and cached.
+          Nothing draws per frame. Dispersion is the one dial that costs more, about three times the
+          filter work.
         </Feature>
-        <Feature title="Degrades honestly">
-          Refraction is Chromium-only today. Safari and Firefox fall back to frosted blur
-          automatically — no configuration, but do look at both.
+        <Feature title="Safari and Firefox too">
+          Neither draws an SVG filter behind an element yet. Tell a surface what is behind it with{' '}
+          <code>LiquiBackdrop</code> and it refracts a copy; anywhere else it frosts, with the same
+          rim. Do look at both.
         </Feature>
       </section>
 

@@ -13,6 +13,10 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
+/** One line for search results and link previews. Under 160 characters. */
+const SITE_DESCRIPTION =
+  'Liquid glass components for React. Real refraction with no WebGL, in Safari and Firefox too: one SVG filter, maps baked once, 38 components on one theme.';
+
 export const metadata: Metadata = {
   // Without this, Next resolves OG and Twitter image URLs against
   // http://localhost:3000 in a production build — the links render, they just
@@ -22,11 +26,21 @@ export const metadata: Metadata = {
   title: {
     // The tab and the search result are where the project is introduced to
     // someone who has not met it, so both carry the full name.
-    default: `${brandName} — liquid glass components for React`,
+    default: `${brandName} — liquid glass for React, no WebGL`,
     template: `%s — ${brandName}`,
   },
-  description:
-    'Liquid glass components for React, built on Base UI. Surfaces that refract what is behind them, installed as source through the shadcn CLI.',
+  description: SITE_DESCRIPTION,
+  // Link previews read these, not `description`. A page that sets its own
+  // `openGraph` (the docs do, for their images) replaces this block whole.
+  openGraph: {
+    type: 'website',
+    siteName: brandName,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary',
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
