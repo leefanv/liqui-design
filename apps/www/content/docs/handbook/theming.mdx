@@ -145,16 +145,18 @@ keeps them in proportion, which is what "make the glass thicker" actually means.
 do the Switch, Slider and Tab Bar sources that read them.
 
 `finish` picks the light model. `classic` is the shipped look: lit along the
-top and bottom edges, frosted. `prism` is one key light from the top left, a
-dark rim on the far edges, a hairline round the outline and a clear, brightened
-interior — the look of refracting glass type, applied to a surface. The five
+top and bottom edges, frosted. `prism` is one key light, from above unless
+`lightAngle` moves it, a dark rim on the edges facing away, a hairline round the
+outline and a brightened, lightly tinted interior — the look of refracting glass
+type, applied to a surface. The five
 lighting dials (`lightAngle`, `edgeShade`, `hairline`, `brightness`,
 `tintFloor`) follow the finish until the theme or a surface sets one, so
 switching the finish alone switches the whole look.
 
-A finish is lighting only. Prism is drawn for a narrower bezel, stronger
-refraction and almost no frost, and `prismGlassTheme` is the finish with that
-tuning — spread it and adjust:
+A finish is lighting only. Prism is drawn for a narrower bezel, a gentler bend,
+a heavier base blur under lighter frost and a colour fringe at the edge
+(`dispersion: 0.35`, which costs about three times the filter work). The
+finish with that tuning is `prismGlassTheme`. Spread it and adjust:
 
 ```tsx
 import { LiquiThemeProvider, prismGlassTheme } from '@liqui-design/glass';
@@ -164,8 +166,8 @@ import { LiquiThemeProvider, prismGlassTheme } from '@liqui-design/glass';
 
 The lenses in Switch, Slider and TabBar read `lightAngle` too, so one light
 lands on every edge of the page from the same side. Prism wants a busy
-backdrop: over a flat colour or a soft gradient there is nothing for a clear
-pane to bend, and it reads as thin glass rather than cut glass.
+backdrop: over a flat colour or a soft gradient there is nothing for the edge
+to bend or fringe, and it reads as thin glass rather than cut glass.
 
 ### Precedence
 
@@ -175,7 +177,7 @@ An explicit prop beats the theme, and the theme beats liqui's default:
 // frost: 0.9 — the prop wins over any theme.
 <LiquiGlass frost={0.9} />
 
-// frost: whatever the theme says, else 0.35.
+// frost: whatever the theme says, else 0.54.
 <LiquiGlass />
 ```
 
@@ -194,10 +196,10 @@ reads as glass or as a panel.
 
 Then check three things the dials will not tell you:
 
-**Look at it in Safari.** Refraction only renders in Chromium today, and a theme
-tuned at `frost: 0.06` can be unreadable once the lens is gone and the tint is
-carrying legibility alone. The [glass handbook](/docs/handbook/glass) has the
-full degradation table.
+**Look at it in Safari.** Safari and Firefox refract only inside a
+`LiquiBackdrop`. Anywhere else the lens is gone and the tint carries legibility
+alone, so a theme tuned at `frost: 0.06` can be unreadable there. The
+[glass handbook](/docs/handbook/glass#safari-and-firefox) has the full table.
 
 **Look at both modes.** The editor edits one token set at a time, and it is easy
 to leave the other on a palette that no longer matches.

@@ -211,8 +211,10 @@ pnpm --filter @liqui-design/glass test:package   # publint + attw, if you touche
 CI runs the same four. `test:package` catches exports-map and type-resolution breakage
 that only surfaces in a consumer's project, where it is expensive to trace back.
 
-Check your change in **both** Chromium and Safari. The fallback path is easy to break
-without noticing, because everything still renders — just flatter.
+Check your change in **both** Chromium and Safari. Safari takes the other two paths —
+the backdrop copy inside a `LiquiBackdrop`, and frost outside one — and both are easy to
+break without noticing, because everything still renders, just flatter or a few pixels
+off.
 
 ## Reporting things
 

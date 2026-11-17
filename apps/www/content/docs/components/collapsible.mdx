@@ -81,11 +81,10 @@ tint, with no SVG filter and no canvas map behind it. **Frost has nothing to
 regenerate**, so the growing box is free however far it opens and however fast
 you click.
 
-This is the degradation tier from [Glass](/docs/handbook/glass#degradation) used
-on purpose rather than as a fallback. It is what Safari and Firefox render for
-every surface today, which is worth knowing: on those browsers the trigger and
-the panel are the same material, and this component looks *more* uniform there,
-not less.
+This is the fallback tier from [Glass](/docs/handbook/glass#safari-and-firefox)
+used on purpose. It is what Safari and Firefox render for every surface outside a
+`LiquiBackdrop`, which is worth knowing: there the trigger and the panel are the
+same material, and this component looks *more* uniform, not less.
 
 ### They are not supposed to match
 

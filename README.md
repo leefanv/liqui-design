@@ -4,10 +4,11 @@
 
 # Liqui Design
 
-**Liquid glass components for React, built on [Base UI](https://base-ui.com).**
+**Liquid glass for React. No WebGL.**
 
-Surfaces that actually refract what is behind them, using a canvas-generated
-displacement map and an SVG filter instead of a blur with a white overlay.
+38 [Base UI](https://base-ui.com) components on one refraction kernel — a
+canvas-baked displacement map and an SVG filter. Nothing renders per frame, and
+it refracts in Safari and Firefox too, wherever the backdrop is known.
 
 English · [简体中文](./README.zh-CN.md)
 
@@ -102,8 +103,8 @@ what a surface didn't set; geometry (`radiusScale`, `refractionScale`,
 drawer stay in proportion.
 
 `finish` chooses how the glass is lit: `classic`, lit along the top and bottom
-edges and frosted, or `prism`, one key light from the top left with a dark far
-rim and a clear interior. `prismGlassTheme` is the prism finish with the optics
+edges and frosted, or `prism`, one key light with a dark far rim, a hairline
+and a colour fringe at the edge. `prismGlassTheme` is the prism finish with the optics
 it is drawn for.
 
 The theme editor opens from **Theme** in the header of any page on the site, so
@@ -178,17 +179,32 @@ refraction needs anyway.
 
 ## Browser support
 
-| | Refraction | Notes |
-| --- | :---: | --- |
-| Chromium | ✅ | Full displacement refraction |
-| Safari | — | Drops `backdrop-filter` entirely when it references an SVG filter. WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) has an implementation in review |
-| Firefox | — | Same |
+Every surface picks the best of four rendering tiers when it mounts, by feature
+detection, with nothing to configure. Best first: **backdrop refraction** (the
+page behind the surface, displaced), **copy refraction** (a copy of a known
+backdrop, displaced), **frost** (blur, tint and the baked rim) and **clear**
+(tint and rim, no backdrop filter).
 
-Falling back to frosted blur is automatic and needs no configuration, but check
-how it looks. A design tuned with `frost: 0` can end up unreadable once the lens
-is gone, because the lens was doing work the tint would otherwise have to do. The
-[glass handbook](https://liqui.design/docs/handbook/glass#degradation) goes
-through this.
+| Capability | Chromium¹ | Safari | Firefox |
+| --- | :---: | :---: | :---: |
+| Refraction over any content | ✅ | —² | —² |
+| Refraction over a known backdrop | ✅ | ✅³ | ✅³ |
+| Chromatic dispersion | ✅ | ✅³ | ✅³ |
+| Baked rim lighting | ✅ | ✅ | ✅ |
+| Frosted fallback | ✅ | ✅ | ✅ |
+| Continuous corners | ✅⁴ | —⁵ | —⁵ |
+
+- ¹ Chrome, Edge, Arc, Opera and other Blink browsers.
+- ² Neither engine draws an SVG filter in `backdrop-filter` yet (WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) has an implementation in review). A surface with no known backdrop falls back to frost, rim intact.
+- ³ Inside a `LiquiBackdrop`, which tells the surfaces in it what is behind them.
+- ⁴ Chromium 139+, through `corner-shape: squircle`.
+- ⁵ Round corners at the declared radius.
+
+Check your design in Safari anyway. A surface tuned with `frost: 0` can be
+unreadable on the frost tier, because the lens was doing work the tint now has
+to do alone. The
+[glass handbook](https://liqui.design/docs/handbook/glass#safari-and-firefox)
+covers which surface lands on which tier.
 
 ## Background
 

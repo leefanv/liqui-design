@@ -126,9 +126,11 @@ app will ever have.
 
 ### Browser support
 
-Refraction renders in Chromium only. Safari and Firefox drop `backdrop-filter`
-entirely when it references an SVG filter, so liqui detects this and falls back
-to frosted blur — no configuration needed, but do check both.
+Chromium refracts whatever is behind the button. Safari and Firefox drop
+`backdrop-filter` when it references an SVG filter, so there the button
+refracts a copy of its backdrop when it sits in a `LiquiBackdrop`, and frosts
+anywhere else, keeping the same rim. No configuration needed, but do check
+both — see [Glass](/docs/handbook/glass#safari-and-firefox).
 
 The solid variants render identically everywhere: there is no filter to fall
 back from.

@@ -4,10 +4,10 @@
 
 # Liqui Design
 
-**基于 [Base UI](https://base-ui.com) 的 React 液态玻璃组件库。**
+**React 液态玻璃组件库，不用 WebGL。**
 
-表面会真的折射背后的内容，用 canvas 生成置换贴图配合 SVG 滤镜实现，
-而不是一层模糊加一块白色蒙版。
+38 个基于 [Base UI](https://base-ui.com) 的组件，共用一个折射内核：canvas 预先烘焙的置换贴图，
+加一个 SVG 滤镜。没有任何逐帧渲染；只要背景是已知的，Safari 和 Firefox 里也一样折射。
 
 [English](./README.md) · 简体中文
 
@@ -93,8 +93,8 @@ export default function Page() {
 （`radiusScale`、`refractionScale`、`bezelScale`、`blurScale`）则是乘在组件自己设的值上，
 这样滚动条滑块和抽屉之间的比例不会被拉垮。
 
-`finish` 决定玻璃怎么打光：`classic` 是上下两条边受光、带磨砂；`prism` 是左上方一盏
-主光，远端一圈暗边，中间清透。`prismGlassTheme` 是 prism 加上它配套的光学参数。
+`finish` 决定玻璃怎么打光：`classic` 是上下两条边受光、带磨砂；`prism` 是一盏
+主光，背光一侧暗边，外圈细线，边缘带色散彩边。`prismGlassTheme` 是 prism 加上它配套的光学参数。
 
 主题编辑器可以在站点任意页面的 header 里点 **Theme** 打开，正在看的页面就是预览；
 [liqui.design/theme](https://liqui.design/theme) 是整页版本。两者都能实时调这两半，并导出
@@ -163,15 +163,28 @@ npx shadcn@latest add https://liqui.design/r/media-player.json
 
 ## 浏览器支持
 
-| | 折射 | 说明 |
-| --- | :---: | --- |
-| Chromium | ✅ | 完整的置换折射 |
-| Safari | — | 只要 `backdrop-filter` 引用了 SVG 滤镜就会被整个丢弃。WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) 的实现正在评审中 |
-| Firefox | — | 同上 |
+每个玻璃表面在挂载时通过特性检测，自动选用四个渲染档位中最好的一档，不需要任何配置。
+从高到低依次是：**背景折射**（折射表面后面的页面）、**拷贝折射**（折射已知背景的一份拷贝）、
+**磨砂**（模糊、着色加烘焙边缘高光）和 **透明**（只有着色和边缘，不用背景滤镜）。
 
-降级到磨砂模糊是自动的，不需要任何配置，但还是要亲自看一眼效果。按 `frost: 0` 调好的
-设计在透镜消失后可能变得难以阅读，因为原本由透镜承担的工作会全部落到着色上。
-[玻璃手册](https://liqui.design/docs/handbook/glass#degradation)里有详细说明。
+| 能力 | Chromium¹ | Safari | Firefox |
+| --- | :---: | :---: | :---: |
+| 折射任意内容 | ✅ | —² | —² |
+| 折射已知背景 | ✅ | ✅³ | ✅³ |
+| 色散 | ✅ | ✅³ | ✅³ |
+| 烘焙边缘高光 | ✅ | ✅ | ✅ |
+| 磨砂降级 | ✅ | ✅ | ✅ |
+| 连续圆角 | ✅⁴ | —⁵ | —⁵ |
+
+- ¹ Chrome、Edge、Arc、Opera 等 Blink 内核浏览器。
+- ² 两个引擎都还不支持在 `backdrop-filter` 里引用 SVG 滤镜（WebKit bug [245510](https://bugs.webkit.org/show_bug.cgi?id=245510) 的实现正在评审中）。没有已知背景的表面退回磨砂，边缘高光照旧。
+- ³ 在 `LiquiBackdrop` 内：它会告诉里面的表面背后是什么。
+- ⁴ Chromium 139 及以上，通过 `corner-shape: squircle`。
+- ⁵ 按声明的半径画普通圆角。
+
+还是建议在 Safari 里亲自看一眼。按 `frost: 0` 调好的表面落到磨砂档时可能难以阅读，
+因为原本由透镜承担的工作全部落到了着色上。哪个表面会落到哪一档，
+[玻璃手册](https://liqui.design/docs/handbook/glass#safari-and-firefox)里有详细说明。
 
 ## 项目由来
 

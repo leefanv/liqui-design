@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/liqui/ui/button';
 import { Fieldset, FieldsetLegend } from '@/registry/liqui/ui/fieldset';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/registry/liqui/ui/select';
 import { Separator } from '@/registry/liqui/ui/separator';
 import {
   Slider,
@@ -72,18 +73,18 @@ export const DEFAULT_OPTICS: GlassOptics = {
   refraction: 150,
   bezel: 28,
   dispersion: 0,
-  specular: 0.7,
-  frost: 0.35,
-  blur: 1,
+  specular: 0.85,
+  frost: 0.54,
+  blur: 2,
   ...FINISH_LIGHTING.classic,
 };
 
 /**
  * The dials each finish is drawn for. Picking a finish on the panel moves the
  * dials too: prism lighting on a classic 28px bezel reads as a bevelled
- * button, not as cut glass — it wants the narrow bezel, the stronger bend and
- * the bit of dispersion of the glass-type study it comes from. Same ratios as
- * `prismGlassTheme` in the kernel, written out in panel units.
+ * button, not as cut glass. Prism's numbers are the ones it was tuned to on
+ * this stage — `prismGlassTheme` in the kernel is the same set as
+ * multipliers, so the two read back as each other.
  */
 export const FINISH_OPTICS: Record<GlassFinish, Omit<GlassOptics, 'material' | 'profile'>> = {
   classic: {
@@ -98,12 +99,12 @@ export const FINISH_OPTICS: Record<GlassFinish, Omit<GlassOptics, 'material' | '
   },
   prism: {
     finish: 'prism',
-    refraction: 190,
-    bezel: 15,
-    dispersion: 0.15,
-    specular: 1,
-    frost: 0.06,
-    blur: 0.5,
+    refraction: 88,
+    bezel: 19,
+    dispersion: 0.35,
+    specular: 0.75,
+    frost: 0.26,
+    blur: 4.5,
     ...FINISH_LIGHTING.prism,
   },
 };
@@ -191,21 +192,9 @@ export function asGlassProps(optics: GlassOptics): Partial<LiquiGlassProps> {
   return optics;
 }
 
-const MATERIALS: { value: GlassMaterial; label: string; hint: string }[] = [
-  { value: 'auto', label: 'Auto', hint: 'Refraction where supported, frost elsewhere' },
-  { value: 'frost', label: 'Frost', hint: 'Blur and saturation only — cheap' },
-  { value: 'clear', label: 'Clear', hint: 'Tint and rim, no backdrop filter — cheapest' },
-];
-
 const FINISHES: { value: GlassFinish; label: string; hint: string }[] = [
   { value: 'classic', label: 'Classic', hint: 'Lit from above and below, frosted' },
-  { value: 'prism', label: 'Prism', hint: 'Key light top left, dark rim, hairline — clear cut glass' },
-];
-
-const PROFILES: { value: GlassProfile; label: string; hint: string }[] = [
-  { value: 'squircle', label: 'Squircle', hint: 'Physical: a steep rim that flattens fast' },
-  { value: 'convex', label: 'Convex', hint: 'Physical: a rounder dome' },
-  { value: 'rim', label: 'Rim', hint: 'Stylized falloff, kept for comparison' },
+  { value: 'prism', label: 'Prism', hint: 'One key light, dark far rim, hairline — cut glass' },
 ];
 
 type DialKey = keyof Omit<GlassOptics, 'material' | 'profile' | 'finish'>;
@@ -260,7 +249,6 @@ const GROUPS: { title: string; dials: Dial[] }[] = [
 /** Fixed decimals per dial, read off its step, so a reading never jitters in width. */
 const decimals = (step: number) => (Number.isInteger(step) ? 0 : String(step).split('.')[1].length);
 
-const pick = <T,>(items: readonly T[]) => items[Math.floor(Math.random() * items.length)];
 const within = (dial: Dial, lo: number, hi: number) => {
   const span = dial.max - dial.min;
   const raw = dial.min + span * (lo + Math.random() * (hi - lo));
@@ -270,16 +258,15 @@ const within = (dial: Dial, lo: number, hi: number) => {
 /**
  * A random look that still reads as glass. Each dial draws from the part of
  * its range that does — the full range of Strength includes 0, which is a tint,
- * and of Bezel includes 4, which is a hairline — and the material stays on
- * Auto, because shuffling into Clear would look like the button broke the
- * stage. Dispersion stays low for the same reason it carries a cost warning.
+ * and of Bezel includes 4, which is a hairline. Material and profile are left
+ * as they are: the panel has no control for either, so a shuffle that changed
+ * them would leave a look nobody could see the cause of. Dispersion stays low
+ * for the same reason it carries a cost warning.
  */
 export function shuffleOptics(base: GlassOptics): GlassOptics {
   const dial = (key: DialKey) => GROUPS.flatMap((g) => g.dials).find((d) => d.key === key)!;
   return {
     ...base,
-    material: 'auto',
-    profile: pick(['squircle', 'convex'] as const),
     refraction: within(dial('refraction'), 0.3, 0.85),
     bezel: within(dial('bezel'), 0.3, 0.8),
     dispersion: within(dial('dispersion'), 0, 0.35),
@@ -356,6 +343,48 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * One-of-n picker as a pop-up, for a choice that would crowd a segmented row
+ * or that you set once and leave. Same shape as `Segmented`, so a group can
+ * swap one for the other; the hints become each option's tooltip.
+ */
+export function Picker<T extends string>({
+  label,
+  items,
+  value,
+  onValueChange,
+  className,
+}: {
+  label: string;
+  items: readonly { value: T; label: string; hint?: string }[];
+  value: T;
+  onValueChange: (next: T) => void;
+  className?: string;
+}) {
+  return (
+    // `items` is what the trigger reads its label from — the list is
+    // unmounted while closed, so there is no option text to look at.
+    <Select
+      items={items}
+      value={value}
+      onValueChange={(next) => {
+        if (next) onValueChange(next as T);
+      }}
+    >
+      <SelectTrigger aria-label={label} className={cn('w-full', className)}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((item) => (
+          <SelectItem key={item.value} value={item.value} title={item.hint}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Panel body                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -363,81 +392,102 @@ export function Segmented<T extends string>({
 export function GlassControls({
   value,
   onChange,
+  defaults = DEFAULT_OPTICS,
   className,
 }: {
   value: GlassOptics;
   onChange: (next: GlassOptics) => void;
+  /**
+   * Where the panel's Reset goes, so each dial's own reset agrees with it.
+   * Once the finish has been switched away from this one's, a dial resets to
+   * the new finish's own value instead — half of one look and half of the
+   * other is not a default of anything.
+   */
+  defaults?: GlassOptics;
   className?: string;
 }) {
   const set = <K extends keyof GlassOptics>(key: K, next: GlassOptics[K]) =>
     onChange({ ...value, [key]: next });
+  const reference =
+    value.finish === defaults.finish ? defaults : { ...defaults, ...FINISH_OPTICS[value.finish] };
 
   return (
     <div className={cn('flex flex-col gap-5', className)}>
+      {/* One choice, on purpose: the panel shows what the library gives you
+          out of the box. The rendering tier stays on Auto and the profile on
+          Squircle — still props for anyone who wants them, but not dials a
+          first look should have to understand. */}
       <ControlGroup title="Material">
         <Segmented
-          label="Finish"
+          label="Material"
           items={FINISHES}
           value={value.finish}
           onValueChange={(next) => onChange({ ...value, ...FINISH_OPTICS[next] })}
-        />
-        <Segmented
-          label="Material"
-          items={MATERIALS}
-          value={value.material}
-          onValueChange={(next) => set('material', next)}
-        />
-        <Segmented
-          label="Profile"
-          items={PROFILES}
-          value={value.profile}
-          onValueChange={(next) => set('profile', next)}
         />
       </ControlGroup>
 
       {GROUPS.map((group) => (
         <ControlGroup key={group.title} title={group.title}>
-          {group.dials.map((dial) => (
-            <Slider
-              key={dial.key}
-              min={dial.min}
-              max={dial.max}
-              step={dial.step}
-              value={value[dial.key]}
-              // Single-thumb sliders hand back a number; the array form is the
-              // range case, which no dial here is.
-              onValueChange={(next) => set(dial.key, Array.isArray(next) ? next[0] : next)}
-              // Edge, not centre: a knob centred on 0 hangs half off the rail
-              // and past the panel's edge.
-              thumbAlignment="edge"
-            >
-              <div className="flex items-baseline justify-between gap-2">
-                {/* `gap` rather than a margin on the hint: the playground's
-                    reset is an unlayered `* { margin: 0 }`, which outranks every
-                    layered utility no matter how specific. */}
-                <SliderLabel className="flex items-baseline gap-1">
-                  {dial.label}
-                  {dial.hint && (
-                    <em className="text-[11px] font-normal not-italic text-[var(--lq-text-dim)]">
-                      {dial.hint}
-                    </em>
-                  )}
-                </SliderLabel>
-                {/* Formatted here rather than by Base UI: a unit, and a
-                    step-matched number of decimals so the width never jitters. */}
-                <SliderValue>
-                  {(_, values) =>
-                    `${values[0].toFixed(decimals(dial.step))}${dial.unit ?? ''}`
-                  }
-                </SliderValue>
-              </div>
-              <SliderControl>
-                <SliderTrack>
-                  <SliderThumb aria-label={dial.label} />
-                </SliderTrack>
-              </SliderControl>
-            </Slider>
-          ))}
+          {group.dials.map((dial) => {
+            const format = (n: number) => `${n.toFixed(decimals(dial.step))}${dial.unit ?? ''}`;
+            const initial = reference[dial.key];
+            return (
+              <Slider
+                key={dial.key}
+                className="group/dial"
+                min={dial.min}
+                max={dial.max}
+                step={dial.step}
+                value={value[dial.key]}
+                // Single-thumb sliders hand back a number; the array form is the
+                // range case, which no dial here is.
+                onValueChange={(next) => set(dial.key, Array.isArray(next) ? next[0] : next)}
+                // Edge, not centre: a knob centred on 0 hangs half off the rail
+                // and past the panel's edge.
+                thumbAlignment="edge"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  {/* `gap` rather than a margin on the hint: the playground's
+                      reset is an unlayered `* { margin: 0 }`, which outranks every
+                      layered utility no matter how specific. */}
+                  <SliderLabel className="flex items-baseline gap-1">
+                    {dial.label}
+                    {dial.hint && (
+                      <em className="text-[11px] font-normal not-italic text-[var(--lq-text-dim)]">
+                        {dial.hint}
+                      </em>
+                    )}
+                  </SliderLabel>
+                  <div className="flex items-baseline gap-1.5">
+                    {/* Only while the dial is off its default, and only shown on
+                        hover or focus — a column of reset icons on every row
+                        would be the loudest thing in the panel. Focus-within
+                        keeps it reachable from the keyboard: tab onto the
+                        slider, and the next stop is its reset. */}
+                    {value[dial.key] !== initial && (
+                      <button
+                        type="button"
+                        onClick={() => set(dial.key, initial)}
+                        aria-label={`Reset ${dial.label}`}
+                        title={`Reset to ${format(initial)}`}
+                        className="grid size-4 cursor-default place-items-center self-center rounded-full text-[var(--lq-text-dim)] opacity-0 outline-none transition-opacity duration-150 group-hover/dial:opacity-100 group-focus-within/dial:opacity-100 hover:text-[var(--lq-text)] focus-visible:opacity-100 focus-visible:shadow-[0_0_0_2px_var(--lq-accent)]"
+                      >
+                        <RotateCcw className="size-3" strokeWidth={2.4} />
+                      </button>
+                    )}
+                    {/* Formatted here rather than by Base UI: a unit, and a
+                        step-matched number of decimals so the width never jitters. */}
+                    <SliderValue>{(_, values) => format(values[0])}</SliderValue>
+                  </div>
+                </div>
+                <SliderControl>
+                  <SliderTrack>
+                    <SliderThumb aria-label={dial.label} />
+                  </SliderTrack>
+                </SliderControl>
+              </Slider>
+            );
+          })}
         </ControlGroup>
       ))}
 
@@ -499,7 +549,8 @@ export function PanelActions({
 }
 
 /**
- * Two buttons sharing the footer evenly. The surface is the flex item; its
- * content is sized to the label, so the surface centres it.
+ * Two buttons sharing the footer evenly. The surface is the flex item, and the
+ * button's content grows to fill it, so the label centres itself and the hover
+ * wash covers the whole button.
  */
-const PANEL_BUTTON = 'flex-1 justify-center';
+const PANEL_BUTTON = 'flex-1';

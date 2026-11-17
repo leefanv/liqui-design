@@ -39,8 +39,14 @@ const glassButtonVariants = cva(
   'group inline-flex cursor-default select-none outline-none transition-[transform,box-shadow] duration-150 data-[pressed]:scale-[0.97] active:scale-[0.97] data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--lq-accent)_50%,transparent)]',
 );
 
+/**
+ * The hover wash is painted on the content layer, so the content has to fill
+ * the surface: `grow` stretches it when the button is stretched (`flex-1`,
+ * `w-full`), and does nothing on a button sized to its label. Without it a
+ * stretched button washed only a label-wide pill in its middle.
+ */
 const glassButtonContentVariants = cva(
-  'inline-flex items-center justify-center font-medium leading-tight whitespace-nowrap group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)] group-data-[disabled]:bg-transparent',
+  'inline-flex grow items-center justify-center font-medium leading-tight whitespace-nowrap group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)] group-data-[disabled]:bg-transparent',
   {
     variants: {
       size: {
