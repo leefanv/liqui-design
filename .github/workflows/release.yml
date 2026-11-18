@@ -1,28 +1,93 @@
 name: Release
 
+# A release is cut on dev and published from main.
+#
+#   dev:  changesets accumulate; this keeps a "Version Packages" PR open against
+#         dev that bumps the version, writes the changelog and consumes them.
+#         Merging it is the decision to release.
+#   main: receives dev, version and all, and publishes whatever version is not
+#         on npm yet. The site deploys from the same merge, so the registry and
+#         the package it imports go live together.
+#
+# Versioning on dev is what keeps the two branches from drifting. When the
+# version commit was made on main it never came back, and dev's package.json,
+# changelog and changesets fell one release further behind every time.
 on:
-  # main only, deliberately. dev is where changes accumulate and a changeset can
-  # still be rewritten; main is the branch a version on npm is allowed to come
-  # from. Adding dev here would publish every merged feature.
   push:
-    branches: [main]
+    branches: [dev, main]
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Version or publish
+  version:
+    name: Version
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the "Version Packages" branch and create tags
-      pull-requests: write # open/update the release PR
-      id-token: write # mint the OIDC token npm exchanges for publish rights
+      contents: write # push the changeset-release/dev branch
+      pull-requests: write # open/update the Version Packages PR
+      actions: write # dispatch the required checks onto that PR
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # changesets needs history to diff against the base branch
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # No publish input, so this only ever manages the PR: opens or updates it
+      # while changesets are pending on dev, and does nothing once they are gone.
+      - id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # The PR is pushed with this workflow's token, and GitHub runs no
+      # pull_request or push workflows for an event that token caused, so the
+      # required checks would never report and the PR could not be merged.
+      # workflow_dispatch is the documented exception. The runs land on the
+      # PR's head commit, which is what the ruleset reads.
+      - name: Run the required checks on the Version Packages PR
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for workflow in ci.yml checks.yml branch-policy.yml; do
+            gh workflow run "$workflow" --ref changeset-release/dev
+          done
+
+  publish:
+    name: Publish
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release tag and create the GitHub release
+      id-token: write # mint the OIDC token npm exchanges for publish rights
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Branch policy already refuses a dev -> main PR with changesets pending.
+      # This is the same rule at the last point it can be enforced: with one
+      # left, changesets/action below would version on main instead of
+      # publishing, and the drift this workflow exists to prevent starts again.
+      - name: Refuse unversioned changesets
+        run: |
+          pending=$(find .changeset -name '*.md' ! -name README.md)
+          if [ -n "$pending" ]; then
+            echo "::error::Changesets reached main without being versioned on dev: $pending"
+            exit 1
+          fi
 
       # Must be a recent action-setup: older pinned versions broke OIDC publishing
       # with a 404 (pnpm/pnpm#11513). Bumping the action was the actual fix.
@@ -44,16 +109,14 @@ jobs:
 
       - run: pnpm build
 
-      # With a changeset present, this opens a "Version Packages" PR. Merging that
-      # PR runs the workflow again with no changesets left, and this step publishes
-      # instead. No NPM_TOKEN anywhere — auth comes from the OIDC token above,
-      # which is why the trusted publisher on npmjs.com must name this exact file.
+      # With no changesets left this takes the publish path: every package whose
+      # version is not on npm yet is published, tagged and given a GitHub
+      # release; a merge that carries no new version publishes nothing. No
+      # NPM_TOKEN anywhere — auth is the OIDC token above, which is why the
+      # trusted publisher on npmjs.com must name this exact file.
       - uses: changesets/action@v1
         with:
-          version: pnpm changeset version
           publish: pnpm release
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Trusted publishing attaches provenance on its own, but changesets

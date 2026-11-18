@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main, dev]
+  # Dispatched by the release workflow onto its Version Packages PR — see ci.yml.
+  workflow_dispatch:
 
 concurrency:
   group: checks-${{ github.ref }}
