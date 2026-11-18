@@ -7,6 +7,9 @@ on:
   # PRs that each passed on their own.
   push:
     branches: [main, dev]
+  # The release workflow dispatches this onto the Version Packages PR it opens
+  # against dev, which GitHub would otherwise run no workflows for.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

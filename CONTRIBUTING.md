@@ -17,8 +17,8 @@ pnpm install
 ## Branches
 
 ```
-feature/*  ──PR──> dev ──PR──> main ──auto──> production
-hotfix/*   ──PR──> dev ──PR──> main ──auto──> production
+feature/*  ──PR──> dev ──PR──> main ──auto──> production + npm
+hotfix/*   ──PR──> dev ──PR──> main ──auto──> production + npm
 ```
 
 `dev` and `main` are both protected and neither accepts a direct push. Everything
@@ -28,7 +28,9 @@ arrives through a pull request, including anything you write yourself.
   Name the branch `feature/<what>`, or `hotfix/<what>` if you are fixing something
   that is already in production.
 - **`main`** is production. It only ever receives a PR from `dev`, and merging one
-  deploys the site and runs the release workflow.
+  deploys the site and publishes any new package version. Nothing is ever
+  committed to `main` that `dev` does not already have — the release's version
+  commit included — so the two never drift apart and nothing needs merging back.
 
 A hotfix takes the same route as a feature. It is a separate prefix so the branch
 list says which is which, not a shortcut past `dev` — skipping `dev` means the next
@@ -36,17 +38,16 @@ list says which is which, not a shortcut past `dev` — skipping `dev` means the
 
 The default branch is `main`, so GitHub pre-fills `main` as the base for a new PR
 and feature work is one dropdown away from going straight to production. The
-**Branch policy** check fails any PR into `main` whose head is not `dev` or the
-release branch changesets opens. If you see it go red, re-target the PR:
+**Branch policy** check fails any PR into `main` whose head is not `dev`. If you
+see it go red for that reason, re-target the PR:
 
 ```bash
 gh pr edit <number> --base dev
 ```
 
 CI runs on every PR and again on `dev` and `main` after a merge, which is what
-catches two PRs that passed separately and conflict together. Releases run from
-`main` alone: merging to `main` opens a "Version Packages" PR, and merging *that*
-publishes to npm.
+catches two PRs that passed separately and conflict together. Releasing is
+covered under [Changesets](#changesets).
 
 ## Layout
 
@@ -181,20 +182,35 @@ pnpm changeset
 ```
 
 Describe the change for someone who will read it in a changelog six months from now,
-and say *why* where it isn't obvious. Releases are automated: merging to `main` opens a
-"Version Packages" PR, and merging that publishes.
+and say *why* where it isn't obvious.
 
-The release workflow opens that PR with the workflow's own token, and GitHub does
-not run workflows on a PR a workflow opened. Its required checks never report, so it
-sits blocked. Close and reopen it to run them, then merge once they pass:
+### Releasing
+
+A release is cut on `dev` and published from `main`:
+
+1. While `dev` has changesets, the release workflow keeps a **chore: version
+   packages** PR open against it. It bumps `packages/glass/package.json`, writes the
+   changelog and deletes the changesets it consumed, and it updates itself as more
+   land. It also dispatches the required checks onto itself, since GitHub runs no
+   workflows for a PR a workflow opened.
+2. Merge it into `dev` when you want to release.
+3. Open the `dev` → `main` PR as usual. Merging it deploys the site and publishes the
+   new version to npm, with its tag and GitHub release, from the same commit.
+
+Branch policy fails a `dev` → `main` PR while `dev` still has changesets, so step 2
+can't be skipped: the site would go live with registry code importing a package
+version nobody can install yet. Merge the version PR and the check re-runs. A
+`dev` → `main` PR that carries no new version just deploys the site.
+
+If the checks on the version PR ever fail to appear, close and reopen it to run
+them:
 
 ```bash
 gh pr close <number> && gh pr reopen <number>
 ```
 
-Merge it soon after the `dev` → `main` PR that brought the changeset. The site deploys
-with that merge, and a registry component that needs a new export from the package
-only works for people installing it once the new version is on npm.
+Use a merge commit for `dev` → `main`, not squash or rebase, so `main` stays a
+merge of `dev` rather than a rewritten copy of it.
 
 ## Before opening a PR
 
