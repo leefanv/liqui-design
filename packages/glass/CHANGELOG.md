@@ -1,5 +1,40 @@
 # @liqui-design/glass
 
+## 0.8.0
+
+### Minor Changes
+
+- e0fa76c: The classic defaults are the look tuned on the home stage against the system's control center: `frost` 0.54 (was 0.35), `specular` 0.85 (was 0.7), and a surface's base `blur` 2px (was 1). `defaultGlassTheme` carries the first two; a theme or a surface that sets them itself is unaffected. `prismGlassTheme`'s `blurScale` is restated against the new base and draws the same blur as before.
+- e0fa76c: Refraction in Safari and Firefox, and the baked rim on every tier.
+
+  - New `LiquiBackdrop`: a positioned box that paints `backdrop` behind its children. Where `backdrop-filter` cannot carry an SVG filter (Safari, Firefox), every `LiquiGlass` inside the box refracts a copy of that backdrop instead, lined up with the original: blurred, saturated and brightened by a CSS filter on the GPU, then displaced and toned by the same SVG filter on its own content. Chromium is unchanged and keeps refracting the real page. A surface nested in another surface, or portalled out of the box, stays on frost. Pass `revision` when something in the box moves by a transform.
+  - The baked specular (highlight, edge line, hairline) is drawn on the frost tier too, Safari and Firefox included, in place of the CSS fallback shine. `material="frost"` gets it as well. The CSS shine remains on the clear tier only.
+
+- e0fa76c: The rim is redrawn against the system's own control center, measured off macOS 26 captures in both appearances.
+
+  - The edge shade is now a crisp line one device pixel wide at the boundary, instead of a soft band about two CSS pixels wide. Under `classic` it runs down the flanks and fades in round the corners as the highlight fades out; under `prism` it sits on the edges facing away from the light. `hairline` is drawn the same way.
+  - The `classic` highlight is a solid line about 1pt deep with a glow under it reaching about 4px (less on small controls), where the glow used to stop after a pixel or two.
+  - `prism` lights its key edge at the glass-type study's strength: it clips to full white instead of grading.
+  - The specular image is baked at the device pixel ratio, up to 2×, so a one-device-pixel line stays one device pixel.
+  - On the refraction tier the fallback CSS rim (`.liqui-glass__shine`) is hidden under `classic` too, as it already was under `prism`. Its bright left inset sat on top of the flank line and hid it. The frost and clear tiers keep it.
+  - `FINISH_LIGHTING.classic.edgeShade` is 0.8 and `FINISH_LIGHTING.prism.edgeShade` is 0.35, since the value is now the opacity of a one-pixel line. A theme that sets `edgeShade` itself will see a thinner, sharper edge at the same number.
+
+- e0fa76c: The `prism` finish is retuned. Its key light now comes from above (`lightAngle: 1`, was `-33`). The edge facing away gets a stronger rim (`edgeShade: 0.48`) and the hairline is a little firmer (`hairline: 0.35`). `prismGlassTheme` moves from clear glass to lightly frosted cut glass with a colour fringe: `frost: 0.26`, `specular: 0.75`, `dispersion: 0.35`, `refractionScale: 88 / 150`, `bezelScale: 19 / 28` and `blurScale: 4.5`. The fallback rim on the frost and clear tiers now follows `lightAngle` through the new `--lq-light-x` / `--lq-light-y` properties, where it was fixed to a top-left light.
+- e0fa76c: `LiquiGlass` takes `corner: 'squircle' | 'round'`. `squircle` is the default and unchanged. `round` draws a plain circular arc at exactly `radius`, with no squircle compensation, and the displacement map, the lighting and the published `--lq-corner` follow it. It is for surfaces the system itself draws with round corners, like the control center's wide slider modules. A capsule or a disc is round either way.
+
+## 0.7.0
+
+### Minor Changes
+
+- fc418da: The default palette is now Apple's, from the macOS 27 kit: accent `#0088ff` / `#0091ff`, danger `#ff383c` / `#ff4245`, and neutral label colours (`rgba(0, 0, 0, 0.85)` and `0.5` in light, `rgba(255, 255, 255, 0.85)` and `0.55` in dark) in place of the blue-tinted ones. A theme that sets these tokens itself is unaffected.
+- 11b2274: Continuous corners, one mechanism for the whole library.
+
+  - Every surface now publishes its drawn corner as `--lq-radius` and its shape as `--lq-corner` (`squircle`, or `round` on a capsule), and the content layer takes both, so a hover wash or a fill painted on it meets the edge on the same curve.
+  - New classes in `styles.css`: `lq-nest` (a container: `[--lq-inset]` and `[--lq-item-h]`) publishes `--lq-item-radius` for what sits in it — concentric with the surface, and a capsule once that reaches half the item's height; `lq-corner` puts an item on that shape; `lq-squircle` (`[--lq-r]`, `[--lq-h]`) gives a box with a corner of its own the same treatment a surface gets.
+  - A surface is drawn as a true capsule once its radius _as drawn_ — 1.4× where the squircle renders — reaches half its short side, instead of a clamped squircle that bulged at the ends.
+  - `LiquiThemeProvider` writes the theme's `radiusScale` to `--lq-radius-scale`, so corners drawn in CSS follow the same dial as the surfaces.
+  - `--lq-corner-shape` is gone; it was internal and is replaced by `--lq-corner`.
+
 ## 0.6.0
 
 ### Minor Changes
