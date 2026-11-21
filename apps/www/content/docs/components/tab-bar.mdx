@@ -5,7 +5,7 @@ description: The iOS floating tab bar — glass over the page, with a lens under
 
 <ComponentPreview name="tab-bar-demo" />
 
-<Callout>Scroll the list under the bar, then press a tab and hold. The pill
+<Callout>Scroll the covers under the bar, then press a tab and hold. The pill
 swells, its fill thins, and the refraction opens up — the page bends through the
 tab you are holding. Press the search button for the same thing in a circle.</Callout>
 
@@ -23,11 +23,11 @@ import { TabBar, TabBarItem, TabBarSearch } from '@/components/ui/tab-bar';
 
 ```tsx
 <TabBar value={tab} onValueChange={setTab}>
-  <TabBarItem value="home" icon={<House fill="currentColor" strokeWidth={0} />}>
+  <TabBarItem value="home" icon={<House strokeWidth={2.25} />}>
     Home
   </TabBarItem>
-  <TabBarItem value="saved" icon={<Heart fill="currentColor" strokeWidth={0} />} badge={3}>
-    Saved
+  <TabBarItem value="library" icon={<ListMusic strokeWidth={2.25} />} badge={3}>
+    Library
   </TabBarItem>
   <TabBarSearch
     icon={<Search strokeWidth={2.5} />}
