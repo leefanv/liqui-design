@@ -55,7 +55,7 @@ import { cn } from '@/lib/utils';
  * should not claim it.
  *
  * Tapping it expands the field leftward out of the button and focuses it. The
- * expansion is a `clip-path`, not a width, and that is not a stylistic choice:
+ * expansion is a mask, not a width, and that is not a stylistic choice:
  * the kernel keys a displacement map on size, so animating the width of a glass
  * surface asks for a new map on every frame and walks the cache clean on the
  * way past. There are three fixed sizes here — the bar, the button, and a field
@@ -104,6 +104,71 @@ const FIELD_GLASS = {
   blur: 1,
   frost: 0.42,
 } satisfies Partial<LiquiGlassProps>;
+
+/**
+ * How the search transition cuts and fades a surface: a mask on each of its
+ * layers, never anything on the surface itself.
+ *
+ * `clip-path`, `opacity` below 1, `filter` and `mask` on an element all make it
+ * a Backdrop Root, so every `backdrop-filter` inside it — the surface's blur,
+ * its refraction, the pill's lens — samples the inside of the surface instead
+ * of the page, which is nothing. The glass goes clear and only the tint is
+ * left. That is what the bar looked like at rest for as long as it carried an
+ * `inset(0)` clip it had no use for, and what the button looked like through
+ * every fade.
+ *
+ * A layer masking *itself* is not a root for its own backdrop, so the same cut
+ * on every child keeps the glass live while it moves. It has to be a mask and
+ * not a per-layer `clip-path`: Chromium clips a backdrop to a clip-path's
+ * bounding box, so a rounded inset cut the blur square while the rim beside it
+ * curved. A mask's alpha is honoured exactly — which also makes it the fade.
+ *
+ * Nothing is painted outside the layers either: an `elevated` shadow belongs to
+ * the surface, would stay whole while its layers were cut, and is left off.
+ */
+const WIPE = cn(
+  '[&>*]:[mask-image:var(--lq-wipe,none)] [&>*]:[mask-repeat:no-repeat]',
+  '[&>*]:[mask-size:var(--lq-wipe-size,auto)] [&>*]:[mask-position:var(--lq-wipe-pos,0_0)]',
+);
+
+/**
+ * Show `[x0, x1]` of a surface `width` wide, as a capsule, at `alpha` — or all
+ * of it, unmasked, which is where every surface spends its resting life.
+ *
+ * A part of it is three mask layers — two half-discs and the run between them —
+ * because a mask has no capsule of its own to draw.
+ */
+function wipe(el: HTMLElement, width: number, x0: number, x1: number, alpha = 1) {
+  const style = el.style;
+  if (x0 <= 0.5 && x1 >= width - 0.5 && alpha >= 0.999) {
+    style.removeProperty('--lq-wipe');
+    style.removeProperty('--lq-wipe-size');
+    style.removeProperty('--lq-wipe-pos');
+    return;
+  }
+  const ink = `rgb(0 0 0 / ${Math.round(alpha * 1000) / 1000})`;
+  // The whole surface, fading: one layer, and the surface's own radius is the
+  // shape. Pieced together it would show its joins down the middle.
+  if (x0 <= 0.5 && x1 >= width - 0.5) {
+    style.setProperty('--lq-wipe', `linear-gradient(${ink}, ${ink})`);
+    style.setProperty('--lq-wipe-size', '100% 100%');
+    style.setProperty('--lq-wipe-pos', '0 0');
+    return;
+  }
+  const span = Math.max(x1 - x0, 0);
+  const r = Math.min(BAR_H / 2, span / 2);
+  const run = span - 2 * r;
+  // Opaque, the run reaches a pixel under each disc, so antialiasing on the
+  // two sides of a join cannot leave a hairline between them. Translucent
+  // (only the bar's last sliver), an overlap would be the brighter line, so
+  // the pieces only meet.
+  const tuck = alpha >= 0.999 && run > 0 ? 1 : 0;
+  const disc = (at: string) =>
+    `radial-gradient(circle ${r}px at ${at} 50%, ${ink} calc(100% - 0.5px), transparent 100%)`;
+  style.setProperty('--lq-wipe', `${disc('100%')}, linear-gradient(${ink}, ${ink}), ${disc('0')}`);
+  style.setProperty('--lq-wipe-size', `${r}px 100%, ${run + 2 * tuck}px 100%, ${r}px 100%`);
+  style.setProperty('--lq-wipe-pos', `${x0}px 0, ${x0 + r - tuck}px 0, ${x0 + r + run}px 0`);
+}
 
 /* -------------------------------------------------------------------------- */
 /* Pill optics                                                                 */
@@ -442,9 +507,9 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
 
     if (field) {
       // Revealed from the right, out of the button's footprint, so the field
-      // grows from it rather than appearing over it. `round` keeps the moving
-      // edge a capsule instead of a straight cut.
-      field.style.clipPath = `inset(0 0 0 ${hidden}px round ${BAR_H / 2}px)`;
+      // grows from it rather than appearing over it, its moving edge a round
+      // end rather than a straight cut. Unmasked once fully open — see WIPE.
+      wipe(field, rowWidth.current, hidden, rowWidth.current);
       // Opaque from the first frame. Fading it in was the second thing that
       // read wrong: the button was still there underneath, so the transition
       // began as two capsules stacked in one place.
@@ -473,7 +538,8 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
     // a fade anyone sees — it is only here because the field is frosted heavier
     // and two panes of glass in one place would read denser than one.
     if (capsuleRef.current) {
-      capsuleRef.current.style.opacity = `${Math.max(1 - t * 8, 0)}`;
+      const capsule = capsuleRef.current;
+      wipe(capsule, capsule.offsetWidth, 0, capsule.offsetWidth, Math.max(1 - t * 8, 0));
     }
     // The bar is *wiped* by the advancing edge, not faded underneath it.
     //
@@ -485,12 +551,11 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
     // every pixel changes hands at the moment the edge crosses it.
     if (barRef.current) {
       const eaten = Math.max(barWidth.current - hidden, 0);
-      barRef.current.style.clipPath = `inset(0 ${eaten}px 0 0 round ${BAR_H / 2}px)`;
       // Dissolved over the last stretch rather than cut off at the end. The
-      // clip's own corner radius turns the final sliver of a capsule into a
-      // crescent, which is a shape nothing else on screen has; fading it out
-      // across 80px means the edge has taken it before it can become one.
-      barRef.current.style.opacity = `${Math.min(hidden / 80, 1)}`;
+      // final sliver of a capsule is a lens, which is a shape nothing else on
+      // screen has; fading it out across 80px means the edge has taken it
+      // before it can become one.
+      wipe(barRef.current, barWidth.current, 0, barWidth.current - eaten, Math.min(hidden / 80, 1));
     }
   }, [expand]);
 
@@ -617,12 +682,11 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
         className={cn('relative inline-flex max-w-full items-center gap-2 select-none', className)}
       >
         <LiquiGlass
-          elevated
           {...BAR_GLASS}
           {...glass}
           ref={barRef}
           inert={open || undefined}
-          className="min-w-0"
+          className={cn('min-w-0', WIPE)}
           contentClassName="p-[6px]"
         >
           {/* `isolate` keeps the pill's stacking inside the bar. It is safe next
@@ -636,11 +700,11 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
 
         {search.length > 0 && (
           <LiquiGlass
-            elevated
             {...BAR_GLASS}
             {...glass}
             ref={capsuleRef}
             inert={open || undefined}
+            className={WIPE}
             contentClassName="p-[6px]"
           >
             <div
@@ -663,11 +727,10 @@ export function TabBar({ glass, lens, className, children, ...props }: TabBarPro
         {searchProps && (
           <LiquiGlass
             ref={fieldRef}
-            elevated
             {...FIELD_GLASS}
             {...glass}
             style={{ visibility: 'hidden', opacity: 0 }}
-            className="absolute inset-0"
+            className={cn('absolute inset-0', WIPE)}
             contentClassName="flex h-full items-center gap-2 px-4"
           >
             {/* Carried in on the reveal. Without this the icon and the
